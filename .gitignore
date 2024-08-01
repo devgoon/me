@@ -29,7 +29,7 @@ build/
 
 # JetBrains IDE
 .vscode/
-
+.vs
 # JetBrains IDE
 .idea/
 __pycache__/
