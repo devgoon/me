@@ -7,7 +7,7 @@ Hi<!DOCTYPE html>
         const totalPages = 5; // Change this to match your actual number of pages
         
         // Generate random number between 1 and totalPages
-        const randomPage = '/code/' + Math.floor(Math.random() * totalPages) + 1;
+        const randomPage = '/code/' + (Math.floor(Math.random() * totalPages) + 1);
         
         // Perform the redirect
         window.location.href = randomPage + '.html';
