@@ -1,13 +1,16 @@
-1<!DOCTYPE html>
 <html>
-    <head>
-        <title>Random Redirect</title>
-        <script>
-        setTimeout(() => {
-            window.location.href = '/code/';
-        }, 10000); // 10000 milliseconds = 10 seconds
-        </script>
-    </head>
+<head>
+    <title>Random Redirect</title>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                window.location.href = '/code/';
+            }, 10000);
+        });
+    </script>
+</head>
+<body>
     <p><s>Don't</s> be a Minnocci</p>
-    <img src="../assets/img/BEAMINNOCCI.mp4" />
+    <video src="../assets/img/BEAMINNOCCI.mp4" controls></video>
+</body>
 </html>
