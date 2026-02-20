@@ -1,0 +1,15 @@
+{
+  "name": "me",
+  "version": "1.0.0",
+  "description": "Personal website for Lodovico Minnocci",
+  "main": "index.html",
+  "scripts": {},
+  "author": "Lodovico Minnocci",
+  "license": "MIT",
+  "devDependencies": {
+    "cspell": "latest",
+    "linkinator": "latest",
+    "pa11y": "latest"
+  },
+  "dependencies": {}
+}
