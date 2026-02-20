@@ -2,10 +2,10 @@ name: Azure Static Web Apps CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches: [main]
+    types: [ opened, synchronize, reopened, closed ]
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -22,13 +22,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # FIX: Configure Node + npm to use the public registry
+      # Configure Node and force npmjs public registry
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: "https://registry.npmjs.org"
-          cache: "npm"
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      # Ensure no auth is used for public installs
+      - name: Clear npm auth
+        run: |
+          unset NODE_AUTH_TOKEN || true
+          # Also ensure npm won’t try to auth implicitly
+          echo "always-auth=false" >> "$NPM_CONFIG_USERCONFIG"
+          echo "Using npmrc at: $NPM_CONFIG_USERCONFIG"
+          cat "$NPM_CONFIG_USERCONFIG"
 
       - name: Install dependencies
         run: npm ci
@@ -43,7 +52,7 @@ jobs:
         run: npx pa11y ./index.html
 
   build_and_deploy_job:
-    needs: [quality-checks]
+    needs: [ quality-checks ]
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy
