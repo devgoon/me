@@ -2,10 +2,10 @@ name: Azure Static Web Apps CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    types: [ opened, synchronize, reopened, closed ]
-    branches: [ main ]
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -27,17 +27,32 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
 
-      # Ensure no auth is used for public installs
-      - name: Clear npm auth
+      # 🔒 Clear any injected tokens for all subsequent steps in this job
+      - name: Clear injected npm tokens
         run: |
-          unset NODE_AUTH_TOKEN || true
-          # Also ensure npm won’t try to auth implicitly
-          echo "always-auth=false" >> "$NPM_CONFIG_USERCONFIG"
-          echo "Using npmrc at: $NPM_CONFIG_USERCONFIG"
+          echo "NODE_AUTH_TOKEN=" >> "$GITHUB_ENV"
+          echo "NPM_TOKEN=" >> "$GITHUB_ENV"
+          echo "Cleared NODE_AUTH_TOKEN and NPM_TOKEN via GITHUB_ENV for following steps."
+
+      # 🔧 Force npm not to authenticate to npmjs; scrub temp .npmrc if needed
+      - name: Force no-auth npm config
+        run: |
+          echo "Using temp npmrc at: $NPM_CONFIG_USERCONFIG"
+          touch "$NPM_CONFIG_USERCONFIG"
+          npm config set always-auth false --userconfig "$NPM_CONFIG_USERCONFIG"
+          npm config delete //registry.npmjs.org/:_authToken --userconfig "$NPM_CONFIG_USERCONFIG" || true
+          echo "---- Effective temp .npmrc ----"
           cat "$NPM_CONFIG_USERCONFIG"
+
+      # (Optional) quick debug to verify the env is clean and registry correct
+      - name: Verify env and registry
+        run: |
+          echo "NODE_AUTH_TOKEN=${NODE_AUTH_TOKEN:-<empty>}"
+          echo "NPM_TOKEN=${NPM_TOKEN:-<empty>}"
+          echo "registry=$(npm config get registry)"
 
       - name: Install dependencies
         run: npm ci
@@ -52,7 +67,7 @@ jobs:
         run: npx pa11y ./index.html
 
   build_and_deploy_job:
-    needs: [ quality-checks ]
+    needs: [quality-checks]
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy
