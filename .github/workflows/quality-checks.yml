@@ -1,24 +1,30 @@
 name: Quality Checks
 
 on:
-	push:
-		branches:
-			- main
-	pull_request:
-		branches:
-			- main
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-	quality-checks:
-        name: Quality Checks
-		runs-on: ubuntu-latest
-		steps:
-			- uses: actions/checkout@v4
-			- name: Show npmrc
-			  run: cat ~/.npmrc || echo "No .npmrc found"
-			- name: Remove npm credentials
-			  run: rm -f ~/.npmrc
-			- name: Install dependencies
-			  run: make install
-			- name: Run quality checks
-				run: make all
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print npm config
+        run: npm config list
+      - name: Show npmrc file
+        run: cat ~/.npmrc || echo "No .npmrc found"
+      - name: Print environment variables
+        run: env
+      - name: Show Node.js and npm versions
+        run: node -v && npm -v
+      - name: Remove npm credentials
+        run: rm -f ~/.npmrc
+      - name: Install dependencies
+        run: make install
+      - name: Run quality checks
+        run: make all
