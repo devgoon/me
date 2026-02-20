@@ -6,5 +6,11 @@
     "Lodovi",
     "Lodovi.co",
     "Minnocci's"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "assets/**",
+    ".github/**",
+    ".git/**"
   ]
 }

@@ -2,7 +2,7 @@
 
 
 spellcheck:
-	npx cspell "**/*.{html,css,js}" --exclude "node_modules/**" --exclude "assets/**" --exclude ".github/**" --exclude ".git/**"
+	npx cspell "**/*.{html,css,js}"
 
 link-check:
 	npx linkinator ./index.html
