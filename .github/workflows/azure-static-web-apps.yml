@@ -22,38 +22,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Configure Node and force npmjs public registry
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: "https://registry.npmjs.org"
-          cache: "npm"
-
-      # Clear any injected tokens for subsequent steps (critical)
-      - name: Clear injected npm tokens
-        run: |
-          echo "NODE_AUTH_TOKEN=" >> "$GITHUB_ENV"
-          echo "NPM_TOKEN=" >> "$GITHUB_ENV"
-          echo "Cleared NODE_AUTH_TOKEN and NPM_TOKEN via GITHUB_ENV for following steps."
-
-      # Force no-auth at the registry scope and ensure correct registry
-      - name: Force no-auth npm config
-        run: |
-          echo "Using temp npmrc at: $NPM_CONFIG_USERCONFIG"
-          touch "$NPM_CONFIG_USERCONFIG"
-          npm config set registry https://registry.npmjs.org/ --userconfig "$NPM_CONFIG_USERCONFIG"
-          npm config set //registry.npmjs.org/:always-auth false --userconfig "$NPM_CONFIG_USERCONFIG"
-          npm config delete //registry.npmjs.org/:_authToken --userconfig "$NPM_CONFIG_USERCONFIG" || true
-          echo "---- Effective temp .npmrc ----"
-          cat "$NPM_CONFIG_USERCONFIG"
-
-      # Optional sanity checks (can remove after first green run)
-      - name: Verify env and registry
-        run: |
-          echo "NODE_AUTH_TOKEN=${NODE_AUTH_TOKEN:-<empty>}"
-          echo "NPM_TOKEN=${NPM_TOKEN:-<empty>}"
-          echo "registry=$(npm config get registry)"
 
       - name: Install dependencies
         run: npm ci
