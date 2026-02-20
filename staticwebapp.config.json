@@ -1,0 +1,20 @@
+{
+  "routes": [
+    { "route": "/favicon.ico", "headers": { "Cache-Control": "public, max-age=604800, immutable" } },
+    { "route": "/*", "headers": {
+      "Content-Security-Policy": "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self' data:",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "X-XSS-Protection": "0",
+      "Permissions-Policy": "geolocation=(), microphone=(), camera=()"
+    }}
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/images/*", "/favicon.ico"]
+  },
+  "mimeTypes": {
+    ".webmanifest": "application/manifest+json"
+  }
+}
