@@ -1,3 +1,20 @@
+name: Azure Static Web Apps CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: swa-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality-checks:
     name: Quality Checks
@@ -5,21 +22,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Configure Node and force npmjs public registry
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
 
-      # Clear any injected tokens for subsequent steps
+      # Clear any injected tokens for subsequent steps (critical)
       - name: Clear injected npm tokens
         run: |
           echo "NODE_AUTH_TOKEN=" >> "$GITHUB_ENV"
           echo "NPM_TOKEN=" >> "$GITHUB_ENV"
           echo "Cleared NODE_AUTH_TOKEN and NPM_TOKEN via GITHUB_ENV for following steps."
 
-      # Force no-auth and clean temp .npmrc at the registry scope
+      # Force no-auth at the registry scope and ensure correct registry
       - name: Force no-auth npm config
         run: |
           echo "Using temp npmrc at: $NPM_CONFIG_USERCONFIG"
@@ -30,7 +48,7 @@ jobs:
           echo "---- Effective temp .npmrc ----"
           cat "$NPM_CONFIG_USERCONFIG"
 
-      # Optional: verify we’re clean
+      # Optional sanity checks (can remove after first green run)
       - name: Verify env and registry
         run: |
           echo "NODE_AUTH_TOKEN=${NODE_AUTH_TOKEN:-<empty>}"
@@ -48,3 +66,32 @@ jobs:
 
       - name: Run pa11y
         run: npx pa11y ./index.html
+
+  build_and_deploy_job:
+    needs: [quality-checks]
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Build and Deploy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Build And Deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_NICE_BAY_0D4AD7C0F }}
+          action: upload
+          app_location: "/"
+          skip_app_build: true
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close PR Environment
+    steps:
+      - name: Close Pull Request
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_NICE_BAY_0D4AD7C0F }}
+          action: close
