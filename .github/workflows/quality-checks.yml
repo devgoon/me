@@ -29,6 +29,10 @@ jobs:
       - name: Remove npm credentials
         run: rm -f ~/.npmrc
       - name: Install dependencies
-        run: make install
-      - name: Run quality checks
-        run: make all
+        run: npm install
+      - name: Run cspell
+        run: npx cspell "**/*.{html,css,js}" --exclude "assets/**" --exclude ".github/**" --exclude ".git/**"
+      - name: Run linkinator
+        run: npx linkinator ./index.html
+      - name: Run pa11y
+        run: npx pa11y ./index.html
