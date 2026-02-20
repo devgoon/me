@@ -28,16 +28,10 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm ci
+        run: make install
 
-      - name: Run cspell
-        run: npx cspell "**/*.{html,css,js}" --exclude "assets/**" --exclude ".github/**" --exclude ".git/**"
-
-      - name: Run linkinator
-        run: npx linkinator ./index.html
-
-      - name: Run pa11y
-        run: npx pa11y ./index.html
+      - name: Run quality checks
+        run: make all
 
   build_and_deploy_job:
     needs: [quality-checks]
