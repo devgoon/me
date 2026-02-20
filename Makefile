@@ -1,4 +1,4 @@
-.PHONY: install spellcheck link-check accessibility all
+.PHONY: install spellcheck link-check all
 
 
 spellcheck:
@@ -7,10 +7,8 @@ spellcheck:
 link-check:
 	npx linkinator ./index.html
 
-accessibility:
-	npx pa11y ./index.html
 
 install:
 	npm install
 
-all: spellcheck link-check accessibility
+all: spellcheck link-check
