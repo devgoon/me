@@ -11,7 +11,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write # only if you want PR comments; otherwise remove
+  pull-requests: write
 
 concurrency:
   group: swa-${{ github.ref }}
