@@ -8,7 +8,7 @@ link-check:
 	npx linkinator ./index.html
 
 accessibility:
-	pa11y ./index.html
+	npx pa11y ./index.html
 
 install:
 	npm install
