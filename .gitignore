@@ -62,3 +62,4 @@ changelog.txt
 Readme.txt
 .dccache
 ci/
+assets/*.txt
