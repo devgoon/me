@@ -5,12 +5,14 @@
     "Minnocci",
     "Lodovi",
     "Lodovi.co",
-    "Minnocci's"
+    "Minnocci's",
+    "Ancera",
+    "Branford"
   ],
   "ignorePaths": [
     "node_modules/**",
-    "assets/**",
     ".github/**",
+    "assets/*/**",
     ".git/**"
   ]
 }
