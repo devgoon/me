@@ -221,8 +221,8 @@ h6 {
 .nav-menu .active,
 .nav-menu .active:focus,
 .nav-menu li:hover>a {
-  color: #0d1117;
-  background: #58a6ff;
+  color: #fff;
+  background: #1f6feb;
 }
 
 .nav-menu a:hover span,
@@ -340,18 +340,18 @@ h6 {
   justify-content: center;
   width: 48px;
   height: 48px;
-  color: #8b949e;
-  border: 1px solid #30363d;
+  color: #e6edf3;
+  border: 1px solid #1f6feb;
   border-radius: 50%;
   margin-right: 12px;
   transition: 0.25s;
-  background: rgba(22, 27, 34, 0.8);
+  background: #1f6feb;
 }
 
 #hero .social-links a:hover {
-  color: #58a6ff;
+  color: #0d1117;
   border-color: #58a6ff;
-  background: rgba(88, 166, 255, 0.08);
+  background: #58a6ff;
   transform: translateY(-2px);
 }
 
@@ -1690,8 +1690,9 @@ h1, h2, h3, h4, h5, h6 {
   padding: 3px 10px;
 }
 
-/* Current role badge on first resume item */
-.resume-item:first-child h4::after {
+/* Current role badge on first resume item and any explicitly marked current */
+.resume-item:first-child h4::after,
+.resume-item--current h4::after {
   content: "Current";
   font-size: 10px;
   font-weight: 600;
