@@ -36,6 +36,12 @@
   * Author: BootstrapMade.com
   * License: https://bootstrapmade.com/license/
   ======================================================== -->
+  <!-- Feature flags: set to true to enable unreleased sections -->
+  <script>
+    window.FEATURES = {
+      projects: false
+    };
+  </script>
 </head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L99ZCQ20Z"></script>
@@ -63,6 +69,8 @@
             <span>Certifications</span></a></li>
         <li><a href="#experience" class="nav-link scrollto"><i class="bx bx-briefcase"></i>
             <span>Experience</span></a></li>
+        <li data-feature="projects" style="display:none"><a href="#projects" class="nav-link scrollto"><i class="bx bx-code-alt"></i>
+            <span>Projects</span></a></li>
         <li><a href="/assets/Lodovico-Resume-11-19-25.pdf" class="nav-link scrollto"><i class="bi bi-box-arrow-down"></i>
             <span>Download Resume</span></a></li>
         
@@ -302,12 +310,77 @@
       </div>
     </section><!-- End Experience Section -->
 
+    <!-- ======= Projects Section ======= -->
+    <section id="projects" class="projects" data-feature="projects" style="display:none">
+      <div class="container" data-aos="fade-up">
+        <div class="section-title">
+          <h2>Projects</h2>
+          <p>Selected hands-on work from my current and recent roles.</p>
+        </div>
+        <div class="row">
+
+          <div class="col-lg-4 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="100">
+            <div class="project-card">
+              <div class="project-card__header">
+                <i class="bx bx-car"></i>
+                <h4>Vehicle Fault Monitor</h4>
+              </div>
+              <p>React + TypeScript SPA for monitoring live autonomous truck data — camera feeds, lidar streams, fault events, and mission logs — on Torc Robotics&#39; AV platform.</p>
+              <div class="project-card__tags">
+                <span>React</span><span>TypeScript</span><span>AWS Lambda</span><span>Datadog</span><span>SLO/SLI</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="200">
+            <div class="project-card">
+              <div class="project-card__header">
+                <i class="bx bx-git-repo-forked"></i>
+                <h4>Fleet Configuration Manager</h4>
+              </div>
+              <p>Compliance system that tracks hardware and software configuration changes across an autonomous truck fleet, enforcing version parity and audit trails via OpenAPI-documented REST endpoints.</p>
+              <div class="project-card__tags">
+                <span>TypeScript</span><span>AWS API Gateway</span><span>DynamoDB</span><span>OpenAPI</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="300">
+            <div class="project-card">
+              <div class="project-card__header">
+                <i class="bx bx-shield-quarter"></i>
+                <h4>SOC 2 DevSecOps Pipeline</h4>
+              </div>
+              <p>Automated security compliance pipeline at Ancera that achieved SOC 2 certification. Integrated Snyk, Beagle Security, and Terraform into CI/CD with policy-as-code gates and zero manual audit steps.</p>
+              <div class="project-card__tags">
+                <span>GitHub Actions</span><span>Snyk</span><span>Terraform</span><span>Azure DevOps</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section><!-- End Projects Section -->
+
     <!-- ======= Portfolio Section ======= -->
 
     <!-- ======= Services Section ======= -->
 
     <!-- ======= Contact Section ======= -->
   </main><!-- End #main -->
+
+  <script>
+    // Apply feature flags — runs after DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+      Object.keys(window.FEATURES).forEach(function (flag) {
+        if (window.FEATURES[flag]) {
+          document.querySelectorAll('[data-feature="' + flag + '"]').forEach(function (el) {
+            el.style.display = '';
+          });
+        }
+      });
+    });
+  </script>
 
   <!-- ======= Footer ======= -->
   <footer id="footer">
