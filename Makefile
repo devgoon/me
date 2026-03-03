@@ -1,5 +1,7 @@
-.PHONY: install spellcheck link-check all
+.PHONY: install spellcheck link-check check live
 
+install:
+	npm install
 
 spellcheck:spellcheck-pdf
 	npx cspell "**/*.{html,css,js}" "assets/*.txt" --verbose
@@ -10,10 +12,9 @@ spellcheck-pdf:
 link-check:
 	npx linkinator ./index.html
 
-install:
-	npm install
-
-all: spellcheck link-check
+check: spellcheck link-check
 #
 # Dependencies for spellchecking PDF and DOCX:
 #   - pdftotext (install via 'brew install poppler' on macOS)
+live:
+	npx live-server --port=8000
