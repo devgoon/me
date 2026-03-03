@@ -13,20 +13,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
-    name: Quality Checks
-    uses: ./.github/workflows/quality.yml
+  ci:
+    name: Quality and Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  security-audit:
-    name: Security Audit
-    uses: ./.github/workflows/security-audit.yml
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.18.1
+
+      - name: Install pdftotext (poppler-utils)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Run quality checks
+        run: make check
+
+      - name: Run npm audit
+        run: npm audit --json > audit.json || true
+
+      - name: Fail on critical vulnerabilities
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = './audit.json';
+          if (!fs.existsSync(path)) { console.log('No audit report'); process.exit(0); }
+          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const vulns = data && data.vulnerabilities ? Object.values(data.vulnerabilities) : [];
+          const critical = vulns.filter(v => v.severity === 'critical').length;
+          if (critical > 0) { console.error('Critical vulnerabilities found:', critical); process.exit(1); }
+          console.log('No critical vulnerabilities');
+          "
 
   deploy:
     name: Deploy
-    needs: [quality, security-audit]
+    needs: ci
     runs-on: ubuntu-latest
     steps:
-    
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
