@@ -8,7 +8,10 @@
     "Minnocci's",
     "Ancera",
     "Branford",
-    "Agri"
+    "Agri",
+    "Wallingford",
+    "Neopost",
+    "Ingenix"
   ],
   "ignorePaths": [
     "node_modules/**",
