@@ -1227,3 +1227,22 @@ section {
 #footer .credits {
   font-size: 13px;
 }
+
+/* Certifications: ensure images are responsive and don't overlap */
+.certifications .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.certifications .row > div[class*="col-"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.certifications img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
