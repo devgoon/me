@@ -2,12 +2,8 @@ name: Security Audit
 
 on:
   workflow_call:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
-  schedule:
-    - cron: '0 0 * * *'
 
 jobs:
   audit:
@@ -16,10 +12,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Use Node.js
+      - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 20.18.1
 
       - name: Install dependencies
         run: npm ci
