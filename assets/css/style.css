@@ -391,10 +391,10 @@ h6 {
 .hero-tagline {
   font-size: 16px !important;
   color: #8b949e !important;
-  max-width: 560px;
   line-height: 1.7 !important;
   margin-top: 14px !important;
   font-family: "Open Sans", sans-serif !important;
+  white-space: nowrap;
 }
 
 /* Hero stat badges */
@@ -528,6 +528,7 @@ h6 {
   }
   .hero-tagline {
     max-width: 100%;
+    white-space: normal;
   }
   .hero-eyebrow {
     font-size: 11px;
