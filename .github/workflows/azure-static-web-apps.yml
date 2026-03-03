@@ -33,6 +33,22 @@ jobs:
       - name: Install dependencies
         run: make install
 
+      - name: Run npm audit (save report)
+        run: npm audit --json > audit.json || true
+
+      - name: Fail on critical vulnerabilities
+        run: |
+          node -e "
+          const fs = require('fs');
+          const p = './audit.json';
+          if (!fs.existsSync(p)) { console.log('No audit report'); process.exit(0); }
+          const data = JSON.parse(fs.readFileSync(p,'utf8'));
+          const vulns = data && data.vulnerabilities ? Object.values(data.vulnerabilities) : [];
+          const critical = vulns.filter(v => v.severity === 'critical').length;
+          if (critical > 0) { console.error('Critical vulnerabilities found:', critical); process.exit(1); }
+          console.log('No critical vulnerabilities');
+          "
+
       - name: Run quality checks
         run: make check
 
