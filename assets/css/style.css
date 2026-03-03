@@ -633,7 +633,7 @@ section {
 }
 
 .cert-list .text-aws {
-  color: #ff9900 !important;
+  color: #0078d4 !important;
   font-size: 13px;
   flex-shrink: 0;
 }
