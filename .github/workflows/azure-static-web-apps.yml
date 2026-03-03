@@ -27,7 +27,6 @@ jobs:
         with:
           node-version: 20.18.1
 
-
       - name: Install pdftotext (poppler-utils)
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
 
@@ -35,7 +34,7 @@ jobs:
         run: make install
 
       - name: Run quality checks
-        run: make all
+        run: make check
 
   build_and_deploy_job:
     needs: [quality-checks]

@@ -17,4 +17,4 @@ check: spellcheck link-check
 # Dependencies for spellchecking PDF and DOCX:
 #   - pdftotext (install via 'brew install poppler' on macOS)
 live:
-	npx live-server --port=8000
+	npx http-server -p 8000 --silent

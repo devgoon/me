@@ -8,8 +8,7 @@
   "devDependencies": {
     "cspell": "latest",
     "linkinator": "latest",
-    "pa11y": "latest",
-    "live-server": "latest"
-  },
-  "dependencies": {}
+    "http-server": "latest",
+    "pa11y": "latest"
+  }
 }
