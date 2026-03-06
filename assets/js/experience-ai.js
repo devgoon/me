@@ -1,141 +1,136 @@
 (() => {
-  const toggles = document.querySelectorAll('.ai-context-toggle');
+  const experienceList = document.getElementById("experience-list");
+  const skillsList = document.getElementById("skills-list");
+  const errorNode = document.getElementById("experience-error");
 
-  toggles.forEach((button) => {
-    button.addEventListener('click', () => {
-      const targetId = button.getAttribute('data-target');
-      if (!targetId) {
-        return;
+  if (!experienceList || !skillsList) {
+    return;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function formatDateRange(startDate, endDate, isCurrent) {
+    const fmt = (dateValue) => {
+      if (!dateValue) {
+        return "Present";
+      }
+      const date = new Date(dateValue);
+      if (Number.isNaN(date.getTime())) {
+        return dateValue;
+      }
+      return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    };
+
+    const start = fmt(startDate);
+    const end = isCurrent ? "Present" : fmt(endDate);
+    return `${start} - ${end}`;
+  }
+
+  function renderExperience(experiences) {
+    experienceList.innerHTML = experiences
+      .map((exp) => {
+        const contextId = `context-${exp.id}`;
+        const bullets = (exp.bulletPoints || [])
+          .map((item) => `<li>${escapeHtml(item)}</li>`)
+          .join("");
+
+        return `
+          <article class="role-card">
+            <div class="role-meta">
+              <h2>${escapeHtml(exp.companyName)}</h2>
+              <span>${escapeHtml(formatDateRange(exp.startDate, exp.endDate, exp.isCurrent))}</span>
+            </div>
+            <p class="role-title">${escapeHtml(exp.title || "")}</p>
+            <ul class="achievement-list">${bullets || "<li>No public achievements provided.</li>"}</ul>
+            <button class="ai-context-toggle" type="button" aria-expanded="false" aria-controls="${contextId}" data-target="${contextId}">✨ Show AI Context</button>
+            <div class="ai-context-panel" id="${contextId}" hidden>
+              <h3>SITUATION</h3>
+              <p>${escapeHtml(exp.aiContext.situation)}</p>
+              <h3>APPROACH</h3>
+              <p>${escapeHtml(exp.aiContext.approach)}</p>
+              <h3>TECHNICAL WORK</h3>
+              <p>${escapeHtml(exp.aiContext.technicalWork)}</p>
+              <h3>LESSONS LEARNED</h3>
+              <p class="lessons">${escapeHtml(exp.aiContext.lessonsLearned)}</p>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  function renderSkillColumn(title, className, items) {
+    const list = items && items.length
+      ? items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")
+      : "<li>None listed</li>";
+
+    return `
+      <article class="role-card skills-card ${className}">
+        <h2>${title}</h2>
+        <ul class="achievement-list">${list}</ul>
+      </article>
+    `;
+  }
+
+  function renderSkills(skills) {
+    skillsList.innerHTML = [
+      renderSkillColumn("STRONG ✓", "skills-card--strong", skills.strong || []),
+      renderSkillColumn("MODERATE ○", "skills-card--moderate", skills.moderate || []),
+      renderSkillColumn("GAPS ✗", "skills-card--gaps", skills.gap || [])
+    ].join("");
+  }
+
+  async function loadData() {
+    experienceList.innerHTML = "<article class=\"role-card\"><p>Loading experience data...</p></article>";
+    skillsList.innerHTML = "<article class=\"role-card\"><p>Loading skills...</p></article>";
+
+    try {
+      const response = await fetch("/api/experience", { method: "GET" });
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
       }
 
-      const panel = document.getElementById(targetId);
-      if (!panel) {
-        return;
+      const data = await response.json();
+      renderExperience(data.experiences || []);
+      renderSkills(data.skills || { strong: [], moderate: [], gap: [] });
+    } catch (error) {
+      if (errorNode) {
+        errorNode.hidden = false;
+        errorNode.textContent = "Unable to load AI/DB experience data right now.";
       }
+      experienceList.innerHTML = "";
+      skillsList.innerHTML = "";
+    }
+  }
 
-      const isExpanded = button.getAttribute('aria-expanded') === 'true';
-      button.setAttribute('aria-expanded', String(!isExpanded));
-      button.textContent = isExpanded ? '✨ Show AI Context' : '✨ Hide AI Context';
-      panel.hidden = isExpanded;
-    });
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest(".ai-context-toggle");
+    if (!button) {
+      return;
+    }
+
+    const targetId = button.getAttribute("data-target");
+    if (!targetId) {
+      return;
+    }
+
+    const panel = document.getElementById(targetId);
+    if (!panel) {
+      return;
+    }
+
+    const isExpanded = button.getAttribute("aria-expanded") === "true";
+    button.setAttribute("aria-expanded", String(!isExpanded));
+    button.textContent = isExpanded ? "✨ Show AI Context" : "✨ Hide AI Context";
+    panel.hidden = isExpanded;
   });
 
-  const rootNode = document.getElementById('experience-ask-root');
-  if (!rootNode || typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
-    return;
-  }
-
-  const e = React.createElement;
-
-  function buildAnswer(rawQuestion) {
-    const question = rawQuestion.toLowerCase();
-
-    if (question.includes('torc') || question.includes('autonomous') || question.includes('lidar')) {
-      return "At Torc, my strongest contribution is translating messy autonomous vehicle telemetry into actionable product workflows. I built React experiences and API contracts so operators can reason about faults faster, not just view data. The key impact was reducing time-to-understand incidents and making reliability measurable with Datadog SLOs and synthetic checks.";
-    }
-
-    if (question.includes('soc 2') || question.includes('security') || question.includes('ancera')) {
-      return "At Ancera, I treated security as an engineering system rather than a compliance checklist. I led DevSecOps standards, added pipeline controls, and aligned platform choices with auditability. That made SOC 2 an outcome of daily engineering behavior, not a one-time scramble.";
-    }
-
-    if (question.includes('lead') || question.includes('team') || question.includes('management')) {
-      return "My leadership style is hands-on technical ownership with clear delivery guardrails. I set architecture direction, unblock teams, and make reliability and quality visible through standards and instrumentation. The pattern across roles is moving teams from heroics to repeatable execution.";
-    }
-
-    if (question.includes('api') || question.includes('architecture') || question.includes('design')) {
-      return "I usually start with contracts and operating boundaries: what the API guarantees, what the data model optimizes for, and how observability proves behavior in production. This keeps frontend/backend work parallel and reduces integration churn across teams.";
-    }
-
-    return "The consistent thread in my experience is building cloud-native systems that are both shippable and operable. I focus on architecture clarity, measurable reliability, and delivery practices that scale from startup speed to enterprise rigor.";
-  }
-
-  function AskExperienceApp() {
-    const [question, setQuestion] = React.useState('');
-    const [answer, setAnswer] = React.useState('');
-    const [status, setStatus] = React.useState('');
-
-    const quickPrompts = [
-      'What was your biggest impact at Torc?',
-      'How did you drive SOC 2 at Ancera?',
-      'What kind of roles are your best fit now?'
-    ];
-
-    const onUsePrompt = (prompt) => {
-      setQuestion(prompt);
-      setStatus('');
-    };
-
-    const onAsk = () => {
-      const trimmed = question.trim();
-      if (!trimmed) {
-        setStatus('Type a question first.');
-        return;
-      }
-      setStatus('Answer ready below.');
-      setAnswer(buildAnswer(trimmed));
-    };
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        onAsk();
-      }
-    };
-
-    return e(
-      'section',
-      { className: 'ask-panel', 'aria-label': 'Ask about experience' },
-      e('label', { className: 'ask-label', htmlFor: 'experience-question' }, 'Ask about my experience'),
-      e(
-        'div',
-        { className: 'ask-quick-prompts', role: 'group', 'aria-label': 'Suggested questions' },
-        quickPrompts.map((prompt) =>
-          e(
-            'button',
-            {
-              key: prompt,
-              type: 'button',
-              className: 'ask-chip',
-              onClick: () => onUsePrompt(prompt)
-            },
-            prompt
-          )
-        )
-      ),
-      e('textarea', {
-        id: 'experience-question',
-        className: 'ask-input',
-        placeholder: 'Ask about a role, decision, architecture tradeoff, or impact...',
-        value: question,
-        onChange: (event) => {
-          setQuestion(event.target.value);
-          setStatus('');
-        },
-        onKeyDown
-      }),
-      e(
-        'button',
-        { className: 'ask-btn', type: 'button', onClick: onAsk },
-        'Ask Experience AI'
-      ),
-      e('p', { className: 'ask-hint' }, 'Tip: Press Cmd+Enter (or Ctrl+Enter) to submit quickly.'),
-      status ? e('p', { className: 'ask-status' }, status) : null,
-      answer
-        ? e(
-            'div',
-            { className: 'ask-answer' },
-            answer
-          )
-        : null
-    );
-  }
-
-  if (ReactDOM.createRoot) {
-    ReactDOM.createRoot(rootNode).render(e(AskExperienceApp));
-    return;
-  }
-
-  if (ReactDOM.render) {
-    ReactDOM.render(e(AskExperienceApp), rootNode);
-  }
+  loadData();
 })();

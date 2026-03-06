@@ -503,6 +503,33 @@ h6 {
   margin-top: 28px;
 }
 
+body.traditional-mode .ai-only {
+  display: none !important;
+}
+
+.ai-only {
+  display: none;
+}
+
+body.ai-mode .ai-only {
+  display: inline-flex !important;
+}
+
+body.ai-mode #header,
+body.ai-mode .mobile-nav-toggle {
+  display: none !important;
+}
+
+@media (min-width: 991px) {
+  body.ai-mode #main {
+    margin-left: 0;
+  }
+
+  body.ai-mode #hero {
+    padding-left: 0;
+  }
+}
+
 .btn-hero-primary {
   display: inline-flex;
   align-items: center;

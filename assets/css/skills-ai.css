@@ -8,6 +8,24 @@
   gap: 16px;
 }
 
+.skills-section-intro {
+  margin: 28px 0 14px;
+}
+
+.skills-section-intro h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-family: "Raleway", sans-serif;
+  letter-spacing: -0.5px;
+}
+
+.skills-section-intro p {
+  margin: 8px 0 0;
+  color: #8b949e;
+  font-size: 1rem;
+  max-width: 760px;
+}
+
 .skills-card h2 {
   margin: 0 0 12px;
   font-size: 1.05rem;

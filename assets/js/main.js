@@ -40,6 +40,24 @@
     el.addEventListener('scroll', listener)
   }
 
+  const MODE_TRADITIONAL = 'traditional';
+  const MODE_AI = 'ai';
+
+  // Applies page-level mode classes used by CSS for AI/traditional layout behavior.
+  const applyMode = (mode) => {
+    const body = select('body');
+    if (!body) return;
+
+    const resolvedMode = mode === MODE_AI ? MODE_AI : MODE_TRADITIONAL;
+    body.classList.toggle('traditional-mode', resolvedMode === MODE_TRADITIONAL);
+    body.classList.toggle('ai-mode', resolvedMode === MODE_AI);
+  }
+
+  // Primary source of truth for mode is <body data-site-mode="..."> in index.html.
+  const bodyMode = document.body && document.body.dataset ? document.body.dataset.siteMode : null;
+  const configuredMode = bodyMode ? String(bodyMode).toLowerCase() : MODE_TRADITIONAL;
+  applyMode(configuredMode);
+
   /**
    * Navbar links active state on scroll
    */

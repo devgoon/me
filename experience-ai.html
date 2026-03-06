@@ -11,6 +11,7 @@
   <link href="assets/img/favicon.png" rel="icon">
   <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
   <link href="assets/css/experience-ai.css" rel="stylesheet">
+  <link href="assets/css/skills-ai.css" rel="stylesheet">
 </head>
 
 <body>
@@ -18,160 +19,21 @@
     <header class="experience-ai-header">
       <a class="back-link" href="/">Back to home</a>
       <h1>Experience</h1>
-      <p>Each role includes queryable AI context-the real story behind the bullet points.</p>
+      <p>Each role is loaded from the database and enriched with AI-generated context.</p>
     </header>
 
-    <div id="experience-ask-root"></div>
+    <div id="experience-error" class="ask-status" hidden></div>
+    <section id="experience-list" class="role-grid" aria-label="Experience role cards"></section>
 
-    <section class="role-grid" aria-label="Experience role cards">
-      <article class="role-card">
-        <div class="role-meta">
-          <h2>Torc Robotics</h2>
-          <span>Sept 2024 - Present</span>
-        </div>
-        <p class="role-title">Senior Software Engineer</p>
-        <ul class="achievement-list">
-          <li>Shipped React dashboards that consolidated <strong>3+ live telemetry streams</strong> (camera, lidar, mission logs) into a single operations UI.</li>
-          <li>Designed OpenAPI-first REST services and DynamoDB data models that reduced integration friction for <strong>multiple internal clients</strong>.</li>
-          <li>Built Datadog dashboards, SLOs, and synthetic tests that improved release confidence across <strong>production-critical services</strong>.</li>
-        </ul>
-        <button class="ai-context-toggle" type="button" aria-expanded="false" aria-controls="context-torc" data-target="context-torc">✨ Show AI Context</button>
-        <div class="ai-context-panel" id="context-torc" hidden>
-          <h3>SITUATION</h3>
-          <p>Autonomous vehicle teams needed fast, trustworthy visibility into faults and fleet behavior without jumping across fragmented tools.</p>
-          <h3>APPROACH</h3>
-          <p>Prioritized operator workflows first, then implemented API contracts, observability guardrails, and test coverage in parallel to avoid UI-only wins.</p>
-          <h3>TECHNICAL WORK</h3>
-          <p>Built React/TypeScript interfaces, authored OpenAPI specs, modeled DynamoDB access patterns, and instrumented SLIs/SLOs with Datadog synthetic validation.</p>
-          <h3>LESSONS LEARNED</h3>
-          <p class="lessons">Observable systems and explicit API contracts turn fast-moving autonomous software into something teams can safely iterate on.</p>
-        </div>
-      </article>
-
-      <article class="role-card">
-        <div class="role-meta">
-          <h2>Ancera</h2>
-          <span>Dec 2020 - Sept 2024</span>
-        </div>
-        <p class="role-title">Systems Architect</p>
-        <ul class="achievement-list">
-          <li>Led cloud, DevOps, and security initiatives that carried the organization to <strong>SOC 2 compliance</strong>.</li>
-          <li>Designed edge AI pipelines with Docker and NVIDIA GPUs that improved image recognition performance by <strong>700%</strong>.</li>
-          <li>Implemented DevSecOps controls and CI/CD security gates that raised reliability across <strong>cost, security, and performance pillars</strong>.</li>
-        </ul>
-        <button class="ai-context-toggle" type="button" aria-expanded="false" aria-controls="context-ancera" data-target="context-ancera">✨ Show AI Context</button>
-        <div class="ai-context-panel" id="context-ancera" hidden>
-          <h3>SITUATION</h3>
-          <p>A rapidly scaling edge AI product needed stronger security posture and infrastructure maturity while still shipping quickly.</p>
-          <h3>APPROACH</h3>
-          <p>Introduced platform standards, automated policy checks, and measurable quality gates to make compliance and velocity coexist.</p>
-          <h3>TECHNICAL WORK</h3>
-          <p>Delivered IaC patterns, hardened CI/CD, integrated Snyk and Beagle Security, and built ML-Ops workflows around Dockerized TensorFlow workloads.</p>
-          <h3>LESSONS LEARNED</h3>
-          <p class="lessons">Compliance succeeds when security becomes a development workflow, not a release-phase audit event.</p>
-        </div>
-      </article>
-
-      <article class="role-card">
-        <div class="role-meta">
-          <h2>Subway</h2>
-          <span>Jul 2019 - Dec 2020</span>
-        </div>
-        <p class="role-title">Lead Integration Engineer</p>
-        <ul class="achievement-list">
-          <li>Delivered API platforms supporting mobile, web, and B2B experiences used by <strong>millions of users daily</strong>.</li>
-          <li>Led a cross-region engineering team and standardized delivery practices across <strong>multiple integration tracks</strong>.</li>
-          <li>Implemented AWS serverless and CI/CD patterns that reduced release friction for <strong>high-traffic customer flows</strong>.</li>
-        </ul>
-        <button class="ai-context-toggle" type="button" aria-expanded="false" aria-controls="context-subway" data-target="context-subway">✨ Show AI Context</button>
-        <div class="ai-context-panel" id="context-subway" hidden>
-          <h3>SITUATION</h3>
-          <p>The business needed faster digital integration delivery while maintaining reliability under heavy customer volume.</p>
-          <h3>APPROACH</h3>
-          <p>Scaled through standards: API governance, repeatable deployment templates, and clear ownership boundaries across teams.</p>
-          <h3>TECHNICAL WORK</h3>
-          <p>Built and evolved integration APIs, deployed serverless services on AWS, and introduced automated CI/CD checks and release pipelines.</p>
-          <h3>LESSONS LEARNED</h3>
-          <p class="lessons">At enterprise scale, platform consistency is the biggest force multiplier for both speed and reliability.</p>
-        </div>
-      </article>
-
-      <article class="role-card">
-        <div class="role-meta">
-          <h2>Thermo Fisher Scientific</h2>
-          <span>Jul 2015 - Jul 2019</span>
-        </div>
-        <p class="role-title">Principal Software Engineer</p>
-        <ul class="achievement-list">
-          <li>Delivered Java, Docker, Kubernetes, and AWS platform work for <strong>Fortune 500 client environments</strong>.</li>
-          <li>Built early containerization and observability prototypes that influenced <strong>enterprise-wide adoption paths</strong>.</li>
-          <li>Supported multi-team modernization across a <strong>4-year tenure</strong> while maintaining production stability.</li>
-        </ul>
-        <button class="ai-context-toggle" type="button" aria-expanded="false" aria-controls="context-thermo" data-target="context-thermo">✨ Show AI Context</button>
-        <div class="ai-context-panel" id="context-thermo" hidden>
-          <h3>SITUATION</h3>
-          <p>Large scientific platforms needed modernization without disrupting mission-critical enterprise use cases.</p>
-          <h3>APPROACH</h3>
-          <p>Introduced modernization incrementally: pilot first, prove value with observability, then productize platform patterns.</p>
-          <h3>TECHNICAL WORK</h3>
-          <p>Implemented Java services, containerized workloads, deployed Kubernetes experiments, and built observability baselines in AWS-hosted systems.</p>
-          <h3>LESSONS LEARNED</h3>
-          <p class="lessons">In legacy-heavy environments, staged modernization beats big-bang rewrites nearly every time.</p>
-        </div>
-      </article>
-
-      <article class="role-card">
-        <div class="role-meta">
-          <h2>Fiserv</h2>
-          <span>May 2009 - Mar 2014</span>
-        </div>
-        <p class="role-title">Senior Software Engineer -> Team Lead</p>
-        <ul class="achievement-list">
-          <li>Led delivery for a real-time bill payment platform handling over <strong>$1M in daily transactions</strong>.</li>
-          <li>Managed onshore/offshore execution, estimations, and code quality across a <strong>~5-year progression</strong> from IC to team lead.</li>
-          <li>Drove performance tuning and service reliability for high-volume financial workflows serving <strong>major retail clients</strong>.</li>
-        </ul>
-        <button class="ai-context-toggle" type="button" aria-expanded="false" aria-controls="context-fiserv" data-target="context-fiserv">✨ Show AI Context</button>
-        <div class="ai-context-panel" id="context-fiserv" hidden>
-          <h3>SITUATION</h3>
-          <p>Payment systems demanded tight reliability and predictable performance under high transaction pressure.</p>
-          <h3>APPROACH</h3>
-          <p>Balanced leadership and technical depth by combining rigorous code review, instrumentation, and delivery discipline.</p>
-          <h3>TECHNICAL WORK</h3>
-          <p>Built Java/.NET services, tuned performance bottlenecks, coordinated release delivery, and mentored distributed engineering contributors.</p>
-          <h3>LESSONS LEARNED</h3>
-          <p class="lessons">Leadership growth is strongest when technical accountability stays close to customer and business outcomes.</p>
-        </div>
-      </article>
-
-      <article class="role-card">
-        <div class="role-meta">
-          <h2>The Hartford</h2>
-          <span>Jun 2008 - May 2009</span>
-        </div>
-        <p class="role-title">Senior Software Engineer</p>
-        <ul class="achievement-list">
-          <li>Delivered enterprise .NET applications for a <strong>Fortune 500 insurance</strong> organization.</li>
-          <li>Contributed production code and system enhancements across a <strong>12-month engagement</strong>.</li>
-          <li>Supported complex line-of-business workflows requiring dependable release and support cycles.</li>
-        </ul>
-        <button class="ai-context-toggle" type="button" aria-expanded="false" aria-controls="context-hartford" data-target="context-hartford">✨ Show AI Context</button>
-        <div class="ai-context-panel" id="context-hartford" hidden>
-          <h3>SITUATION</h3>
-          <p>Insurance systems required stable, maintainable software delivery in highly process-oriented enterprise environments.</p>
-          <h3>APPROACH</h3>
-          <p>Focused on reliability and maintainability, emphasizing disciplined implementation and low-regression delivery.</p>
-          <h3>TECHNICAL WORK</h3>
-          <p>Developed and maintained .NET enterprise components, collaborated with stakeholders, and supported release readiness.</p>
-          <h3>LESSONS LEARNED</h3>
-          <p class="lessons">Enterprise software quality depends as much on process clarity as it does on engineering craftsmanship.</p>
-        </div>
-      </article>
+    <section aria-label="Skills section">
+      <header class="skills-section-intro">
+        <h2>Skills</h2>
+        <p>A practical snapshot of where I am strongest, where I am solid, and where I have clear gaps.</p>
+      </header>
+      <div id="skills-list" class="skills-grid" aria-label="Skills strength cards"></div>
     </section>
   </main>
 
-  <script src="assets/vendor/react/react.production.min.js"></script>
-  <script src="assets/vendor/react/react-dom.production.min.js"></script>
   <script src="assets/js/experience-ai.js"></script>
 </body>
 

@@ -1,4 +1,4 @@
-.PHONY: install spellcheck link-check check live stop
+.PHONY: install spellcheck link-check check start live stop
 
 install:
 	npm install
@@ -16,12 +16,14 @@ check: spellcheck link-check
 #
 # Dependencies for spellchecking PDF and DOCX:
 #   - pdftotext (install via 'brew install poppler' on macOS)
-live:
+start:
 	@mkdir -p .azurite
 	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
 	AZURITE_PID=$$!; \
 	trap 'kill $$AZURITE_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
 	npx swa start . --api-location api
+
+live: start
 
 stop:
 	@set -e; \

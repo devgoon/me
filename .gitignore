@@ -69,3 +69,4 @@ assets/*.txt
 .env.local
 .env.*.local
 local.settings.json
+.azurite/

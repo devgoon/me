@@ -36,12 +36,6 @@
   * Author: BootstrapMade.com
   * License: https://bootstrapmade.com/license/
   ======================================================== -->
-  <!-- Feature flags: set to true to enable unreleased sections -->
-  <script>
-    window.FEATURES = {
-      projects: false
-    };
-  </script>
 </head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L99ZCQ20Z"></script>
@@ -53,7 +47,12 @@
   gtag('config', 'G-0L99ZCQ20Z');
 </script>
 
-<body>
+<!--
+  Site mode switch:
+  - data-site-mode="ai"          => show AI hero buttons, hide left vertical nav
+  - data-site-mode="traditional" => hide AI hero buttons, show left vertical nav
+-->
+<body data-site-mode="ai">
 
   <!-- ======= Mobile nav toggle button ======= -->
   <i class="bi bi-list mobile-nav-toggle d-lg-none"></i>
@@ -100,24 +99,20 @@
       <div class="hero-actions" data-aos="fade-up" data-aos-delay="400">
         <button
           id="ask-ai-toggle"
-          class="btn-hero-primary"
+          class="btn-hero-primary ai-only"
           type="button"
           aria-label="Open Ask AI chat"
         >
           <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
           <span>Ask AI About Me</span>
         </button>
-        <a class="btn-hero-secondary" href="/experience-ai.html">
+        <a class="btn-hero-secondary ai-only" href="/experience-ai.html">
           <i class="bi bi-briefcase" aria-hidden="true"></i>
-          <span>Ask AI about my Experience</span>
+          <span>Experience</span>
         </a>
-        <a class="btn-hero-secondary" href="/fit-ai.html">
+        <a class="btn-hero-secondary ai-only" href="/fit-ai.html">
           <i class="bi bi-check2-circle" aria-hidden="true"></i>
-          <span>Ask AI about fit</span>
-        </a>
-        <a class="btn-hero-secondary" href="/skills-ai.html">
-          <i class="bi bi-tools" aria-hidden="true"></i>
-          <span>Ask AI about My Skills</span>
+          <span>Fit Check</span>
         </a>
       </div>
       <div class="social-links" data-aos="fade-up" data-aos-delay="500">
@@ -524,19 +519,6 @@
 
     <!-- ======= Contact Section ======= -->
   </main><!-- End #main -->
-
-  <script>
-    // Apply feature flags — runs after DOM is ready
-    document.addEventListener('DOMContentLoaded', function () {
-      Object.keys(window.FEATURES).forEach(function (flag) {
-        if (window.FEATURES[flag]) {
-          document.querySelectorAll('[data-feature="' + flag + '"]').forEach(function (el) {
-            el.style.display = '';
-          });
-        }
-      });
-    });
-  </script>
 
   <!-- ======= Footer ======= -->
   <footer id="footer">
