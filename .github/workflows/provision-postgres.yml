@@ -1,0 +1,152 @@
+name: Provision Azure PostgreSQL
+
+on:
+  workflow_dispatch:
+    inputs:
+      database_name:
+        description: "PostgreSQL database name"
+        required: false
+        default: "portfolio"
+      postgres_version:
+        description: "PostgreSQL version"
+        required: false
+        default: "16"
+      sku_name:
+        description: "Flexible Server SKU"
+        required: false
+        default: "Standard_B1ms"
+      storage_gb:
+        description: "Storage size in GB"
+        required: false
+        default: "32"
+      apply_schema:
+        description: "Apply db/schema.sql after provisioning"
+        required: false
+        default: "true"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  provision:
+    name: Provision PostgreSQL Flexible Server
+    runs-on: ubuntu-latest
+    env:
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      LOCATION: ${{ vars.AZURE_LOCATION }}
+      SERVER_NAME: ${{ vars.AZURE_PG_SERVER_NAME }}
+      ADMIN_USER: ${{ vars.AZURE_PG_ADMIN_USER }}
+      ADMIN_PASSWORD: ${{ secrets.AZURE_PG_ADMIN_PASSWORD }}
+      DATABASE_NAME: ${{ inputs.database_name }}
+      POSTGRES_VERSION: ${{ inputs.postgres_version }}
+      SKU_NAME: ${{ inputs.sku_name }}
+      STORAGE_GB: ${{ inputs.storage_gb }}
+      APPLY_SCHEMA: ${{ inputs.apply_schema }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required vars and secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(RESOURCE_GROUP LOCATION SERVER_NAME ADMIN_USER ADMIN_PASSWORD DATABASE_NAME POSTGRES_VERSION SKU_NAME STORAGE_GB)
+          for item in "${required[@]}"; do
+            if [[ -z "${!item:-}" ]]; then
+              echo "Missing required value: $item"
+              exit 1
+            fi
+          done
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ensure resource group exists
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az group create \
+              --name "$RESOURCE_GROUP" \
+              --location "$LOCATION" \
+              --output table
+
+      - name: Create or update PostgreSQL Flexible Server
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            if az postgres flexible-server show --name "$SERVER_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+              echo "Server already exists: $SERVER_NAME"
+            else
+              az postgres flexible-server create \
+                --name "$SERVER_NAME" \
+                --resource-group "$RESOURCE_GROUP" \
+                --location "$LOCATION" \
+                --admin-user "$ADMIN_USER" \
+                --admin-password "$ADMIN_PASSWORD" \
+                --version "$POSTGRES_VERSION" \
+                --sku-name "$SKU_NAME" \
+                --storage-size "$STORAGE_GB" \
+                --public-access none \
+                --output table
+            fi
+
+      - name: Create database if missing
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            if az postgres flexible-server db show \
+              --resource-group "$RESOURCE_GROUP" \
+              --server-name "$SERVER_NAME" \
+              --database-name "$DATABASE_NAME" >/dev/null 2>&1; then
+              echo "Database already exists: $DATABASE_NAME"
+            else
+              az postgres flexible-server db create \
+                --resource-group "$RESOURCE_GROUP" \
+                --server-name "$SERVER_NAME" \
+                --database-name "$DATABASE_NAME" \
+                --output table
+            fi
+
+      - name: Apply schema.sql
+        if: ${{ inputs.apply_schema == 'true' }}
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+
+            if [[ ! -f "db/schema.sql" ]]; then
+              echo "db/schema.sql not found"
+              exit 1
+            fi
+
+            az postgres flexible-server execute \
+              --name "$SERVER_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --admin-user "$ADMIN_USER" \
+              --admin-password "$ADMIN_PASSWORD" \
+              --database-name "$DATABASE_NAME" \
+              --file-path "db/schema.sql" \
+              --output table
+
+      - name: Print connection info
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            FQDN=$(az postgres flexible-server show \
+              --resource-group "$RESOURCE_GROUP" \
+              --name "$SERVER_NAME" \
+              --query fullyQualifiedDomainName -o tsv)
+
+            echo "PostgreSQL server ready: $SERVER_NAME"
+            echo "Database ready: $DATABASE_NAME"
+            echo "FQDN: $FQDN"
+            echo ""
+            echo "Connection string format:"
+            echo "postgresql://$ADMIN_USER:<password>@$FQDN:5432/$DATABASE_NAME?sslmode=require"
