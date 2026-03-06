@@ -1,0 +1,9 @@
+{
+  "name": "me-api",
+  "version": "1.0.0",
+  "private": true,
+  "main": "chat/index.js",
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}

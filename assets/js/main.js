@@ -287,36 +287,62 @@
     chatHistory.scrollTop = chatHistory.scrollHeight;
   };
 
-  const answerFromPrompt = (prompt) => {
-    const q = prompt.toLowerCase();
+  const callChatApi = async (prompt) => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 15000);
 
-    if (q.includes('biggest weakness')) {
-      return 'I tend to default to high standards for architecture and observability, which can feel heavy for very early prototypes. I manage this by scaling process to stage: lighter guardrails for discovery, stronger rigor once value is proven.';
+    let response;
+    try {
+      response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: prompt }),
+        signal: controller.signal
+      });
+    } finally {
+      window.clearTimeout(timeoutId);
     }
 
-    if (q.includes('project that failed') || q.includes('failed')) {
-      return 'I have had initiatives where we over-optimized early architecture before fully validating user workflow. The lesson was to front-load discovery with operators, ship thinner slices sooner, and let real usage drive complexity.';
+    if (!response.ok) {
+      let details = '';
+      try {
+        const errorData = await response.json();
+        details = errorData && errorData.error ? `: ${errorData.error}` : '';
+      } catch (e) {
+        details = '';
+      }
+      throw new Error(`AI request failed (${response.status})${details}`);
     }
 
-    if (q.includes('why did you leave')) {
-      return 'I usually move when the next step increases scope of impact, technical challenge, or growth. The pattern across roles has been intentional progression toward higher ownership and broader systems responsibility.';
-    }
-
-    if (q.includes('last manager')) {
-      return 'They would likely say I raise the technical bar, stay calm in ambiguity, and take ownership from architecture through delivery. They would also say I push for clarity and measurable outcomes, especially around reliability.';
-    }
-
-    return 'My experience centers on building cloud-native systems that are scalable, observable, and practical for real teams. If you ask about a specific company or project, I can give a more direct answer.';
+    const data = await response.json();
+    return data && data.response ? data.response : 'I could not generate a response right now.';
   };
 
-  const sendPrompt = (rawPrompt) => {
+  const sendPrompt = async (rawPrompt) => {
     const prompt = (rawPrompt || '').trim();
     if (!prompt) return;
     appendMessage(prompt, 'user');
     chatInput.value = '';
-    window.setTimeout(() => {
-      appendMessage(answerFromPrompt(prompt), 'assistant');
-    }, 220);
+
+    if (chatSend) {
+      chatSend.disabled = true;
+    }
+
+    try {
+      const answer = await callChatApi(prompt);
+      appendMessage(answer, 'assistant');
+    } catch (error) {
+      const msg = error && error.name === 'AbortError'
+        ? 'The AI service timed out. Please try again in a moment.'
+        : `I am having trouble reaching the AI service right now. ${error && error.message ? error.message : ''}`.trim();
+      appendMessage(msg, 'assistant');
+    } finally {
+      if (chatSend) {
+        chatSend.disabled = false;
+      }
+    }
   };
 
   const openChat = () => {
