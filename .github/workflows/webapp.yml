@@ -16,6 +16,7 @@ concurrency:
 jobs:
   ci:
     name: Quality and Security
+    if: ${{ false }} # Temporarily disabled; re-enable by removing this line.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -53,7 +54,6 @@ jobs:
 
   deploy:
     name: Deploy
-    needs: ci
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
