@@ -7,8 +7,12 @@
   "license": "MIT",
   "devDependencies": {
     "cspell": "latest",
-    "linkinator": "latest",
     "http-server": "latest",
+    "linkinator": "latest",
     "pa11y": "latest"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }

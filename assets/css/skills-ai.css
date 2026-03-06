@@ -1,0 +1,46 @@
+.skills-page {
+  max-width: 1200px;
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.skills-card h2 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  letter-spacing: 0.3px;
+  font-family: "Raleway", sans-serif;
+}
+
+.skills-card--strong {
+  border-color: rgba(63, 185, 80, 0.4);
+}
+
+.skills-card--strong h2 {
+  color: #3fb950;
+}
+
+.skills-card--moderate {
+  border-color: #484f58;
+}
+
+.skills-card--moderate h2 {
+  color: #9ea7b3;
+}
+
+.skills-card--gaps {
+  border-color: rgba(210, 153, 34, 0.45);
+}
+
+.skills-card--gaps h2 {
+  color: #d29922;
+}
+
+@media (max-width: 980px) {
+  .skills-grid {
+    grid-template-columns: 1fr;
+  }
+}

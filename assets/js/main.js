@@ -266,4 +266,110 @@
    */
   new PureCounter();
 
+  /**
+   * Ask AI slide-in chat
+   */
+  const chatToggle = select('#ask-ai-toggle');
+  const chatPanel = select('#ai-chat-panel');
+  const chatOverlay = select('#ai-chat-overlay');
+  const chatClose = select('#ai-chat-close');
+  const chatHistory = select('#ai-chat-history');
+  const chatInput = select('#ai-chat-input');
+  const chatSend = select('#ai-chat-send');
+  const chatSuggestions = select('.ai-suggestion', true);
+
+  const appendMessage = (text, role) => {
+    if (!chatHistory) return;
+    const bubble = document.createElement('div');
+    bubble.classList.add('ai-msg', role === 'user' ? 'ai-msg-user' : 'ai-msg-assistant');
+    bubble.textContent = text;
+    chatHistory.appendChild(bubble);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  };
+
+  const answerFromPrompt = (prompt) => {
+    const q = prompt.toLowerCase();
+
+    if (q.includes('biggest weakness')) {
+      return 'I tend to default to high standards for architecture and observability, which can feel heavy for very early prototypes. I manage this by scaling process to stage: lighter guardrails for discovery, stronger rigor once value is proven.';
+    }
+
+    if (q.includes('project that failed') || q.includes('failed')) {
+      return 'I have had initiatives where we over-optimized early architecture before fully validating user workflow. The lesson was to front-load discovery with operators, ship thinner slices sooner, and let real usage drive complexity.';
+    }
+
+    if (q.includes('why did you leave')) {
+      return 'I usually move when the next step increases scope of impact, technical challenge, or growth. The pattern across roles has been intentional progression toward higher ownership and broader systems responsibility.';
+    }
+
+    if (q.includes('last manager')) {
+      return 'They would likely say I raise the technical bar, stay calm in ambiguity, and take ownership from architecture through delivery. They would also say I push for clarity and measurable outcomes, especially around reliability.';
+    }
+
+    return 'My experience centers on building cloud-native systems that are scalable, observable, and practical for real teams. If you ask about a specific company or project, I can give a more direct answer.';
+  };
+
+  const sendPrompt = (rawPrompt) => {
+    const prompt = (rawPrompt || '').trim();
+    if (!prompt) return;
+    appendMessage(prompt, 'user');
+    chatInput.value = '';
+    window.setTimeout(() => {
+      appendMessage(answerFromPrompt(prompt), 'assistant');
+    }, 220);
+  };
+
+  const openChat = () => {
+    document.body.classList.add('ai-chat-open');
+    if (chatPanel) chatPanel.setAttribute('aria-hidden', 'false');
+    if (chatOverlay) chatOverlay.setAttribute('aria-hidden', 'false');
+    if (chatHistory && !chatHistory.hasChildNodes()) {
+      appendMessage('Ask me about strengths, hard lessons, leadership, or project outcomes.', 'assistant');
+    }
+    if (chatInput) chatInput.focus();
+  };
+
+  const closeChat = () => {
+    document.body.classList.remove('ai-chat-open');
+    if (chatPanel) chatPanel.setAttribute('aria-hidden', 'true');
+    if (chatOverlay) chatOverlay.setAttribute('aria-hidden', 'true');
+  };
+
+  if (chatToggle && chatPanel) {
+    chatToggle.addEventListener('click', openChat);
+  }
+
+  if (chatClose) {
+    chatClose.addEventListener('click', closeChat);
+  }
+
+  if (chatOverlay) {
+    chatOverlay.addEventListener('click', closeChat);
+  }
+
+  if (chatSend) {
+    chatSend.addEventListener('click', () => sendPrompt(chatInput ? chatInput.value : ''));
+  }
+
+  if (chatInput) {
+    chatInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        sendPrompt(chatInput.value);
+      }
+      if (event.key === 'Escape') {
+        closeChat();
+      }
+    });
+  }
+
+  if (chatSuggestions && chatSuggestions.length > 0) {
+    chatSuggestions.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const text = btn.textContent || '';
+        sendPrompt(text);
+      });
+    });
+  }
+
 })()

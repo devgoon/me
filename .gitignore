@@ -63,3 +63,9 @@ Readme.txt
 .dccache
 ci/
 assets/*.txt
+
+# secrets
+.env
+.env.local
+.env.*.local
+local.settings.json
