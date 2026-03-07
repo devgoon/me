@@ -88,8 +88,8 @@
   }
 
   async function loadData() {
-    experienceList.innerHTML = "<article class=\"role-card\"><p>Loading experience data...</p></article>";
-    skillsList.innerHTML = "<article class=\"role-card\"><p>Loading skills...</p></article>";
+    experienceList.innerHTML = "<article class=\"role-card\"><p>AI analyzing experience data...</p></article>";
+    skillsList.innerHTML = "<article class=\"role-card\"><p>AI analyzing skills profile...</p></article>";
 
     try {
       const response = await fetch("/api/experience", { method: "GET" });
