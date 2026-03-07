@@ -1,4 +1,4 @@
-.PHONY: install spellcheck spellcheck-pdf link-check syntax-check config-check unit-test check start live stop
+.PHONY: install spellcheck spellcheck-pdf link-check syntax-check ts-build config-check unit-test check start live stop
 
 install:
 	npm install
@@ -15,12 +15,15 @@ link-check:
 
 syntax-check:
 	@set -e; \
-	FILES="assets/js/main.js assets/js/fit-ai.js assets/js/experience-ai.js assets/js/admin.js assets/js/auth.js api/chat/index.js api/experience/index.js api/admin/index.js api/auth/index.js api/_shared/auth.js"; \
+	FILES="api/chat/index.js api/experience/index.js api/admin/index.js api/auth/index.js api/_shared/auth.js"; \
 	for FILE in $$FILES; do \
 		if [ -f "$$FILE" ]; then \
 			node --check "$$FILE"; \
 		fi; \
 	done
+
+ts-build:
+	npm run build:ts
 
 config-check:
 	@node -e "const fs=require('fs'); const files=['package.json','cspell.json','staticwebapp.config.json','swa-cli.config.json']; for (const f of files) { if (fs.existsSync(f)) JSON.parse(fs.readFileSync(f,'utf8')); }"
@@ -29,15 +32,17 @@ unit-test:
 	cd api && npm test -- --runInBand
 
 check:
-	@echo "==> [1/5] Running spellcheck"
+	@echo "==> [1/6] Running spellcheck"
 	@$(MAKE) spellcheck
-	@echo "==> [2/5] Running JavaScript syntax checks"
+	@echo "==> [2/6] Building TypeScript frontend assets"
+	@$(MAKE) ts-build
+	@echo "==> [3/6] Running JavaScript syntax checks"
 	@$(MAKE) syntax-check
-	@echo "==> [3/5] Validating JSON/config files"
+	@echo "==> [4/6] Validating JSON/config files"
 	@$(MAKE) config-check
-	@echo "==> [4/5] Running API unit tests"
+	@echo "==> [5/6] Running API unit tests"
 	@$(MAKE) unit-test
-	@echo "==> [5/5] Running link check"
+	@echo "==> [6/6] Running link check"
 	@$(MAKE) link-check
 	@echo "==> Quality checks complete"
 #
