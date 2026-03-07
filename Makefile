@@ -1,7 +1,8 @@
-.PHONY: install spellcheck link-check check start live stop
+.PHONY: install spellcheck link-check syntax-check config-check unit-test check start live stop
 
 install:
 	npm install
+	cd api && npm install
 
 spellcheck:spellcheck-pdf
 	npx cspell "**/*.{html,css,js}" "assets/*.txt" --verbose
@@ -12,7 +13,22 @@ spellcheck-pdf:
 link-check:
 	npx linkinator ./index.html
 
-check: spellcheck link-check
+syntax-check:
+	@set -e; \
+	FILES="assets/js/main.js assets/js/fit-ai.js assets/js/experience-ai.js assets/js/admin.js assets/js/auth.js api/chat/index.js api/experience/index.js api/admin/index.js api/auth/index.js api/_shared/auth.js"; \
+	for FILE in $$FILES; do \
+		if [ -f "$$FILE" ]; then \
+			node --check "$$FILE"; \
+		fi; \
+	done
+
+config-check:
+	@node -e "const fs=require('fs'); const files=['package.json','cspell.json','staticwebapp.config.json','swa-cli.config.json']; for (const f of files) { if (fs.existsSync(f)) JSON.parse(fs.readFileSync(f,'utf8')); }"
+
+unit-test:
+	cd api && npm test -- --runInBand
+
+check: spellcheck syntax-check config-check unit-test link-check
 #
 # Dependencies for spellchecking PDF and DOCX:
 #   - pdftotext (install via 'brew install poppler' on macOS)
