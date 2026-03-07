@@ -1,4 +1,4 @@
-.PHONY: install spellcheck link-check syntax-check config-check unit-test check start live stop
+.PHONY: install spellcheck spellcheck-pdf link-check syntax-check config-check unit-test check start live stop
 
 install:
 	npm install
@@ -28,7 +28,18 @@ config-check:
 unit-test:
 	cd api && npm test -- --runInBand
 
-check: spellcheck syntax-check config-check unit-test link-check
+check:
+	@echo "==> [1/5] Running spellcheck"
+	@$(MAKE) spellcheck
+	@echo "==> [2/5] Running JavaScript syntax checks"
+	@$(MAKE) syntax-check
+	@echo "==> [3/5] Validating JSON/config files"
+	@$(MAKE) config-check
+	@echo "==> [4/5] Running API unit tests"
+	@$(MAKE) unit-test
+	@echo "==> [5/5] Running link check"
+	@$(MAKE) link-check
+	@echo "==> Quality checks complete"
 #
 # Dependencies for spellchecking PDF and DOCX:
 #   - pdftotext (install via 'brew install poppler' on macOS)

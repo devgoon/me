@@ -32,8 +32,20 @@ jobs:
       - name: Install dependencies
         run: make install
 
-      - name: Run quality checks
-        run: make check
+      - name: Quality [1/5] Spellcheck
+        run: make spellcheck
+
+      - name: Quality [2/5] JavaScript syntax check
+        run: make syntax-check
+
+      - name: Quality [3/5] Config validation
+        run: make config-check
+
+      - name: Quality [4/5] API unit tests
+        run: make unit-test
+
+      - name: Quality [5/5] Link check
+        run: make link-check
 
       - name: Run npm audit
         run: npm audit --json > audit.json || true
