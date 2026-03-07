@@ -614,9 +614,32 @@
     return payload;
   }
 
+  function parseNullableNumber(value) {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    const raw = String(value).trim();
+    if (!raw) {
+      return null;
+    }
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function validateSalaryRange(payload) {
+    const profile = payload && payload.profile ? payload.profile : {};
+    const salaryMin = parseNullableNumber(profile.salaryMin);
+    const salaryMax = parseNullableNumber(profile.salaryMax);
+
+    if (salaryMin !== null && salaryMax !== null && salaryMin > salaryMax) {
+      throw new Error("Salary min cannot be greater than salary max");
+    }
+  }
+
   async function saveAll() {
     setMessage("Saving all changes...", false);
     const payload = sanitizeForSave();
+    validateSalaryRange(payload);
     await apiRequest("/api/panel-data", {
       method: "POST",
       body: JSON.stringify(payload)

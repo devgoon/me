@@ -27,10 +27,14 @@ function asDate(value) {
 }
 
 function asNumber(value) {
-  if (value === null || value === undefined || value === "") {
+  if (value === null || value === undefined) {
     return null;
   }
-  const n = Number(value);
+  const raw = typeof value === "string" ? value.trim() : value;
+  if (raw === "") {
+    return null;
+  }
+  const n = Number(raw);
   return Number.isFinite(n) ? n : null;
 }
 
@@ -273,6 +277,12 @@ async function saveAll(client, candidateId, payload, authEmail) {
   const aiInstructions = payload.aiInstructions || {};
   const safeEmail = asText(profile.email) || String(authEmail || "").toLowerCase() || "admin@example.com";
   const safeName = asText(profile.fullName) || safeEmail.split("@")[0] || "Admin";
+  const salaryMinValue = asNumber(profile.salaryMin);
+  const salaryMaxValue = asNumber(profile.salaryMax);
+
+  if (salaryMinValue !== null && salaryMaxValue !== null && salaryMinValue > salaryMaxValue) {
+    throw new Error("Salary min cannot be greater than salary max");
+  }
 
   await client.query("BEGIN");
   try {
@@ -313,8 +323,8 @@ async function saveAll(client, candidateId, payload, authEmail) {
         asText(profile.notLookingFor),
         asText(profile.managementStyle),
         asText(profile.workStylePreferences),
-        asNumber(profile.salaryMin),
-        asNumber(profile.salaryMax),
+        salaryMinValue,
+        salaryMaxValue,
         asText(profile.availabilityStatus),
         asDate(profile.availableStarting),
         asText(profile.location),
