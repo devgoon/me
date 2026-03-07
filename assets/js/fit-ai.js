@@ -6,10 +6,6 @@
 
   const e = React.createElement;
 
-  const strongDemo = `Senior/Staff Software Engineer - Cloud Platform\n\nWe are looking for an engineer to lead cloud-native services on AWS, define API contracts, and improve observability/SLOs.\n\nRequirements:\n- 7+ years software engineering experience\n- TypeScript/React and backend API development\n- AWS architecture (Lambda, API Gateway, DynamoDB)\n- DevOps and CI/CD practices\n- Observability with Datadog or equivalent\n- Experience leading cross-functional technical initiatives`;
-
-  const weakDemo = `Senior iOS Engineer - Consumer Social App\n\nBuild high-velocity mobile features in SwiftUI for a social media product.\n\nRequirements:\n- 5+ years native iOS with Swift/SwiftUI\n- Deep mobile graphics and animation expertise\n- Hands-on App Store optimization ownership\n- Kotlin Android collaboration\n- Prior consumer social growth experimentation\n- Onsite daily in San Francisco`;
-
   const profileStrengths = [
     { key: 'aws', label: 'Strong AWS platform and architecture depth (Lambda/API Gateway/DynamoDB).' },
     { key: 'azure', label: 'Proven Azure administration and cloud migration leadership.' },
@@ -57,19 +53,10 @@
   }
 
   function FitApp() {
-    const [activeDemo, setActiveDemo] = React.useState('strong');
-    const [jobDescription, setJobDescription] = React.useState(strongDemo);
+    const [jobDescription, setJobDescription] = React.useState('');
     const [result, setResult] = React.useState(null);
     const [followUp, setFollowUp] = React.useState('');
     const [followUpAnswer, setFollowUpAnswer] = React.useState('');
-
-    const setDemo = (demo) => {
-      setActiveDemo(demo);
-      setJobDescription(demo === 'strong' ? strongDemo : weakDemo);
-      setResult(null);
-      setFollowUp('');
-      setFollowUpAnswer('');
-    };
 
     const analyze = () => {
       const jd = jobDescription.trim();
@@ -135,33 +122,12 @@
       e(
         'section',
         { className: 'fit-panel', 'aria-label': 'Fit analyzer' },
-        e(
-          'div',
-          { className: 'prefill-toggles', role: 'group', 'aria-label': 'Demo job descriptions' },
-          e(
-            'button',
-            {
-              className: `prefill-btn ${activeDemo === 'strong' ? 'is-active' : ''}`,
-              type: 'button',
-              onClick: () => setDemo('strong')
-            },
-            'Strong Fit Example'
-          ),
-          e(
-            'button',
-            {
-              className: `prefill-btn ${activeDemo === 'weak' ? 'is-active' : ''}`,
-              type: 'button',
-              onClick: () => setDemo('weak')
-            },
-            'Weak Fit Example'
-          )
-        ),
         e('label', { className: 'jd-label', htmlFor: 'job-description' }, 'Job description'),
+        e('p', { className: 'jd-hint' }, 'Copy/paste JD here.'),
         e('textarea', {
           id: 'job-description',
           className: 'jd-input',
-          placeholder: 'Paste job description here...',
+          placeholder: 'e.g. Senior Software Engineer - Cloud Platform\nLooking for TypeScript/React, AWS (Lambda/API Gateway/DynamoDB), API design, CI/CD, and observability with Datadog.',
           value: jobDescription,
           onChange: (event) => setJobDescription(event.target.value)
         }),

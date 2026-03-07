@@ -1,5 +1,10 @@
 {
   "routes": [
+    { "route": "/auth", "rewrite": "/auth.html" },
+    { "route": "/auth/*", "rewrite": "/auth.html" },
+    { "route": "/admin", "allowedRoles": ["authenticated"], "rewrite": "/admin.html" },
+    { "route": "/admin/*", "allowedRoles": ["authenticated"], "rewrite": "/admin.html" },
+    { "route": "/api/panel-data", "allowedRoles": ["authenticated"] },
     { "route": "/favicon.ico", "headers": { "Cache-Control": "public, max-age=604800, immutable" } },
     { "route": "/*", "headers": {
       "Content-Security-Policy": "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self' data:",
@@ -10,9 +15,15 @@
       "Permissions-Policy": "geolocation=(), microphone=(), camera=()"
     }}
   ],
+  "responseOverrides": {
+    "401": {
+      "statusCode": 302,
+      "redirect": "/.auth/login/aad?post_login_redirect_uri=/admin"
+    }
+  },
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/images/*", "/favicon.ico"]
+    "exclude": ["/assets/*", "/images/*", "/favicon.ico", "/auth", "/auth/*", "/admin", "/admin/*"]
   },
   "mimeTypes": {
     ".webmanifest": "application/manifest+json"

@@ -42,6 +42,26 @@
 
   const MODE_TRADITIONAL = 'traditional';
   const MODE_AI = 'ai';
+  const MODE_STORAGE_KEY = 'site_mode';
+
+  const getStoredMode = () => {
+    try {
+      const value = localStorage.getItem(MODE_STORAGE_KEY);
+      if (!value) return null;
+      const normalized = String(value).toLowerCase();
+      return normalized === MODE_AI ? MODE_AI : MODE_TRADITIONAL;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  const setStoredMode = (mode) => {
+    try {
+      localStorage.setItem(MODE_STORAGE_KEY, mode);
+    } catch (error) {
+      // Ignore storage write errors (private mode, quota, etc.).
+    }
+  }
 
   // Applies page-level mode classes used by CSS for AI/traditional layout behavior.
   const applyMode = (mode) => {
@@ -49,14 +69,34 @@
     if (!body) return;
 
     const resolvedMode = mode === MODE_AI ? MODE_AI : MODE_TRADITIONAL;
+    body.dataset.siteMode = resolvedMode;
     body.classList.toggle('traditional-mode', resolvedMode === MODE_TRADITIONAL);
     body.classList.toggle('ai-mode', resolvedMode === MODE_AI);
+
+    const traditionalBtn = select('#mode-toggle-traditional');
+    const aiBtn = select('#mode-toggle-ai');
+    if (traditionalBtn) {
+      traditionalBtn.setAttribute('aria-pressed', String(resolvedMode === MODE_TRADITIONAL));
+    }
+    if (aiBtn) {
+      aiBtn.setAttribute('aria-pressed', String(resolvedMode === MODE_AI));
+    }
+
+    setStoredMode(resolvedMode);
   }
 
-  // Primary source of truth for mode is <body data-site-mode="..."> in index.html.
+  // Local storage persists mode across navigations; body data attribute is fallback default.
   const bodyMode = document.body && document.body.dataset ? document.body.dataset.siteMode : null;
-  const configuredMode = bodyMode ? String(bodyMode).toLowerCase() : MODE_TRADITIONAL;
+  const configuredMode = getStoredMode() || (bodyMode ? String(bodyMode).toLowerCase() : MODE_TRADITIONAL);
   applyMode(configuredMode);
+
+  on('click', '#mode-toggle-traditional', () => {
+    applyMode(MODE_TRADITIONAL);
+  });
+
+  on('click', '#mode-toggle-ai', () => {
+    applyMode(MODE_AI);
+  });
 
   /**
    * Navbar links active state on scroll

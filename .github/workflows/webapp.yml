@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [ main, ai-portfolio ]
+    branches: [ ai-portfolio ]
   workflow_dispatch:
 
 permissions:
@@ -16,7 +16,6 @@ concurrency:
 jobs:
   ci:
     name: Quality and Security
-    if: ${{ false }} # Temporarily disabled; re-enable by removing this line.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -60,6 +59,8 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       AI_MODEL: ${{ vars.AI_MODEL }}
       RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      SITE_HOSTNAME: ${{ vars.SITE_HOSTNAME }}
+      STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
     steps:
 
       - name: Checkout
@@ -99,14 +100,16 @@ jobs:
           inlineScript: |
             set -euo pipefail
 
-            APP_COUNT=$(az staticwebapp list --resource-group "$RESOURCE_GROUP" --query "length(@)" -o tsv)
-            if [[ "$APP_COUNT" != "1" ]]; then
-              echo "Expected exactly 1 Static Web App in resource group '$RESOURCE_GROUP', found: $APP_COUNT"
-              echo "Set up a dedicated resource group for this app or update workflow discovery logic."
-              exit 1
+            if [[ -z "${STATIC_WEB_APP_NAME:-}" ]]; then
+              APP_COUNT=$(az staticwebapp list --resource-group "$RESOURCE_GROUP" --query "length(@)" -o tsv)
+              if [[ "$APP_COUNT" != "1" ]]; then
+                echo "Expected exactly 1 Static Web App in resource group '$RESOURCE_GROUP', found: $APP_COUNT"
+                echo "Set vars.AZURE_STATIC_WEB_APP_NAME to the target app name to avoid discovery."
+                exit 1
+              fi
+              STATIC_WEB_APP_NAME=$(az staticwebapp list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv)
             fi
 
-            STATIC_WEB_APP_NAME=$(az staticwebapp list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv)
             if [[ -z "${STATIC_WEB_APP_NAME:-}" ]]; then
               echo "Unable to resolve Static Web App name"
               exit 1
@@ -131,3 +134,30 @@ jobs:
           app_location: "/"
           api_location: "api"
           skip_app_build: true
+
+      - name: Smoke test AAD login endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          HOST="${SITE_HOSTNAME:-lodovi.co}"
+          URL="https://${HOST}/.auth/login/aad?post_login_redirect_uri=/admin"
+          echo "Testing auth endpoint: $URL"
+
+          HEADERS=$(curl -sS -I -m 20 "$URL")
+          STATUS=$(printf "%s\n" "$HEADERS" | awk 'NR==1 { print $2 }')
+          LOCATION=$(printf "%s\n" "$HEADERS" | awk 'tolower($1)=="location:" { print $2 }' | tr -d '\r' | head -n 1)
+
+          if [[ "$STATUS" != "302" ]]; then
+            echo "Expected HTTP 302 from AAD login endpoint, got: $STATUS"
+            echo "$HEADERS"
+            exit 1
+          fi
+
+          if [[ "$LOCATION" != https://identity.*.azurestaticapps.net/* ]]; then
+            echo "Unexpected AAD login redirect location: $LOCATION"
+            echo "$HEADERS"
+            exit 1
+          fi
+
+          echo "AAD login endpoint looks healthy for $HOST"

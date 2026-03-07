@@ -52,7 +52,12 @@
   - data-site-mode="ai"          => show AI hero buttons, hide left vertical nav
   - data-site-mode="traditional" => hide AI hero buttons, show left vertical nav
 -->
-<body data-site-mode="ai">
+<body data-site-mode="traditional">
+
+  <div class="mode-switch" role="group" aria-label="Site mode">
+    <button id="mode-toggle-traditional" class="mode-switch-btn" type="button" aria-pressed="false">Classic</button>
+    <button id="mode-toggle-ai" class="mode-switch-btn" type="button" aria-pressed="true">AI</button>
+  </div>
 
   <!-- ======= Mobile nav toggle button ======= -->
   <i class="bi bi-list mobile-nav-toggle d-lg-none"></i>

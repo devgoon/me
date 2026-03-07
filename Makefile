@@ -21,7 +21,7 @@ start:
 	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
 	AZURITE_PID=$$!; \
 	trap 'kill $$AZURITE_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
-	npx swa start . --api-location api
+	npx swa start --config swa-cli.config.json --config-name me-local
 
 live: start
 
@@ -40,6 +40,7 @@ stop:
 		exit 0; \
 	fi; \
 	echo "Stopping local app processes: $$PIDS"; \
+	kill -CONT $$PIDS >/dev/null 2>&1 || true; \
 	kill -INT $$PIDS >/dev/null 2>&1 || true; \
 	for _ in 1 2 3 4 5; do \
 		sleep 1; \
@@ -55,6 +56,7 @@ stop:
 		fi; \
 	done; \
 	echo "Processes still running after SIGINT:$$STILL_RUNNING"; \
+	kill -CONT $$STILL_RUNNING >/dev/null 2>&1 || true; \
 	kill -TERM $$STILL_RUNNING >/dev/null 2>&1 || true; \
 	for _ in 1 2 3 4 5; do \
 		sleep 1; \
@@ -78,7 +80,30 @@ stop:
 	done; \
 	if [ -n "$$STILL_RUNNING" ]; then \
 		echo "Processes still running after SIGINT and SIGTERM:$$STILL_RUNNING"; \
-		echo "Use 'kill -9' manually if you want to force-stop them."; \
+		echo "Escalating to SIGKILL..."; \
+		kill -KILL $$STILL_RUNNING >/dev/null 2>&1 || true; \
+		sleep 1; \
+	fi; \
+	STILL_RUNNING=""; \
+	for PID in $$PIDS; do \
+		if kill -0 $$PID >/dev/null 2>&1; then \
+			STILL_RUNNING="$$STILL_RUNNING $$PID"; \
+		fi; \
+	done; \
+	if [ -n "$$STILL_RUNNING" ]; then \
+		LISTENERS=""; \
+		for PORT in 4280 7071 10000 10001 10002; do \
+			FOUND=$$(lsof -tiTCP:$$PORT -sTCP:LISTEN || true); \
+			if [ -n "$$FOUND" ]; then \
+				LISTENERS="$$LISTENERS $$FOUND"; \
+			fi; \
+		done; \
+		if [ -z "$$LISTENERS" ]; then \
+			echo "App ports are clear; ignoring defunct process entries:$$STILL_RUNNING"; \
+			echo "Local app stack stopped."; \
+			exit 0; \
+		fi; \
+		echo "Unable to stop processes:$$STILL_RUNNING"; \
 		exit 1; \
 	fi; \
 	echo "Local app stack stopped.";

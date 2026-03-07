@@ -11,9 +11,12 @@
     "Agri",
     "Wallingford",
     "Neopost",
-    "Ingenix"
+    "Ingenix",
+    "dealbreakers",
+    "Millis"
   ],
   "ignorePaths": [
+    "**/node_modules/**",
     "node_modules/**",
     ".github/**",
     "assets/*/**",

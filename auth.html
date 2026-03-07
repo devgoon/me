@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Admin Auth | Lodovi.co</title>
+  <meta content="Login or create an admin account." name="description">
+  <link href="assets/img/favicon.png" rel="icon">
+  <link href="assets/css/admin.css" rel="stylesheet">
+</head>
+<body class="admin-page auth-page">
+  <main class="admin-shell auth-shell">
+    <header class="admin-topbar">
+      <a class="back-link" href="/">View Site</a>
+      <h1>Admin Authentication</h1>
+    </header>
+
+    <section class="panel auth-panel">
+      <p id="auth-message" class="message" hidden></p>
+
+      <p class="subtle">
+        Sign in with your Microsoft account to access the admin panel.
+      </p>
+
+      <div class="form-grid">
+        <button id="microsoft-login" class="primary-btn" type="button">Sign In With Microsoft</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/auth.js"></script>
+</body>
+</html>

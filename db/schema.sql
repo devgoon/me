@@ -153,4 +153,15 @@ CREATE INDEX IF NOT EXISTS ai_instructions_candidate_id_idx
 CREATE INDEX IF NOT EXISTS ai_instructions_priority_idx
   ON ai_instructions (candidate_id, instruction_type, priority);
 
+CREATE TABLE IF NOT EXISTS admin_users (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  email TEXT NOT NULL,
+  full_name TEXT,
+  password_hash TEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS admin_users_email_uidx
+  ON admin_users (LOWER(email));
+
 COMMIT;
