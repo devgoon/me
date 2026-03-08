@@ -1,0 +1,106 @@
+name: Manage Azure Budget
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget_name:
+        description: "Budget resource name"
+        required: false
+        default: "lodovi-monthly-budget"
+      amount:
+        description: "Monthly budget amount"
+        required: true
+        default: "75"
+      currency:
+        description: "Currency code"
+        required: false
+        default: "USD"
+      resource_group_name:
+        description: "Optional resource group scope (empty = subscription scope)"
+        required: false
+        default: ""
+      start_date:
+        description: "Start date YYYY-MM-01"
+        required: false
+        default: "2026-03-01"
+      alert_emails_csv:
+        description: "Comma-separated alert emails"
+        required: true
+        default: "you@lodovi.co"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-budget:
+    name: Deploy monthly Azure budget
+    runs-on: ubuntu-latest
+    env:
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate input values
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! [[ "${{ inputs.amount }}" =~ ^[0-9]+$ ]]; then
+            echo "amount must be an integer"
+            exit 1
+          fi
+
+          if ! [[ "${{ inputs.start_date }}" =~ ^[0-9]{4}-[0-9]{2}-01$ ]]; then
+            echo "start_date must match YYYY-MM-01"
+            exit 1
+          fi
+
+          if [[ -z "${AZURE_LOCATION:-}" ]]; then
+            echo "Missing required repo variable: AZURE_LOCATION"
+            exit 1
+          fi
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy budget via Bicep
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          EMAILS_JSON=$(printf '%s' "${{ inputs.alert_emails_csv }}" | awk -F',' '
+            BEGIN { printf("[") }
+            {
+              for (i=1; i<=NF; i++) {
+                gsub(/^ +| +$/, "", $i)
+                if (length($i) > 0) {
+                  if (seen++) printf(",")
+                  printf("\"%s\"", $i)
+                }
+              }
+            }
+            END { printf("]") }
+          ')
+
+          az deployment sub create \
+            --location "$AZURE_LOCATION" \
+            --template-file infra/cost/budget.bicep \
+            --parameters \
+              budgetName="${{ inputs.budget_name }}" \
+              amount=${{ inputs.amount }} \
+              currency="${{ inputs.currency }}" \
+              resourceGroupName="${{ inputs.resource_group_name }}" \
+              startDate="${{ inputs.start_date }}" \
+              alertEmails="$EMAILS_JSON"
+
+      - name: Output budget summary
+        shell: bash
+        run: |
+          echo "Budget deployment complete"
+          echo "budget_name=${{ inputs.budget_name }}"
+          echo "amount=${{ inputs.amount }} ${{ inputs.currency }}"
+          echo "resource_group_scope='${{ inputs.resource_group_name }}'"
