@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_EXTENSION_VERSION": "~4",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "ANTHROPIC_API_KEY": "your_anthropic_api_key_here",
+    "AI_MODEL": "claude-sonnet-4-20250514",
+    "DATABASE_URL": "postgresql://username:password@server.postgres.database.azure.com:5432/database?sslmode=require"
+  }
+}

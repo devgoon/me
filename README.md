@@ -35,7 +35,9 @@ brew install poppler
 ## Environment setup
 
 1. Copy `.env.example` values into your local environment file(s) used by SWA/Functions.
-2. Set values:
+2. Copy `local.settings.example.json` to `local.settings.json` for local Functions runtime values.
+3. Keep `local.settings.json` untracked (it is gitignored) and store only placeholders in committed files.
+4. Set values:
 - `ANTHROPIC_API_KEY`
 - `AI_MODEL`
 - `DATABASE_URL`
