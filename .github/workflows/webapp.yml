@@ -153,6 +153,7 @@ jobs:
           skip_app_build: true
 
       - name: Smoke test AAD login endpoint
+        if: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -180,6 +181,7 @@ jobs:
           echo "AAD login endpoint looks healthy for $HOST"
 
       - name: Smoke test API health endpoint
+        if: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != '' }}
         shell: bash
         run: |
           set -euo pipefail
