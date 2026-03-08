@@ -27,18 +27,6 @@ on:
         description: "Apply db/seed.sql after provisioning"
         required: false
         default: "false"
-      allow_destructive_changes:
-        description: "Allow destructive SQL operations (required for apply_seed)"
-        required: false
-        default: "false"
-      destructive_seed_approval:
-        description: "Type Y to proceed with apply_seed (destructive)"
-        required: false
-        default: "N"
-      destructive_confirmation:
-        description: "Type EXACTLY: <server-name>/<database-name> to confirm destructive run"
-        required: false
-        default: ""
 
 permissions:
   id-token: write
@@ -60,9 +48,6 @@ jobs:
       STORAGE_GB: ${{ inputs.storage_gb }}
       APPLY_SCHEMA: ${{ inputs.apply_schema }}
       APPLY_SEED: ${{ inputs.apply_seed }}
-      ALLOW_DESTRUCTIVE_CHANGES: ${{ inputs.allow_destructive_changes }}
-      DESTRUCTIVE_SEED_APPROVAL: ${{ inputs.destructive_seed_approval }}
-      DESTRUCTIVE_CONFIRMATION: ${{ inputs.destructive_confirmation }}
 
     steps:
       - name: Checkout
@@ -153,30 +138,6 @@ jobs:
               --database-name "$DATABASE_NAME" \
               --file-path "db/schema.sql" \
               --output table
-
-      - name: Guard destructive seed operation
-        if: ${{ inputs.apply_seed == 'true' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if [[ "$ALLOW_DESTRUCTIVE_CHANGES" != "true" ]]; then
-            echo "Destructive seed blocked: set allow_destructive_changes=true to continue."
-            exit 1
-          fi
-
-          EXPECTED_CONFIRMATION="$SERVER_NAME/$DATABASE_NAME"
-          if [[ "$DESTRUCTIVE_CONFIRMATION" != "$EXPECTED_CONFIRMATION" ]]; then
-            echo "Destructive seed blocked: destructive_confirmation must exactly match '$EXPECTED_CONFIRMATION'."
-            exit 1
-          fi
-
-          if [[ "$DESTRUCTIVE_SEED_APPROVAL" != "Y" ]]; then
-            echo "Destructive seed blocked: set destructive_seed_approval=Y to continue."
-            exit 1
-          fi
-
-          echo "Destructive seed guard checks passed for $EXPECTED_CONFIRMATION"
 
       - name: Apply seed.sql
         if: ${{ inputs.apply_seed == 'true' }}

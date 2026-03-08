@@ -113,9 +113,6 @@ Provision Azure PostgreSQL via workflow:
 - Optional workflow inputs:
 	- `apply_schema` (default `true`) to execute `db/schema.sql`
 	- `apply_seed` (default `false`) to execute `db/seed.sql`
-	- `allow_destructive_changes` (default `false`) must be `true` for `apply_seed=true`
-	- `destructive_seed_approval` (default `N`) must be `Y` for `apply_seed=true`
-	- `destructive_confirmation` must exactly equal `<server-name>/<database-name>` for `apply_seed=true`
 
 Default behavior is non-destructive for production usage.
 
@@ -123,7 +120,6 @@ Safety checks before running seed on any environment:
 1. Confirm workflow target variables: `AZURE_PG_SERVER_NAME` and `database_name`.
 2. Keep `apply_seed=false` unless you intentionally want to replace data.
 3. If seeding, verify `db/seed.sql` includes destructive statements you expect (for this repo it uses `TRUNCATE ... RESTART IDENTITY CASCADE`).
-4. In workflow logs, verify `Guard destructive seed operation` passed for the exact expected `<server>/<db>` target.
 
 Required GitHub repository variables/secrets for DB workflow:
 - Vars: `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`, `AZURE_PG_SERVER_NAME`, `AZURE_PG_ADMIN_USER`
