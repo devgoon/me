@@ -1,4 +1,4 @@
-.PHONY: install spellcheck spellcheck-pdf link-check syntax-check ts-build config-check unit-test check start live stop
+.PHONY: install spellcheck spellcheck-pdf link-check syntax-check ts-build config-check unit-test check start stop
 
 install:
 	npm install
@@ -54,8 +54,6 @@ start:
 	AZURITE_PID=$$!; \
 	trap 'kill $$AZURITE_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
 	npx swa start --config swa-cli.config.json --config-name me-local
-
-live: start
 
 stop:
 	@set -e; \

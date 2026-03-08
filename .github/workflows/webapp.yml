@@ -73,6 +73,7 @@ jobs:
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SWA_DEPLOY_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
       AI_MODEL: ${{ vars.AI_MODEL }}
       RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       SITE_HOSTNAME: ${{ vars.SITE_HOSTNAME }}
@@ -145,13 +146,15 @@ jobs:
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_NICE_BAY_0D4AD7C0F }}
+          azure_static_web_apps_api_token: ${{ env.SWA_DEPLOY_TOKEN }}
+          skip_deploy_on_missing_secrets: true
           action: upload
           app_location: "/"
           api_location: "api"
           skip_app_build: true
 
       - name: Smoke test AAD login endpoint
+        if: ${{ env.SWA_DEPLOY_TOKEN != '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -179,6 +182,7 @@ jobs:
           echo "AAD login endpoint looks healthy for $HOST"
 
       - name: Smoke test API health endpoint
+        if: ${{ env.SWA_DEPLOY_TOKEN != '' }}
         shell: bash
         run: |
           set -euo pipefail

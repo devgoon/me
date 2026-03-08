@@ -23,6 +23,10 @@ on:
         description: "Apply db/schema.sql after provisioning"
         required: false
         default: "true"
+      apply_seed:
+        description: "Apply db/seed.sql after provisioning"
+        required: false
+        default: "false"
 
 permissions:
   id-token: write
@@ -43,6 +47,7 @@ jobs:
       SKU_NAME: ${{ inputs.sku_name }}
       STORAGE_GB: ${{ inputs.storage_gb }}
       APPLY_SCHEMA: ${{ inputs.apply_schema }}
+      APPLY_SEED: ${{ inputs.apply_seed }}
 
     steps:
       - name: Checkout
@@ -132,6 +137,27 @@ jobs:
               --admin-password "$ADMIN_PASSWORD" \
               --database-name "$DATABASE_NAME" \
               --file-path "db/schema.sql" \
+              --output table
+
+      - name: Apply seed.sql
+        if: ${{ inputs.apply_seed == 'true' }}
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+
+            if [[ ! -f "db/seed.sql" ]]; then
+              echo "db/seed.sql not found"
+              exit 1
+            fi
+
+            az postgres flexible-server execute \
+              --name "$SERVER_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --admin-user "$ADMIN_USER" \
+              --admin-password "$ADMIN_PASSWORD" \
+              --database-name "$DATABASE_NAME" \
+              --file-path "db/seed.sql" \
               --output table
 
       - name: Print connection info
