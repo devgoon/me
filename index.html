@@ -36,12 +36,6 @@
   * Author: BootstrapMade.com
   * License: https://bootstrapmade.com/license/
   ======================================================== -->
-  <!-- Feature flags: set to true to enable unreleased sections -->
-  <script>
-    window.FEATURES = {
-      projects: false
-    };
-  </script>
 </head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L99ZCQ20Z"></script>
@@ -53,7 +47,17 @@
   gtag('config', 'G-0L99ZCQ20Z');
 </script>
 
-<body>
+<!--
+  Site mode switch:
+  - data-site-mode="ai"          => show AI hero buttons, hide left vertical nav
+  - data-site-mode="traditional" => hide AI hero buttons, show left vertical nav
+-->
+<body data-site-mode="traditional">
+
+  <div class="mode-switch" role="group" aria-label="Site mode">
+    <button id="mode-toggle-traditional" class="mode-switch-btn" type="button" aria-pressed="true">Classic</button>
+    <button id="mode-toggle-ai" class="mode-switch-btn" type="button" aria-pressed="false">AI</button>
+  </div>
 
   <!-- ======= Mobile nav toggle button ======= -->
   <i class="bi bi-list mobile-nav-toggle d-lg-none"></i>
@@ -89,6 +93,33 @@
           Software Engineer. Cloud architect. From start-ups to Fortune 500 companies. 
       </p>
       <p class="hero-tagline" data-aos="fade-up" data-aos-delay="200">Currently: autonomous vehicles.</p>
+      <div class="hero-company-badges" data-aos="fade-up" data-aos-delay="300" aria-label="Past companies">
+        <span>Torc Robotics</span>
+        <span>Ancera</span>
+        <span>Subway</span>
+        <span>Thermo Fisher</span>
+        <span>Fiserv</span>
+        <span>The Hartford</span>
+      </div>
+      <div class="hero-actions" data-aos="fade-up" data-aos-delay="400">
+        <button
+          id="ask-ai-toggle"
+          class="btn-hero-primary ai-only"
+          type="button"
+          aria-label="Open Ask AI chat"
+        >
+          <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
+          <span>Ask AI About Me</span>
+        </button>
+        <a class="btn-hero-secondary ai-only" href="/experience-ai.html">
+          <i class="bi bi-briefcase" aria-hidden="true"></i>
+          <span>Experience</span>
+        </a>
+        <a class="btn-hero-secondary ai-only" href="/fit-ai.html">
+          <i class="bi bi-check2-circle" aria-hidden="true"></i>
+          <span>Fit Check</span>
+        </a>
+      </div>
       <div class="social-links" data-aos="fade-up" data-aos-delay="500">
         <a href="https://www.linkedin.com/in/lodovico-minnocci/" class="linkedin">
           <span class="visually-hidden">LinkedIn</span>
@@ -494,19 +525,6 @@
     <!-- ======= Contact Section ======= -->
   </main><!-- End #main -->
 
-  <script>
-    // Apply feature flags — runs after DOM is ready
-    document.addEventListener('DOMContentLoaded', function () {
-      Object.keys(window.FEATURES).forEach(function (flag) {
-        if (window.FEATURES[flag]) {
-          document.querySelectorAll('[data-feature="' + flag + '"]').forEach(function (el) {
-            el.style.display = '';
-          });
-        }
-      });
-    });
-  </script>
-
   <!-- ======= Footer ======= -->
   <footer id="footer">
     <div class="container">
@@ -525,6 +543,24 @@
   </footer><!-- End Footer -->
 
   <div id="preloader"></div>
+  <div id="ai-chat-overlay" class="ai-chat-overlay" aria-hidden="true"></div>
+  <aside id="ai-chat-panel" class="ai-chat-panel" aria-label="Ask AI chat" aria-hidden="true">
+    <div class="ai-chat-header">
+      <h3>Ask AI About Me</h3>
+      <button id="ai-chat-close" class="ai-chat-close" type="button" aria-label="Close Ask AI chat">&times;</button>
+    </div>
+    <div id="ai-chat-history" class="ai-chat-history" aria-live="polite"></div>
+    <div class="ai-chat-suggestions" role="group" aria-label="Suggested questions">
+      <button class="ai-suggestion" type="button">What's your biggest weakness?</button>
+      <button class="ai-suggestion" type="button">Tell me about a project that failed</button>
+      <button class="ai-suggestion" type="button">Why did you leave [Company]?</button>
+      <button class="ai-suggestion" type="button">What would your last manager say about you?</button>
+    </div>
+    <div class="ai-chat-input-row">
+      <input id="ai-chat-input" type="text" placeholder="Ask a question..." aria-label="Ask AI input">
+      <button id="ai-chat-send" type="button">Send</button>
+    </div>
+  </aside>
   <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i
       class="bi bi-arrow-up-short" aria-hidden="true"></i><span class="visually-hidden">Back to top</span></a>
 

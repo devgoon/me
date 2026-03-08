@@ -1,0 +1,15 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "me-local": {
+      "appLocation": ".",
+      "outputLocation": ".",
+      "apiLocation": "api",
+      "swaConfigLocation": ".",
+      "host": "127.0.0.1",
+      "port": 4280,
+      "apiPort": 7071,
+      "open": false
+    }
+  }
+}

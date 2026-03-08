@@ -5,10 +5,19 @@
   "main": "index.html",
   "author": "Lodovico Minnocci",
   "license": "MIT",
+  "scripts": {
+    "build:ts": "tsc --project tsconfig.json",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
   "devDependencies": {
     "cspell": "latest",
-    "linkinator": "latest",
     "http-server": "latest",
-    "pa11y": "latest"
+    "linkinator": "latest",
+    "pa11y": "latest",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }

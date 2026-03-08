@@ -2,7 +2,8 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ ai-portfolio ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -31,8 +32,23 @@ jobs:
       - name: Install dependencies
         run: make install
 
-      - name: Run quality checks
-        run: make check
+      - name: Quality [1/6] Spellcheck
+        run: make spellcheck
+
+      - name: Quality [2/6] Build TypeScript frontend assets
+        run: make ts-build
+
+      - name: Quality [3/6] JavaScript syntax check
+        run: make syntax-check
+
+      - name: Quality [4/6] Config validation
+        run: make config-check
+
+      - name: Quality [5/6] API unit tests
+        run: make unit-test
+
+      - name: Quality [6/6] Link check
+        run: make link-check
 
       - name: Run npm audit
         run: npm audit --json > audit.json || true
@@ -54,6 +70,13 @@ jobs:
     name: Deploy
     needs: ci
     runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      AI_MODEL: ${{ vars.AI_MODEL }}
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      SITE_HOSTNAME: ${{ vars.SITE_HOSTNAME }}
+      STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
     steps:
 
       - name: Checkout
@@ -61,10 +84,120 @@ jobs:
         with:
           submodules: false
 
+      - name: Validate AI deployment settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+            echo "Missing required secret: ANTHROPIC_API_KEY"
+            exit 1
+          fi
+          if [[ -z "${DATABASE_URL:-}" ]]; then
+            echo "Missing required secret: DATABASE_URL"
+            exit 1
+          fi
+          if [[ -z "${AI_MODEL:-}" ]]; then
+            echo "Missing required variable: AI_MODEL"
+            exit 1
+          fi
+          if [[ -z "${RESOURCE_GROUP:-}" ]]; then
+            echo "Missing required variable: AZURE_RESOURCE_GROUP"
+            exit 1
+          fi
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Sync API app settings to Azure Static Web App
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+
+            if [[ -z "${STATIC_WEB_APP_NAME:-}" ]]; then
+              APP_COUNT=$(az staticwebapp list --resource-group "$RESOURCE_GROUP" --query "length(@)" -o tsv)
+              if [[ "$APP_COUNT" != "1" ]]; then
+                echo "Expected exactly 1 Static Web App in resource group '$RESOURCE_GROUP', found: $APP_COUNT"
+                echo "Set vars.AZURE_STATIC_WEB_APP_NAME to the target app name to avoid discovery."
+                exit 1
+              fi
+              STATIC_WEB_APP_NAME=$(az staticwebapp list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv)
+            fi
+
+            if [[ -z "${STATIC_WEB_APP_NAME:-}" ]]; then
+              echo "Unable to resolve Static Web App name"
+              exit 1
+            fi
+
+            echo "Updating app settings on Static Web App: $STATIC_WEB_APP_NAME"
+
+            az staticwebapp appsettings set \
+              --name "$STATIC_WEB_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --setting-names \
+                ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+                DATABASE_URL="$DATABASE_URL" \
+                AI_MODEL="$AI_MODEL" \
+              --output table
+
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_NICE_BAY_0D4AD7C0F }}
           action: upload
           app_location: "/"
+          api_location: "api"
           skip_app_build: true
+
+      - name: Smoke test AAD login endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          HOST="${SITE_HOSTNAME:-lodovi.co}"
+          URL="https://${HOST}/.auth/login/aad?post_login_redirect_uri=/admin"
+          echo "Testing auth endpoint: $URL"
+
+          HEADERS=$(curl -sS -I -m 20 "$URL")
+          STATUS=$(printf "%s\n" "$HEADERS" | awk 'NR==1 { print $2 }')
+          LOCATION=$(printf "%s\n" "$HEADERS" | awk 'tolower($1)=="location:" { print $2 }' | tr -d '\r' | head -n 1)
+
+          if [[ "$STATUS" != "302" ]]; then
+            echo "Expected HTTP 302 from AAD login endpoint, got: $STATUS"
+            echo "$HEADERS"
+            exit 1
+          fi
+
+          if [[ "$LOCATION" != https://identity.*.azurestaticapps.net/* ]]; then
+            echo "Unexpected AAD login redirect location: $LOCATION"
+            echo "$HEADERS"
+            exit 1
+          fi
+
+          echo "AAD login endpoint looks healthy for $HOST"
+
+      - name: Smoke test API health endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          HOST="${SITE_HOSTNAME:-lodovi.co}"
+          URL="https://${HOST}/api/health"
+          echo "Testing API health endpoint: $URL"
+
+          HTTP_CODE=$(curl -sS -m 20 -o /tmp/health.json -w "%{http_code}" "$URL")
+          if [[ "$HTTP_CODE" != "200" ]]; then
+            echo "Expected HTTP 200 from /api/health, got: $HTTP_CODE"
+            cat /tmp/health.json || true
+            exit 1
+          fi
+
+          if ! grep -q '"ok"' /tmp/health.json; then
+            echo "Health response does not include expected 'ok' field"
+            cat /tmp/health.json || true
+            exit 1
+          fi
+
+          echo "API health endpoint looks healthy for $HOST"

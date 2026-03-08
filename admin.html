@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Admin Panel | Lodovi.co</title>
+  <meta content="Manage portfolio data for AI and traditional views." name="description">
+  <link href="assets/img/favicon.png" rel="icon">
+  <link href="assets/css/admin.css" rel="stylesheet">
+</head>
+<body class="admin-page">
+  <main class="admin-shell">
+    <header class="admin-topbar">
+      <div>
+        <h1>Admin Panel</h1>
+        <p id="admin-user" class="subtle"></p>
+        <p id="admin-provider" class="identity-badge" hidden>Signed in via Microsoft</p>
+      </div>
+      <div class="toolbar-actions">
+        <a class="ghost-btn" href="/" target="_blank" rel="noopener">View Site</a>
+        <button id="save-all" class="primary-btn" type="button">Save All Changes</button>
+        <button id="sign-out" class="danger-btn" type="button">Sign Out</button>
+      </div>
+    </header>
+
+    <p id="admin-message" class="message" hidden></p>
+
+    <div class="admin-layout">
+      <aside class="tabs" aria-label="Admin sections">
+        <button class="tab-btn is-active" data-tab="profile" type="button">Profile</button>
+        <button class="tab-btn" data-tab="experience" type="button">Experience</button>
+        <button class="tab-btn" data-tab="skills" type="button">Skills</button>
+        <button class="tab-btn" data-tab="gaps" type="button">Gaps</button>
+        <button class="tab-btn" data-tab="values" type="button">Values & Culture</button>
+        <button class="tab-btn" data-tab="faq" type="button">FAQ</button>
+        <button class="tab-btn" data-tab="ai" type="button">AI Instructions</button>
+      </aside>
+
+      <section class="panel-stack">
+        <section class="panel tab-panel" data-panel="profile">
+          <h2>Profile</h2>
+          <div class="form-grid two-col">
+            <label>Full name<input id="profile-fullName" type="text"></label>
+            <label>Email<input id="profile-email" type="email"></label>
+            <label>Current title<input id="profile-currentTitle" type="text"></label>
+            <label>Location<input id="profile-location" type="text"></label>
+            <label>Availability status
+              <select id="profile-availabilityStatus">
+                <option value="">Select...</option>
+                <option>Actively looking</option>
+                <option>Open to opportunities</option>
+                <option>Not looking</option>
+              </select>
+            </label>
+            <label>Available starting<input id="profile-availableStarting" type="date"></label>
+            <label>Remote preference
+              <select id="profile-remotePreference">
+                <option value="">Select...</option>
+                <option>Remote only</option>
+                <option>Hybrid</option>
+                <option>On-site</option>
+                <option>Flexible</option>
+              </select>
+            </label>
+            <label>Management style<input id="profile-managementStyle" type="text"></label>
+            <label>Work style preferences<input id="profile-workStylePreferences" type="text"></label>
+            <label>Salary min<input id="profile-salaryMin" type="number" step="0.01"></label>
+            <label>Salary max<input id="profile-salaryMax" type="number" step="0.01"></label>
+            <label>LinkedIn URL<input id="profile-linkedInUrl" type="url"></label>
+            <label>GitHub URL<input id="profile-githubUrl" type="url"></label>
+          </div>
+
+          <div class="subpanel">
+            <h3>Target titles</h3>
+            <div class="inline-row">
+              <input id="target-title-input" type="text" placeholder="Add target title">
+              <button id="add-target-title" class="ghost-btn" type="button">Add</button>
+            </div>
+            <ul id="target-title-list" class="chip-list"></ul>
+          </div>
+
+          <div class="subpanel">
+            <h3>Target company stages</h3>
+            <div id="company-stage-list" class="checkbox-grid"></div>
+          </div>
+
+          <label>Elevator pitch (2-3 sentences)
+            <textarea id="profile-elevatorPitch" rows="3"></textarea>
+          </label>
+          <label>Career narrative
+            <textarea id="profile-careerNarrative" rows="5"></textarea>
+          </label>
+          <label>What you're looking for
+            <textarea id="profile-lookingFor" rows="3"></textarea>
+          </label>
+          <label>What you're NOT looking for
+            <textarea id="profile-notLookingFor" rows="3"></textarea>
+          </label>
+        </section>
+
+        <section class="panel tab-panel" data-panel="experience" hidden>
+          <h2>Experience</h2>
+          <button id="add-experience" class="ghost-btn" type="button">Add Experience</button>
+          <div id="experience-list" class="card-list"></div>
+        </section>
+
+        <section class="panel tab-panel" data-panel="skills" hidden>
+          <h2>Skills</h2>
+          <button id="add-skill" class="ghost-btn" type="button">Add Skill</button>
+          <div id="skills-list" class="card-list"></div>
+        </section>
+
+        <section class="panel tab-panel" data-panel="gaps" hidden>
+          <h2>Gaps</h2>
+          <p class="subtle">Be honest about your gaps-this is what makes the AI valuable.</p>
+          <button id="add-gap" class="ghost-btn" type="button">Add Gap</button>
+          <div id="gaps-list" class="card-list"></div>
+        </section>
+
+        <section class="panel tab-panel" data-panel="values" hidden>
+          <h2>Values & Culture</h2>
+          <label>Must-haves in a company<textarea id="values-mustHaves" rows="4"></textarea></label>
+          <label>Dealbreakers<textarea id="values-dealbreakers" rows="4"></textarea></label>
+          <label>Management style preferences<textarea id="values-managementStylePreferences" rows="3"></textarea></label>
+          <label>Team size preferences<textarea id="values-teamSizePreferences" rows="3"></textarea></label>
+          <label>How do you handle conflict?<textarea id="values-howHandleConflict" rows="3"></textarea></label>
+          <label>How do you handle ambiguity?<textarea id="values-howHandleAmbiguity" rows="3"></textarea></label>
+          <label>How do you handle failure?<textarea id="values-howHandleFailure" rows="3"></textarea></label>
+        </section>
+
+        <section class="panel tab-panel" data-panel="faq" hidden>
+          <h2>FAQ</h2>
+          <button id="add-faq" class="ghost-btn" type="button">Add FAQ</button>
+          <div id="faq-list" class="card-list"></div>
+        </section>
+
+        <section class="panel tab-panel" data-panel="ai" hidden>
+          <h2>AI Instructions</h2>
+          <p class="subtle">Tell the AI how to behave.</p>
+          <label>Honesty level: <span id="honesty-level-display">7</span>/10
+            <input id="ai-honestyLevel" type="range" min="1" max="10" step="1" value="7">
+          </label>
+          <button id="add-ai-rule" class="ghost-btn" type="button">Add Instruction Rule</button>
+          <div id="ai-rule-list" class="card-list"></div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
