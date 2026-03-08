@@ -33,21 +33,29 @@ permissions:
   contents: read
 
 jobs:
+  # -----------------------------------------------------------
+  # Job 1: Provision – Azure CLI in a job-level container
+  # -----------------------------------------------------------
   provision:
     name: Provision PostgreSQL Flexible Server
     runs-on: ubuntu-latest
+    container: mcr.microsoft.com/azure-cli:2.83.0
     env:
       RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       LOCATION: ${{ vars.AZURE_LOCATION }}
       SERVER_NAME: ${{ vars.AZURE_PG_SERVER_NAME }}
-      ADMIN_USER: ${{ vars.AZURE_PG_ADMIN_USER }}
+      ADMIN_USER: ${{ vars.AZURE_PG_ADMIN_USER }}      # Flexible Server: plain username (no @server)
       ADMIN_PASSWORD: ${{ secrets.AZURE_PG_ADMIN_PASSWORD }}
       DATABASE_NAME: ${{ inputs.database_name }}
       POSTGRES_VERSION: ${{ inputs.postgres_version }}
       SKU_NAME: ${{ inputs.sku_name }}
       STORAGE_GB: ${{ inputs.storage_gb }}
-      APPLY_SCHEMA: ${{ inputs.apply_schema }}
-      APPLY_IMPORT_DATA: ${{ inputs.apply_import_data }}
+
+    outputs:
+      fqdn: ${{ steps.getfqdn.outputs.fqdn }}
+      db: ${{ env.DATABASE_NAME }}
+      admin_user: ${{ env.ADMIN_USER }}
+      server_name: ${{ env.SERVER_NAME }}
 
     steps:
       - name: Checkout
@@ -65,121 +73,111 @@ jobs:
             fi
           done
 
-      - name: Azure Login
+      - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Ensure resource group exists
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            az group create \
-              --name "$RESOURCE_GROUP" \
-              --location "$LOCATION" \
-              --output table
+        shell: bash
+        run: |
+          az group create \
+            --name "$RESOURCE_GROUP" \
+            --location "$LOCATION" \
+            --output table
 
       - name: Create or update PostgreSQL Flexible Server
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            if az postgres flexible-server show --name "$SERVER_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
-              echo "Server already exists: $SERVER_NAME"
-            else
-              az postgres flexible-server create \
-                --name "$SERVER_NAME" \
-                --resource-group "$RESOURCE_GROUP" \
-                --location "$LOCATION" \
-                --admin-user "$ADMIN_USER" \
-                --admin-password "$ADMIN_PASSWORD" \
-                --version "$POSTGRES_VERSION" \
-                --sku-name "$SKU_NAME" \
-                --storage-size "$STORAGE_GB" \
-                --public-access none \
-                --output table
-            fi
+        shell: bash
+        run: |
+          set -euo pipefail
+          if az postgres flexible-server show \
+              --name "$SERVER_NAME" \
+              --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+            echo "Server already exists: $SERVER_NAME"
+          else
+            az postgres flexible-server create \
+              --name "$SERVER_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --location "$LOCATION" \
+              --admin-user "$ADMIN_USER" \
+              --admin-password "$ADMIN_PASSWORD" \
+              --version "$POSTGRES_VERSION" \
+              --sku-name "$SKU_NAME" \
+              --storage-size "$STORAGE_GB" \
+              --public-access none \
+              --output table
+          fi
 
       - name: Create database if missing
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            if az postgres flexible-server db show \
+        shell: bash
+        run: |
+          set -euo pipefail
+          if az postgres flexible-server db show \
               --resource-group "$RESOURCE_GROUP" \
               --server-name "$SERVER_NAME" \
               --database-name "$DATABASE_NAME" >/dev/null 2>&1; then
-              echo "Database already exists: $DATABASE_NAME"
-            else
-              az postgres flexible-server db create \
-                --resource-group "$RESOURCE_GROUP" \
-                --server-name "$SERVER_NAME" \
-                --database-name "$DATABASE_NAME" \
-                --output table
-            fi
+            echo "Database already exists: $DATABASE_NAME"
+          else
+            az postgres flexible-server db create \
+              --resource-group "$RESOURCE_GROUP" \
+              --server-name "$SERVER_NAME" \
+              --database-name "$DATABASE_NAME" \
+              --output table
+          fi
+
+      - name: Get FQDN
+        id: getfqdn
+        shell: bash
+        run: |
+          set -euo pipefail
+          FQDN=$(az postgres flexible-server show \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$SERVER_NAME" \
+            --query fullyQualifiedDomainName -o tsv)
+          echo "fqdn=$FQDN" >> "$GITHUB_OUTPUT"
+          echo "Server FQDN: $FQDN"
+
+      - name: Print connection info
+        shell: bash
+        run: |
+          echo "PostgreSQL server ready: $SERVER_NAME"
+          echo "Database ready: $DATABASE_NAME"
+          echo "FQDN: ${{ steps.getfqdn.outputs.fqdn }}"
+          echo ""
+          echo "Connection string (Flexible Server username is plain, TLS required):"
+          echo "postgresql://$ADMIN_USER:<password>@${{ steps.getfqdn.outputs.fqdn }}:5432/$DATABASE_NAME?sslmode=require"
+
+  # -----------------------------------------------------------
+  # Job 2: Apply SQL – Postgres client in a job-level container
+  # -----------------------------------------------------------
+  apply-sql:
+    name: Apply schema/import with psql
+    needs: provision
+    runs-on: ubuntu-latest
+    container: postgres:16
+    env:
+      ADMIN_USER: ${{ needs.provision.outputs.admin_user }}
+      ADMIN_PASSWORD: ${{ secrets.AZURE_PG_ADMIN_PASSWORD }}
+      FQDN: ${{ needs.provision.outputs.fqdn }}
+      DATABASE_NAME: ${{ needs.provision.outputs.db }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Apply schema.sql
         if: ${{ inputs.apply_schema == 'true' }}
-        uses: azure/cli@v2
-        with:
-          container: mcr.microsoft.com/azure-cli:2.80.0
-          inlineScript: |
-            set -euo pipefail
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f db/schema.sql || { echo "db/schema.sql not found"; exit 1; }
+          psql "postgresql://${ADMIN_USER}:${ADMIN_PASSWORD}@${FQDN}:5432/${DATABASE_NAME}?sslmode=require" \
+               -v ON_ERROR_STOP=1 -f db/schema.sql
 
-            az config set extension.dynamic_install_allow_preview=true
-
-            if [[ ! -f "db/schema.sql" ]]; then
-              echo "db/schema.sql not found"
-              exit 1
-            fi
-
-            az postgres flexible-server execute \
-              --name "$SERVER_NAME" \
-              --resource-group "$RESOURCE_GROUP" \
-              --admin-user "$ADMIN_USER" \
-              --admin-password "$ADMIN_PASSWORD" \
-              --database-name "$DATABASE_NAME" \
-              --file-path "db/schema.sql" \
-              --output table
-
-      - name: Import db
+      - name: Import db (import.sql)
         if: ${{ inputs.apply_import_data == 'true' }}
-        uses: azure/cli@v2
-        with:
-          container: mcr.microsoft.com/azure-cli:2.80.0
-          inlineScript: |
-            set -euo pipefail
-
-            az config set extension.dynamic_install_allow_preview=true
-
-            if [[ ! -f "db/import.sql" ]]; then
-              echo "db/import.sql not found"
-              exit 1
-            fi
-
-            az postgres flexible-server execute \
-              --name "$SERVER_NAME" \
-              --resource-group "$RESOURCE_GROUP" \
-              --admin-user "$ADMIN_USER" \
-              --admin-password "$ADMIN_PASSWORD" \
-              --database-name "$DATABASE_NAME" \
-              --file-path "db/import.sql" \
-              --output table
-
-
-      - name: Print connection info
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            FQDN=$(az postgres flexible-server show \
-              --resource-group "$RESOURCE_GROUP" \
-              --name "$SERVER_NAME" \
-              --query fullyQualifiedDomainName -o tsv)
-
-            echo "PostgreSQL server ready: $SERVER_NAME"
-            echo "Database ready: $DATABASE_NAME"
-            echo "FQDN: $FQDN"
-            echo ""
-            echo "Connection string format:"
-            echo "postgresql://$ADMIN_USER:<password>@$FQDN:5432/$DATABASE_NAME?sslmode=require"
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f db/import.sql || { echo "db/import.sql not found"; exit 1; }
+          psql "postgresql://${ADMIN_USER}:${ADMIN_PASSWORD}@${FQDN}:5432/${DATABASE_NAME}?sslmode=require" \
+               -v ON_ERROR_STOP=1 -f db/import.sql
