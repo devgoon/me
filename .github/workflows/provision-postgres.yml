@@ -118,30 +118,47 @@ jobs:
                 --output table
             fi
 
-      - name: Apply schema with psql
-        uses: docker://postgres:16
-        env:
-          PGHOST: ${{ secrets.PGHOST }}
-          PGPORT: ${{ secrets.PGPORT }}
-          PGUSER: ${{ secrets.PGUSER }}
-          PGPASSWORD: ${{ secrets.PGPASSWORD }}
-          PGDATABASE: ${{ secrets.PGDATABASE }}
+      - name: Apply schema.sql
+        if: ${{ inputs.apply_schema == 'true' }}
+        uses: azure/cli@v2
         with:
-          args: |
-            bash -c "if [ -f db/schema.sql ]; then psql -f db/schema.sql; else echo 'db/schema.sql not found'; exit 1; fi"
+          inlineScript: |
+            set -euo pipefail
 
-      - name: Import db with psql
+            if [[ ! -f "db/schema.sql" ]]; then
+              echo "db/schema.sql not found"
+              exit 1
+            fi
+
+            az postgres flexible-server execute \
+              --name "$SERVER_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --admin-user "$ADMIN_USER" \
+              --admin-password "$ADMIN_PASSWORD" \
+              --database-name "$DATABASE_NAME" \
+              --file-path "db/schema.sql" \
+              --output table
+
+      - name: Import db
         if: ${{ inputs.apply_import_data == 'true' }}
-        uses: docker://postgres:16
-        env:
-          PGHOST: ${{ secrets.PGHOST }}
-          PGPORT: ${{ secrets.PGPORT }}
-          PGUSER: ${{ secrets.PGUSER }}
-          PGPASSWORD: ${{ secrets.PGPASSWORD }}
-          PGDATABASE: ${{ secrets.PGDATABASE }}
+        uses: azure/cli@v2
         with:
-          args: |
-            bash -c "if [ -f db/import.sql ]; then psql -f db/import.sql; else echo 'db/import.sql not found'; exit 1; fi"
+          inlineScript: |
+            set -euo pipefail
+
+            if [[ ! -f "db/import.sql" ]]; then
+              echo "db/import.sql not found"
+              exit 1
+            fi
+
+            az postgres flexible-server execute \
+              --name "$SERVER_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --admin-user "$ADMIN_USER" \
+              --admin-password "$ADMIN_PASSWORD" \
+              --database-name "$DATABASE_NAME" \
+              --file-path "db/import.sql" \
+              --output table
 
 
       - name: Print connection info
