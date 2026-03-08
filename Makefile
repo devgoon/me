@@ -1,8 +1,12 @@
-.PHONY: install spellcheck spellcheck-pdf link-check syntax-check ts-build config-check unit-test check start stop
+.PHONY: install spellcheck spellcheck-pdf link-check syntax-check ts-build config-check unit-test check start stop db-export
 
 install:
 	npm install
 	cd api && npm install
+
+db-export:
+	@if [ ! -f .env.local ]; then echo "ERROR: .env.local not found"; exit 1; fi
+	@set -a && source .env.local && set +a && node scripts/db-export.js
 
 spellcheck:spellcheck-pdf
 	npx cspell "**/*.{html,css,js}" "assets/*.txt" --verbose

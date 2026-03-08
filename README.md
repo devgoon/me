@@ -133,7 +133,6 @@ Main deploy workflow:
 - `.github/workflows/webapp.yml`
 
 Trigger conditions:
-- Push to branch `ai-portfolio`
 - Manual `workflow_dispatch`
 
 ### Required GitHub secrets
