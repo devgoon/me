@@ -23,8 +23,8 @@ on:
         description: "Apply db/schema.sql after provisioning"
         required: false
         default: "true"
-      apply_seed:
-        description: "Apply db/seed.sql after provisioning"
+      apply_import_data:
+        description: "Apply db/import.sql after provisioning"
         required: false
         default: "false"
 
@@ -47,7 +47,7 @@ jobs:
       SKU_NAME: ${{ inputs.sku_name }}
       STORAGE_GB: ${{ inputs.storage_gb }}
       APPLY_SCHEMA: ${{ inputs.apply_schema }}
-      APPLY_SEED: ${{ inputs.apply_seed }}
+      APPLY_IMPORT_DATA: ${{ inputs.apply_import_data }}
 
     steps:
       - name: Checkout
@@ -139,40 +139,31 @@ jobs:
               --file-path "db/schema.sql" \
               --output table
 
-      - name: Enable preview extension install
-        if: ${{ inputs.apply_seed == 'true' }}
-        uses: azure/cli@v2
+      - name: Apply schema with psql
+        uses: docker://postgres:16
+        env:
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
         with:
-          inlineScript: |
-            az config set extension.dynamic_install_allow_preview=true
+          args: |
+            bash -c "if [ -f db/schema.sql ]; then psql -f db/schema.sql; else echo 'db/schema.sql not found'; exit 1; fi"
 
-      - name: Install rdbms-connect extension
-        if: ${{ inputs.apply_seed == 'true' }}
-        uses: azure/cli@v2
+      - name: Import db with psql
+        if: ${{ inputs.apply_import_data == 'true' }}
+        uses: docker://postgres:16
+        env:
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
         with:
-          inlineScript: |
-            az extension add --name rdbms-connect --allow-preview
+          args: |
+            bash -c "if [ -f db/import.sql ]; then psql -f db/import.sql; else echo 'db/import.sql not found'; exit 1; fi"
 
-      - name: Apply db import
-        if: ${{ inputs.apply_seed == 'true' }}
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-
-            if [[ ! -f "db/import.sql" ]]; then
-              echo "db/import.sql not found"
-              exit 1
-            fi
-
-            az postgres flexible-server execute \
-              --name "$SERVER_NAME" \
-              --resource-group "$RESOURCE_GROUP" \
-              --admin-user "$ADMIN_USER" \
-              --admin-password "$ADMIN_PASSWORD" \
-              --database-name "$DATABASE_NAME" \
-              --file-path "db/import.sql" \
-              --output table
 
       - name: Print connection info
         uses: azure/cli@v2
