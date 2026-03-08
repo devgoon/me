@@ -122,7 +122,7 @@ jobs:
         if: ${{ inputs.apply_schema == 'true' }}
         uses: azure/cli@v2
         with:
-          container: mcr.microsoft.com/azure-cli:latest
+          container: mcr.microsoft.com/azure-cli:2.80.0
           inlineScript: |
             set -euo pipefail
 
@@ -146,7 +146,7 @@ jobs:
         if: ${{ inputs.apply_import_data == 'true' }}
         uses: azure/cli@v2
         with:
-          container: mcr.microsoft.com/azure-cli:latest
+          container: mcr.microsoft.com/azure-cli:2.80.0
           inlineScript: |
             set -euo pipefail
 
