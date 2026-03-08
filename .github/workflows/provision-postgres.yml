@@ -34,7 +34,7 @@ permissions:
 
 jobs:
   # -----------------------------------------------------------
-  # Job 1: Provision – Azure CLI in a job-level container
+  # Job 1: Provision – run entirely in Azure CLI container
   # -----------------------------------------------------------
   provision:
     name: Provision PostgreSQL Flexible Server
@@ -58,8 +58,18 @@ jobs:
       server_name: ${{ env.SERVER_NAME }}
 
     steps:
+      - name: Install git in Azure Linux container
+        shell: bash
+        run: |
+          set -euo pipefail
+          tdnf makecache -q
+          tdnf install -y git
+          git --version
+
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Validate required vars and secrets
         shell: bash
@@ -122,62 +132,3 @@ jobs:
               --resource-group "$RESOURCE_GROUP" \
               --server-name "$SERVER_NAME" \
               --database-name "$DATABASE_NAME" \
-              --output table
-          fi
-
-      - name: Get FQDN
-        id: getfqdn
-        shell: bash
-        run: |
-          set -euo pipefail
-          FQDN=$(az postgres flexible-server show \
-            --resource-group "$RESOURCE_GROUP" \
-            --name "$SERVER_NAME" \
-            --query fullyQualifiedDomainName -o tsv)
-          echo "fqdn=$FQDN" >> "$GITHUB_OUTPUT"
-          echo "Server FQDN: $FQDN"
-
-      - name: Print connection info
-        shell: bash
-        run: |
-          echo "PostgreSQL server ready: $SERVER_NAME"
-          echo "Database ready: $DATABASE_NAME"
-          echo "FQDN: ${{ steps.getfqdn.outputs.fqdn }}"
-          echo ""
-          echo "Connection string (Flexible Server username is plain, TLS required):"
-          echo "postgresql://$ADMIN_USER:<password>@${{ steps.getfqdn.outputs.fqdn }}:5432/$DATABASE_NAME?sslmode=require"
-
-  # -----------------------------------------------------------
-  # Job 2: Apply SQL – Postgres client in a job-level container
-  # -----------------------------------------------------------
-  apply-sql:
-    name: Apply schema/import with psql
-    needs: provision
-    runs-on: ubuntu-latest
-    container: postgres:16
-    env:
-      ADMIN_USER: ${{ needs.provision.outputs.admin_user }}
-      ADMIN_PASSWORD: ${{ secrets.AZURE_PG_ADMIN_PASSWORD }}
-      FQDN: ${{ needs.provision.outputs.fqdn }}
-      DATABASE_NAME: ${{ needs.provision.outputs.db }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Apply schema.sql
-        if: ${{ inputs.apply_schema == 'true' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -f db/schema.sql || { echo "db/schema.sql not found"; exit 1; }
-          psql "postgresql://${ADMIN_USER}:${ADMIN_PASSWORD}@${FQDN}:5432/${DATABASE_NAME}?sslmode=require" \
-               -v ON_ERROR_STOP=1 -f db/schema.sql
-
-      - name: Import db (import.sql)
-        if: ${{ inputs.apply_import_data == 'true' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -f db/import.sql || { echo "db/import.sql not found"; exit 1; }
-          psql "postgresql://${ADMIN_USER}:${ADMIN_PASSWORD}@${FQDN}:5432/${DATABASE_NAME}?sslmode=require" \
-               -v ON_ERROR_STOP=1 -f db/import.sql
