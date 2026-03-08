@@ -139,6 +139,13 @@ jobs:
               --file-path "db/schema.sql" \
               --output table
 
+      - name: Install rdbms-connect extension
+        if: ${{ inputs.apply_seed == 'true' }}
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az extension add --name rdbms-connect --allow-preview
+
       - name: Apply db import
         if: ${{ inputs.apply_seed == 'true' }}
         uses: azure/cli@v2
