@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "budgetName": {
+      "value": "lodovi-monthly-budget"
+    },
+    "amount": {
+      "value": 75
+    },
+    "currency": {
+      "value": "USD"
+    },
+    "resourceGroupName": {
+      "value": ""
+    },
+    "startDate": {
+      "value": "2026-03-01"
+    },
+    "alertEmails": {
+      "value": [
+        "you@lodovi.co"
+      ]
+    },
+    "actualThresholds": {
+      "value": [50, 80, 100]
+    },
+    "forecastThresholds": {
+      "value": [80, 100]
+    }
+  }
+}

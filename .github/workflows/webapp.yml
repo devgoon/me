@@ -68,6 +68,7 @@ jobs:
 
   deploy:
     name: Deploy
+    needs: ci
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -176,3 +177,27 @@ jobs:
           fi
 
           echo "AAD login endpoint looks healthy for $HOST"
+
+      - name: Smoke test API health endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          HOST="${SITE_HOSTNAME:-lodovi.co}"
+          URL="https://${HOST}/api/health"
+          echo "Testing API health endpoint: $URL"
+
+          HTTP_CODE=$(curl -sS -m 20 -o /tmp/health.json -w "%{http_code}" "$URL")
+          if [[ "$HTTP_CODE" != "200" ]]; then
+            echo "Expected HTTP 200 from /api/health, got: $HTTP_CODE"
+            cat /tmp/health.json || true
+            exit 1
+          fi
+
+          if ! grep -q '"ok"' /tmp/health.json; then
+            echo "Health response does not include expected 'ok' field"
+            cat /tmp/health.json || true
+            exit 1
+          fi
+
+          echo "API health endpoint looks healthy for $HOST"

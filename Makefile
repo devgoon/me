@@ -15,7 +15,7 @@ link-check:
 
 syntax-check:
 	@set -e; \
-	FILES="api/chat/index.js api/experience/index.js api/admin/index.js api/auth/index.js api/_shared/auth.js"; \
+	FILES="api/chat/index.js api/experience/index.js api/admin/index.js api/auth/index.js api/health/index.js api/_shared/auth.js api/_shared/observability.js"; \
 	for FILE in $$FILES; do \
 		if [ -f "$$FILE" ]; then \
 			node --check "$$FILE"; \

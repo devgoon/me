@@ -1,4 +1,5 @@
 const { Client } = require("pg");
+const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-20250514";
@@ -206,14 +207,18 @@ async function loadCandidateData(client) {
 }
 
 module.exports = async function(context) {
+  const req = context.req || null;
+  const obs = beginRequest(context, req, "experience.get");
   const databaseUrl = process.env.DATABASE_URL;
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
   if (!databaseUrl) {
     context.res = {
       status: 500,
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
       body: { error: "DATABASE_URL is not configured" }
     };
+    endRequest(context, obs, 500);
     return;
   }
 
@@ -255,7 +260,7 @@ module.exports = async function(context) {
 
     context.res = {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
       body: {
         profile: {
           name: payload.profile.name,
@@ -265,12 +270,15 @@ module.exports = async function(context) {
         skills
       }
     };
+    endRequest(context, obs, 200);
   } catch (error) {
-    context.log.error("experience endpoint failed", error);
     const message = error && error.message ? error.message : "Unable to load experience data";
     const isTimeout = /timeout/i.test(message);
+    const status = isTimeout ? 504 : 500;
+    failRequest(context, obs, error, status);
     context.res = {
-      status: isTimeout ? 504 : 500,
+      status,
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
       body: { error: message }
     };
   } finally {

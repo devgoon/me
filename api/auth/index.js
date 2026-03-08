@@ -1,4 +1,5 @@
 const { getClientPrincipal } = require("../_shared/auth");
+const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 
 function text(value) {
   return value === null || value === undefined ? "" : String(value).trim();
@@ -24,6 +25,7 @@ async function handleMe(req) {
 }
 
 module.exports = async function(context, req) {
+  const obs = beginRequest(context, req, "auth.me");
   const action = text(req && req.params && req.params.action).toLowerCase() || "";
   const method = text(req && req.method).toUpperCase();
 
@@ -37,14 +39,15 @@ module.exports = async function(context, req) {
 
     context.res = {
       status: response.status,
-      headers: { "Content-Type": "application/json" },
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
       body: response.body
     };
+    endRequest(context, obs, response.status);
   } catch (error) {
-    context.log.error("auth endpoint failed", error);
+    failRequest(context, obs, error, 500);
     context.res = {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
       body: { error: error.message || "Authentication error" }
     };
   }

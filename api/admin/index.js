@@ -1,5 +1,6 @@
 const { Client } = require("pg");
 const { getClientPrincipal } = require("../_shared/auth");
+const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 15000;
@@ -486,13 +487,15 @@ async function saveAll(client, candidateId, payload, authEmail) {
 }
 
 module.exports = async function(context, req) {
+  const obs = beginRequest(context, req, "admin.panel");
   const auth = requireAuth(req);
   if (!auth) {
     context.res = {
       status: 401,
-      headers: { "Content-Type": "application/json" },
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
       body: { error: "Unauthorized" }
     };
+    endRequest(context, obs, 401);
     return;
   }
 
@@ -507,9 +510,10 @@ module.exports = async function(context, req) {
       const data = await loadAll(client, candidateId);
       context.res = {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
         body: data
       };
+      endRequest(context, obs, 200);
       return;
     }
 
@@ -517,22 +521,24 @@ module.exports = async function(context, req) {
       await saveAll(client, candidateId, req.body || {}, String(auth.email).toLowerCase());
       context.res = {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
         body: { ok: true }
       };
+      endRequest(context, obs, 200);
       return;
     }
 
     context.res = {
       status: 405,
-      headers: { "Content-Type": "application/json" },
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
       body: { error: "Method not allowed" }
     };
+    endRequest(context, obs, 405);
   } catch (error) {
-    context.log.error("admin endpoint failed", error);
+    failRequest(context, obs, error, 500);
     context.res = {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
       body: { error: error.message || "Admin operation failed" }
     };
   } finally {
