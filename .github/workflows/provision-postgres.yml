@@ -139,15 +139,15 @@ jobs:
               --file-path "db/schema.sql" \
               --output table
 
-      - name: Apply seed.sql
+      - name: Apply db import
         if: ${{ inputs.apply_seed == 'true' }}
         uses: azure/cli@v2
         with:
           inlineScript: |
             set -euo pipefail
 
-            if [[ ! -f "db/seed.sql" ]]; then
-              echo "db/seed.sql not found"
+            if [[ ! -f "db/import.sql" ]]; then
+              echo "db/import.sql not found"
               exit 1
             fi
 
@@ -157,7 +157,7 @@ jobs:
               --admin-user "$ADMIN_USER" \
               --admin-password "$ADMIN_PASSWORD" \
               --database-name "$DATABASE_NAME" \
-              --file-path "db/seed.sql" \
+              --file-path "db/import.sql" \
               --output table
 
       - name: Print connection info
