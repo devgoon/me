@@ -122,8 +122,11 @@ jobs:
         if: ${{ inputs.apply_schema == 'true' }}
         uses: azure/cli@v2
         with:
+          container: mcr.microsoft.com/azure-cli:latest
           inlineScript: |
             set -euo pipefail
+
+            az config set extension.dynamic_install_allow_preview=true
 
             if [[ ! -f "db/schema.sql" ]]; then
               echo "db/schema.sql not found"
@@ -143,8 +146,11 @@ jobs:
         if: ${{ inputs.apply_import_data == 'true' }}
         uses: azure/cli@v2
         with:
+          container: mcr.microsoft.com/azure-cli:latest
           inlineScript: |
             set -euo pipefail
+
+            az config set extension.dynamic_install_allow_preview=true
 
             if [[ ! -f "db/import.sql" ]]; then
               echo "db/import.sql not found"
