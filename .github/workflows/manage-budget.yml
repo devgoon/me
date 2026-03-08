@@ -67,6 +67,52 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Preflight permission check
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          EMAILS_JSON=$(printf '%s' "${{ inputs.alert_emails_csv }}" | awk -F',' '
+            BEGIN { printf("[") }
+            {
+              for (i=1; i<=NF; i++) {
+                gsub(/^ +| +$/, "", $i)
+                if (length($i) > 0) {
+                  if (seen++) printf(",")
+                  printf("\"%s\"", $i)
+                }
+              }
+            }
+            END { printf("]") }
+          ')
+
+          set +e
+          VALIDATE_OUTPUT=$(az deployment sub validate \
+            --location "$AZURE_LOCATION" \
+            --template-file infra/cost/budget.bicep \
+            --parameters \
+              budgetName="${{ inputs.budget_name }}" \
+              amount=${{ inputs.amount }} \
+              currency="${{ inputs.currency }}" \
+              resourceGroupName="${{ inputs.resource_group_name }}" \
+              startDate="${{ inputs.start_date }}" \
+              alertEmails="$EMAILS_JSON" \
+            --only-show-errors 2>&1)
+          STATUS=$?
+          set -e
+
+          if [[ "$STATUS" -ne 0 ]]; then
+            echo "$VALIDATE_OUTPUT"
+            echo ""
+            echo "Preflight permission check failed."
+            echo "Grant the GitHub service principal these subscription-scope roles:"
+            echo "- Contributor (for Microsoft.Resources/deployments/*)"
+            echo "- Cost Management Contributor (for Microsoft.Consumption/budgets/*)"
+            exit 1
+          fi
+
+          echo "Preflight permission check passed."
+
       - name: Deploy budget via Bicep
         shell: bash
         run: |
