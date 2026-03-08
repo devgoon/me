@@ -1,0 +1,164 @@
+# me
+
+Personal website and AI-assisted portfolio for Lodovico Minnocci.
+
+This repo contains:
+- Static frontend pages (home, auth, admin, experience/fit views)
+- Azure Functions API (`api/`)
+- PostgreSQL schema and seed files (`db/`)
+- CI/CD workflows for deploy and database provisioning
+
+## Architecture
+
+- Frontend: static HTML/CSS + TypeScript-compiled browser JS in `assets/js/`
+- Backend: Azure Functions (Node.js) in `api/`
+- Data: PostgreSQL
+- Local runtime: Azure Static Web Apps CLI + Azurite
+
+## Prerequisites
+
+Required:
+- Node.js 20+
+- npm
+- GNU Make
+
+Recommended:
+- Azure CLI (`az`) for provisioning and infra operations
+- GitHub CLI (`gh`) for workflow dispatch and PR automation
+- `pdftotext` (from poppler) for spellcheck PDF extraction used in `make check`
+
+macOS install example for `pdftotext`:
+```bash
+brew install poppler
+```
+
+## Environment setup
+
+1. Copy `.env.example` values into your local environment file(s) used by SWA/Functions.
+2. Set values:
+- `ANTHROPIC_API_KEY`
+- `AI_MODEL`
+- `DATABASE_URL`
+
+Example from `.env.example`:
+```env
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+AI_MODEL=claude-sonnet-4-20250514
+DATABASE_URL=postgresql://username:password@server.postgres.database.azure.com:5432/database?sslmode=require
+```
+
+## Install
+
+```bash
+make install
+```
+
+This installs root dependencies and API dependencies.
+
+## Build
+
+TypeScript frontend build:
+```bash
+npm run build:ts
+```
+
+Typecheck only:
+```bash
+npm run typecheck
+```
+
+## Run locally
+
+Start local stack (SWA + Functions + Azurite):
+```bash
+make start
+```
+
+Stop local stack:
+```bash
+make stop
+```
+
+SWA local config is in `swa-cli.config.json` (`me-local`, host `127.0.0.1`, port `4280`, API `7071`).
+
+## Quality checks
+
+Run all checks:
+```bash
+make check
+```
+
+Current staged checks:
+1. Spellcheck
+2. TypeScript build
+3. API JS syntax check
+4. Config validation
+5. API unit tests
+6. Link check
+
+Run API tests only:
+```bash
+cd api && npm test -- --runInBand
+```
+
+## Database
+
+Schema and seed files:
+- `db/schema.sql`
+- `db/seed.sql`
+
+Provision Azure PostgreSQL via workflow:
+- `.github/workflows/provision-postgres.yml`
+- Trigger manually with `workflow_dispatch`
+- Optional workflow inputs:
+	- `apply_schema` (default `true`) to execute `db/schema.sql`
+	- `apply_seed` (default `false`) to execute `db/seed.sql`
+	- `allow_destructive_changes` (default `false`) must be `true` for `apply_seed=true`
+	- `destructive_seed_approval` (default `N`) must be `Y` for `apply_seed=true`
+	- `destructive_confirmation` must exactly equal `<server-name>/<database-name>` for `apply_seed=true`
+
+Default behavior is non-destructive for production usage.
+
+Safety checks before running seed on any environment:
+1. Confirm workflow target variables: `AZURE_PG_SERVER_NAME` and `database_name`.
+2. Keep `apply_seed=false` unless you intentionally want to replace data.
+3. If seeding, verify `db/seed.sql` includes destructive statements you expect (for this repo it uses `TRUNCATE ... RESTART IDENTITY CASCADE`).
+4. In workflow logs, verify `Guard destructive seed operation` passed for the exact expected `<server>/<db>` target.
+
+Required GitHub repository variables/secrets for DB workflow:
+- Vars: `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`, `AZURE_PG_SERVER_NAME`, `AZURE_PG_ADMIN_USER`
+- Secrets: `AZURE_CREDENTIALS`, `AZURE_PG_ADMIN_PASSWORD`
+
+## Deploy
+
+Main deploy workflow:
+- `.github/workflows/webapp.yml`
+
+Trigger conditions:
+- Push to branch `ai-portfolio`
+- Manual `workflow_dispatch`
+
+### Required GitHub secrets
+- `AZURE_CREDENTIALS`
+- `AZURE_STATIC_WEB_APPS_API_TOKEN`
+- `ANTHROPIC_API_KEY`
+- `DATABASE_URL`
+
+### Required GitHub variables
+- `AI_MODEL`
+- `AZURE_RESOURCE_GROUP`
+- `AZURE_STATIC_WEB_APP_NAME`
+- `SITE_HOSTNAME`
+
+Deployment workflow does:
+- quality/security checks
+- Azure login
+- sync API app settings to Static Web App
+- deploy app + API
+- smoke test AAD login endpoint
+
+## Notes and caveats
+
+- The deploy workflow currently targets the `ai-portfolio` branch.
+- Local auth behavior uses SWA auth emulator flow and may differ from cloud login UX.
+- If you see port/process issues locally, run `make stop` before `make start`.
