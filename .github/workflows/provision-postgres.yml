@@ -139,6 +139,13 @@ jobs:
               --file-path "db/schema.sql" \
               --output table
 
+      - name: Enable preview extension install
+        if: ${{ inputs.apply_seed == 'true' }}
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az config set extension.dynamic_install_allow_preview=true
+
       - name: Install rdbms-connect extension
         if: ${{ inputs.apply_seed == 'true' }}
         uses: azure/cli@v2
