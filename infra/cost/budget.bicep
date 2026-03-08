@@ -34,50 +34,75 @@ param forecastThresholds array = [
   100
 ]
 
-var budgetFilter = empty(resourceGroupName)
-  ? null
+var notificationConfig = {
+  actual50: {
+    enabled: contains(actualThresholds, 50)
+    operator: 'GreaterThan'
+    threshold: 50
+    thresholdType: 'Actual'
+    contactEmails: alertEmails
+  }
+  actual80: {
+    enabled: contains(actualThresholds, 80)
+    operator: 'GreaterThan'
+    threshold: 80
+    thresholdType: 'Actual'
+    contactEmails: alertEmails
+  }
+  actual100: {
+    enabled: contains(actualThresholds, 100)
+    operator: 'GreaterThan'
+    threshold: 100
+    thresholdType: 'Actual'
+    contactEmails: alertEmails
+  }
+  forecast80: {
+    enabled: contains(forecastThresholds, 80)
+    operator: 'GreaterThan'
+    threshold: 80
+    thresholdType: 'Forecasted'
+    contactEmails: alertEmails
+  }
+  forecast100: {
+    enabled: contains(forecastThresholds, 100)
+    operator: 'GreaterThan'
+    threshold: 100
+    thresholdType: 'Forecasted'
+    contactEmails: alertEmails
+  }
+}
+
+var baseProperties = {
+  category: 'Cost'
+  amount: amount
+  timeGrain: 'Monthly'
+  timePeriod: {
+    startDate: startDate
+  }
+  notifications: notificationConfig
+}
+
+var filterProperties = empty(resourceGroupName)
+  ? {}
   : {
-      dimensions: {
-        name: 'ResourceGroupName'
-        operator: 'In'
-        values: [
-          resourceGroupName
-        ]
+      filter: {
+        dimensions: {
+          name: 'ResourceGroupName'
+          operator: 'In'
+          values: [
+            resourceGroupName
+          ]
+        }
       }
     }
 
 resource monthlyBudget 'Microsoft.Consumption/budgets@2023-11-01' = {
   name: budgetName
   properties: {
-    category: 'Cost'
-    amount: amount
-    timeGrain: 'Monthly'
-    timePeriod: {
-      startDate: startDate
-    }
-    filter: budgetFilter
-    notifications: union(
-      {
-        for threshold in actualThresholds: 'actual${threshold}': {
-          enabled: true
-          operator: 'GreaterThan'
-          threshold: threshold
-          thresholdType: 'Actual'
-          contactEmails: alertEmails
-        }
-      },
-      {
-        for threshold in forecastThresholds: 'forecast${threshold}': {
-          enabled: true
-          operator: 'GreaterThan'
-          threshold: threshold
-          thresholdType: 'Forecasted'
-          contactEmails: alertEmails
-        }
-      }
-    )
+    ...union(baseProperties, filterProperties)
   }
 }
 
 output budgetId string = monthlyBudget.id
 output scopedTo string = empty(resourceGroupName) ? 'subscription' : resourceGroupName
+output budgetCurrency string = currency
