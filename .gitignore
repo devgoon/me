@@ -1,3 +1,11 @@
+# Ignore temp SQL files
+db/backup-*.sql
+db/pre-migration-schema.sql
+db/post-migration-schema.sql
+db/pre-migration-schema.struct.sql
+db/post-migration-schema.struct.sql
+db/live-schema.sql
+db/export.sql
 # These are some examples of commonly ignored file patterns.
 # You should customize this list as applicable to your project.
 # Learn more about .gitignore:
@@ -61,7 +69,6 @@ Thumbs.db
 changelog.txt
 Readme.txt
 .dccache
-ci/
 assets/*.txt
 
 # secrets
@@ -70,3 +77,6 @@ assets/*.txt
 .env.*.local
 local.settings.json
 .azurite/
+
+db/export.sql
+migrations/*.sql

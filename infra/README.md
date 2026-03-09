@@ -21,5 +21,3 @@ az deployment group create \
 
 ## Notes
 
-- This is a phase-1 IaC baseline and is intended to complement the current workflows.
-- Next step is to add Static Web App and Key Vault resources and then move workflow provisioning to pure IaC apply.

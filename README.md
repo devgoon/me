@@ -1,3 +1,7 @@
+## Database Schema & API Flow
+
+See README-db-schema.md for a comprehensive database schema (ERD).
+See README-api-flow.md for API flow diagrams for chat and admin cache reporting.
 # me
 
 ## Project Overview
@@ -6,7 +10,6 @@ Personal website and AI-assisted portfolio for Lodovico Minnocci.
 - Static frontend pages (home, auth, admin, experience/fit views)
 - Azure Functions API (`api/`)
 - PostgreSQL schema and seed files (`db/`)
-- CI/CD workflows for deploy and database provisioning
 
 ## Architecture
 
@@ -50,14 +53,15 @@ Required:
 - Node.js 20+
 - npm
 - GNU Make
+- PostgreSQL client tools (for pg_dump, psql)
 
 Recommended:
 - Azure CLI (`az`) for provisioning and infra operations
-- GitHub CLI (`gh`) for workflow dispatch and PR automation
 - `pdftotext` (from poppler) for spellcheck PDF extraction used in `make check`
 
-macOS install example for `pdftotext`:
+macOS install example for PostgreSQL client tools and pdftotext:
 ```bash
+brew install postgresql
 brew install poppler
 ```
 
@@ -137,46 +141,9 @@ Schema and seed files:
 - `db/schema.sql`
 - `db/seed.sql`
 
-Provision Azure PostgreSQL via workflow:
-- `.github/workflows/provision-postgres.yml`
-- Trigger manually with `workflow_dispatch`
-- Optional workflow inputs:
-  - `apply_schema` (default `true`) to execute `db/schema.sql`
-  - `apply_seed` (default `false`) to execute `db/seed.sql`
-
-Default behavior is non-destructive for production usage.
-
-Safety checks before running seed on any environment:
-1. Confirm workflow target variables: `AZURE_PG_SERVER_NAME` and `database_name`.
-2. Keep `apply_seed=false` unless you intentionally want to replace data.
-3. If seeding, verify `db/seed.sql` includes destructive statements you expect (for this repo it uses `TRUNCATE ... RESTART IDENTITY CASCADE`).
-
-Required GitHub repository variables/secrets for DB workflow:
-- Vars: `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`, `AZURE_PG_SERVER_NAME`, `AZURE_PG_ADMIN_USER`
-- Secrets: `AZURE_CREDENTIALS`, `AZURE_PG_ADMIN_PASSWORD`
 
 ## Deploy
 
-Main deploy workflow:
-- `.github/workflows/webapp.yml`
-
-Trigger conditions:
-- Manual `workflow_dispatch`
-
-### Required GitHub secrets
-- `AZURE_CREDENTIALS`
-- `AZURE_STATIC_WEB_APPS_API_TOKEN`
-- `ANTHROPIC_API_KEY`
-- `DATABASE_URL`
-
-### Required GitHub variables
-- `AI_MODEL`
-- `AZURE_RESOURCE_GROUP`
-- `AZURE_STATIC_WEB_APP_NAME`
-- `SITE_HOSTNAME`
-
-Deployment workflow does:
-- quality/security checks
 - Azure login
 - sync API app settings to Static Web App
 - deploy app + API
@@ -199,6 +166,69 @@ The AI response cache is stored in the PostgreSQL table `ai_response_cache`. Eac
 
 ## Notes & Caveats
 
-- The deploy workflow currently targets the `ai-portfolio` branch.
 - Local auth behavior uses SWA auth emulator flow and may differ from cloud login UX.
 - If you see port/process issues locally, run `make stop` before `make start`.
+
+## Database Migration & Validation Workflow
+
+This project uses a robust Makefile-based workflow for database migration, schema validation, and automated rollback.
+
+### Migration Workflow
+
+1. **Dump pre-migration schema**
+   ```bash
+   make pre-migration-schema
+   ```
+2. **Apply migrations**
+   ```bash
+   make migrate-db
+   ```
+3. **Dump post-migration schema**
+   ```bash
+   make post-migration-schema
+   ```
+4. **Verify migration and rollback if mismatch**
+   ```bash
+   make verify-migration
+   ```
+
+- `verify-migration` compares pre- and post-migration schemas, ignoring pg_dump metadata and focusing on structural SQL.
+- If a mismatch is detected, the database is automatically restored from the latest backup.
+- For destructive restores, drop the database or schema before running `make rollback-db`.
+
+### Database Operations
+
+- **Backup database:**
+  ```bash
+  make backup-db
+  ```
+- **Profile data backup:**
+  ```bash
+  make profile-data-backup
+  ```
+- **Profile data upload:**
+  ```bash
+  make profile-data-upload
+  ```
+- **Deploy database (all steps):**
+  ```bash
+  make deploy-db
+  ```
+
+### Quality & Utility
+
+- **Schema validation against canonical schema:**
+  ```bash
+  make verify-schema
+  ```
+
+### Makefile Organization
+
+The Makefile is organized into:
+- Automated Migration Validation & Rollback
+- Database Operations
+- Migration Workflow
+- Quality & Utility
+- Local Development
+
+See comments in the Makefile for details and usage examples.

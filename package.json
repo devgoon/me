@@ -7,12 +7,16 @@
   "license": "MIT",
   "scripts": {
     "build:ts": "tsc --project tsconfig.json",
-    "typecheck": "tsc --project tsconfig.json --noEmit"
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "migrate": "node-pg-migrate -d $DATABASE_URL -m migrations",
+    "migrate:up": "node-pg-migrate up -d $DATABASE_URL -m migrations",
+    "migrate:down": "node-pg-migrate down -d $DATABASE_URL -m migrations"
   },
   "devDependencies": {
     "cspell": "latest",
     "http-server": "latest",
     "linkinator": "latest",
+    "node-pg-migrate": "^7.9.1",
     "pa11y": "latest",
     "typescript": "^5.8.2"
   },
