@@ -137,9 +137,10 @@ API tests include validation of the cache report and the `is_cached` flag.
 
 ## Database
 
-Schema and seed files:
-- `db/schema.sql`
-- `db/seed.sql`
+
+Schema and export files:
+  - `db/schema.sql`
+  - `db/export.sql`
 
 
 ## Deploy
