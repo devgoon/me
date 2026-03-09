@@ -1,8 +1,8 @@
 # me
 
+## Project Overview
 Personal website and AI-assisted portfolio for Lodovico Minnocci.
 
-This repo contains:
 - Static frontend pages (home, auth, admin, experience/fit views)
 - Azure Functions API (`api/`)
 - PostgreSQL schema and seed files (`db/`)
@@ -10,12 +10,41 @@ This repo contains:
 
 ## Architecture
 
-- Frontend: static HTML/CSS + TypeScript-compiled browser JS in `assets/js/`
-- Backend: Azure Functions (Node.js) in `api/`
-- Data: PostgreSQL
-- Local runtime: Azure Static Web Apps CLI + Azurite
+````mermaid
+flowchart TD
+  User -->|Browser| SWA[Azure Static Web Apps]
+  SWA -->|API| Functions[Azure Functions]
+  Functions -->|DB| Postgres[Azure PostgreSQL]
+  Functions -->|AI| Anthropic[Claude API]
+````
 
-## Prerequisites
+SWA = Azure Static Web Apps, a Microsoft service for hosting static sites and serverless APIs.
+
+## Visual Documentation with Mermaid
+
+You can use Mermaid diagrams in markdown to visually document architecture, workflows, and API flows. GitHub and VS Code support Mermaid syntax for rendering charts.
+
+### Sequence Diagram Example
+
+````mermaid
+sequenceDiagram
+  participant User
+  participant SWA
+  participant API
+  participant DB
+  participant AI
+
+  User->>SWA: Request /chat
+  SWA->>API: Forward request
+  API->>DB: Check cache
+  API->>AI: Call AI (if cache miss)
+  AI-->>API: Return response
+  API->>DB: Store in cache
+  API-->>SWA: Return answer
+  SWA-->>User: Show response
+````
+
+## Prerequisites & Environment Setup
 
 Required:
 - Node.js 20+
@@ -32,15 +61,15 @@ macOS install example for `pdftotext`:
 brew install poppler
 ```
 
-## Environment setup
+### Environment setup
 
 1. Copy `.env.example` values into your local environment file(s) used by SWA/Functions.
 2. Copy `local.settings.example.json` to `local.settings.json` for local Functions runtime values.
 3. Keep `local.settings.json` untracked (it is gitignored) and store only placeholders in committed files.
 4. Set values:
-- `ANTHROPIC_API_KEY`
-- `AI_MODEL`
-- `DATABASE_URL`
+   - `ANTHROPIC_API_KEY`
+   - `AI_MODEL`
+   - `DATABASE_URL`
 
 Example from `.env.example`:
 ```env
@@ -49,15 +78,12 @@ AI_MODEL=claude-sonnet-4-20250514
 DATABASE_URL=postgresql://username:password@server.postgres.database.azure.com:5432/database?sslmode=require
 ```
 
-## Install
+## Install & Build
 
+Install dependencies:
 ```bash
 make install
 ```
-
-This installs root dependencies and API dependencies.
-
-## Build
 
 TypeScript frontend build:
 ```bash
@@ -69,7 +95,7 @@ Typecheck only:
 npm run typecheck
 ```
 
-## Run locally
+## Run Locally
 
 Start local stack (SWA + Functions + Azurite):
 ```bash
@@ -83,7 +109,7 @@ make stop
 
 SWA local config is in `swa-cli.config.json` (`me-local`, host `127.0.0.1`, port `4280`, API `7071`).
 
-## Quality checks
+## Quality Checks & Testing
 
 Run all checks:
 ```bash
@@ -103,6 +129,8 @@ Run API tests only:
 cd api && npm test -- --runInBand
 ```
 
+API tests include validation of the cache report and the `is_cached` flag.
+
 ## Database
 
 Schema and seed files:
@@ -113,8 +141,8 @@ Provision Azure PostgreSQL via workflow:
 - `.github/workflows/provision-postgres.yml`
 - Trigger manually with `workflow_dispatch`
 - Optional workflow inputs:
-	- `apply_schema` (default `true`) to execute `db/schema.sql`
-	- `apply_seed` (default `false`) to execute `db/seed.sql`
+  - `apply_schema` (default `true`) to execute `db/schema.sql`
+  - `apply_seed` (default `false`) to execute `db/seed.sql`
 
 Default behavior is non-destructive for production usage.
 
@@ -154,7 +182,22 @@ Deployment workflow does:
 - deploy app + API
 - smoke test AAD login endpoint
 
-## Notes and caveats
+## AI Response Cache
+
+The AI response cache is stored in the PostgreSQL table `ai_response_cache`. Each entry is keyed by a hash of the AI model and question. The cache is used to avoid redundant AI calls and improve performance.
+
+- The `is_cached` flag indicates whether a record is valid for cache lookup.
+- When relevant data changes (profile, experience, skills, gaps, values, FAQ, AI instructions), all cache records are invalidated by setting `is_cached = FALSE`.
+- Records are never deleted, so all questions and responses are available for reporting.
+- The admin page includes a Cache Report tab showing questions, models, cache hits, last accessed, and cached status.
+
+### Example cache record
+| Question         | Model                  | Cache Hits | Last Accessed         | Cached |
+|------------------|------------------------|------------|-----------------------|--------|
+| What is AI?      | claude-sonnet-4-20250514 | 5          | 2026-03-09T12:00:00Z | Yes    |
+| What is ML?      | claude-sonnet-4-20250514 | 2          | 2026-03-09T11:00:00Z | No     |
+
+## Notes & Caveats
 
 - The deploy workflow currently targets the `ai-portfolio` branch.
 - Local auth behavior uses SWA auth emulator flow and may differ from cloud login UX.

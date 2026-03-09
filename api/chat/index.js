@@ -1,5 +1,6 @@
 const { Client } = require("pg");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
+const crypto = require("crypto");
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-20250514";
@@ -272,6 +273,32 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
   return textBlock ? textBlock.text : "I do not have an answer for that yet.";
 }
 
+async function getCache(client, model, question) {
+  const hash = crypto.createHash("sha256").update(model + "|" + question).digest("hex");
+  const result = await client.query(
+    `SELECT response, cache_hit_count FROM ai_response_cache WHERE hash = $1 AND is_cached = TRUE`,
+    [hash]
+  );
+  if (result.rows.length > 0) {
+    await client.query(
+      `UPDATE ai_response_cache SET cache_hit_count = cache_hit_count + 1, last_accessed = NOW() WHERE hash = $1`,
+      [hash]
+    );
+    return result.rows[0].response;
+  }
+  return null;
+}
+
+async function setCache(client, model, question, response) {
+  const hash = crypto.createHash("sha256").update(model + "|" + question).digest("hex");
+  await client.query(
+    `INSERT INTO ai_response_cache (hash, question, model, response, cache_hit_count, last_accessed, updated_at, is_cached)
+     VALUES ($1, $2, $3, $4, 1, NOW(), NOW(), TRUE)
+     ON CONFLICT (hash) DO UPDATE SET response = EXCLUDED.response, cache_hit_count = ai_response_cache.cache_hit_count + 1, last_accessed = NOW(), updated_at = NOW(), is_cached = TRUE`,
+    [hash, question, model, response]
+  );
+}
+
 module.exports = async function(context, req) {
   const obs = beginRequest(context, req, "chat.ask");
   try {
@@ -323,9 +350,16 @@ module.exports = async function(context, req) {
 
     let assistantResponse;
     try {
-      const contextPayload = await loadCandidateContext(client);
-      const systemPrompt = buildPrompt(contextPayload);
-      assistantResponse = await callAnthropic(systemPrompt, userMessage, apiKey);
+      // Check cache first
+      const cached = await getCache(client, AI_MODEL, userMessage);
+      if (cached) {
+        assistantResponse = cached;
+      } else {
+        const contextPayload = await loadCandidateContext(client);
+        const systemPrompt = buildPrompt(contextPayload);
+        assistantResponse = await callAnthropic(systemPrompt, userMessage, apiKey);
+        await setCache(client, AI_MODEL, userMessage, assistantResponse);
+      }
     } finally {
       await client.end();
     }

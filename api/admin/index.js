@@ -547,3 +547,46 @@ module.exports = async function(context, req) {
     }
   }
 };
+
+// Cache report endpoint
+module.exports.cacheReport = async function(context, req) {
+  const obs = beginRequest(context, req, "admin.cacheReport");
+  const auth = requireAuth(req);
+  if (!auth) {
+    context.res = {
+      status: 401,
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
+      body: { error: "Unauthorized" }
+    };
+    endRequest(context, obs, 401);
+    return;
+  }
+  const client = getDbClient();
+  await client.connect();
+  try {
+    const result = await client.query(
+      `SELECT question, model, cache_hit_count, last_accessed, is_cached
+       FROM ai_response_cache
+       ORDER BY cache_hit_count DESC, last_accessed DESC`
+    );
+    context.res = {
+      status: 200,
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
+      body: result.rows
+    };
+    endRequest(context, obs, 200);
+  } catch (error) {
+    failRequest(context, obs, error, 500);
+    context.res = {
+      status: 500,
+      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
+      body: { error: error.message || "Cache report error" }
+    };
+  } finally {
+    await client.end();
+  }
+};
+
+module.exports.hideCacheRecords = async function(client) {
+  await client.query(`UPDATE ai_response_cache SET is_cached = FALSE WHERE is_cached = TRUE`);
+};

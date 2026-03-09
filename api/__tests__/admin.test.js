@@ -106,4 +106,53 @@ describe("admin API", () => {
     expect(context.res.status).toBe(200);
     expect(client.query.mock.calls[1][0]).toContain("INSERT INTO candidate_profile");
   });
+
+  test("cache report includes is_cached flag", async () => {
+    getClientPrincipal.mockReturnValue({ email: "admin@example.com" });
+    client.query.mockImplementationOnce(() => Promise.resolve()) // connect
+      .mockImplementationOnce(() => Promise.resolve({
+        rows: [
+          {
+            question: "What is AI?",
+            model: "claude-sonnet-4-20250514",
+            cache_hit_count: 5,
+            last_accessed: "2026-03-09T12:00:00Z",
+            is_cached: true
+          },
+          {
+            question: "What is ML?",
+            model: "claude-sonnet-4-20250514",
+            cache_hit_count: 2,
+            last_accessed: "2026-03-09T11:00:00Z",
+            is_cached: false
+          }
+        ]
+      })) // cache report query
+      .mockImplementationOnce(() => Promise.resolve()); // end
+
+    const context = buildContext();
+    await adminHandler.cacheReport(context, {
+      method: "GET",
+      headers: {},
+      body: null
+    });
+
+    expect(context.res.status).toBe(200);
+    expect(context.res.body).toEqual([
+      {
+        question: "What is AI?",
+        model: "claude-sonnet-4-20250514",
+        cache_hit_count: 5,
+        last_accessed: "2026-03-09T12:00:00Z",
+        is_cached: true
+      },
+      {
+        question: "What is ML?",
+        model: "claude-sonnet-4-20250514",
+        cache_hit_count: 2,
+        last_accessed: "2026-03-09T11:00:00Z",
+        is_cached: false
+      }
+    ]);
+  });
 });

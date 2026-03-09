@@ -153,15 +153,24 @@ CREATE INDEX IF NOT EXISTS ai_instructions_candidate_id_idx
 CREATE INDEX IF NOT EXISTS ai_instructions_priority_idx
   ON ai_instructions (candidate_id, instruction_type, priority);
 
-CREATE TABLE IF NOT EXISTS admin_users (
-  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  email TEXT NOT NULL,
-  full_name TEXT,
-  password_hash TEXT NOT NULL
+-- AI response cache table
+CREATE TABLE IF NOT EXISTS ai_response_cache (
+  hash TEXT PRIMARY KEY,
+  question TEXT NOT NULL,
+  model TEXT NOT NULL,
+  response TEXT NOT NULL,
+  cache_hit_count INTEGER NOT NULL DEFAULT 0,
+  last_accessed TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  is_cached BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS admin_users_email_uidx
-  ON admin_users (LOWER(email));
+CREATE INDEX IF NOT EXISTS ai_response_cache_last_accessed_idx
+  ON ai_response_cache (last_accessed);
+
+-- Cache invalidation policy: Only invalidate after writes to candidate_profile, experiences, skills, gaps_weaknesses, values_culture, faq_responses, ai_instructions. Never invalidate after writes to ai_response_cache.
+
+COMMENT ON INDEX ai_response_cache_last_accessed_idx
+  IS 'Cache invalidation policy: Only invalidate after writes to candidate_profile, experiences, skills, gaps_weaknesses, values_culture, faq_responses, ai_instructions. Never invalidate after writes to ai_response_cache';
 
 COMMIT;

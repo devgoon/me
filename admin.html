@@ -34,6 +34,7 @@
         <button class="tab-btn" data-tab="values" type="button">Values & Culture</button>
         <button class="tab-btn" data-tab="faq" type="button">FAQ</button>
         <button class="tab-btn" data-tab="ai" type="button">AI Instructions</button>
+        <button class="tab-btn" data-tab="cache" type="button">Cache Report</button>
       </aside>
 
       <section class="panel-stack">
@@ -142,6 +143,23 @@
           </label>
           <button id="add-ai-rule" class="ghost-btn" type="button">Add Instruction Rule</button>
           <div id="ai-rule-list" class="card-list"></div>
+        </section>
+
+        <section class="panel tab-panel" data-panel="cache" hidden>
+          <h2>Cache Report</h2>
+          <input id="cache-search" type="text" placeholder="Search questions..." style="width: 100%; margin-bottom: 1em;">
+          <table id="cache-table" class="admin-table">
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Model</th>
+                <th>Cached</th>
+                <th>Last Accessed</th>
+                <th>Hidden</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </section>
       </section>
     </div>
