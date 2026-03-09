@@ -695,6 +695,29 @@
         mergeState(data);
         setMessage("Admin data loaded.", false);
     }
+    async function loadCacheReport() {
+        const tableBody = document.querySelector("#cache-table tbody");
+        if (!tableBody) return;
+        tableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+        try {
+            const rows = await apiRequest("/api/admin/cache-report", { method: "GET" });
+            if (!Array.isArray(rows) || !rows.length) {
+                tableBody.innerHTML = '<tr><td colspan="5">No cache data found.</td></tr>';
+                return;
+            }
+            tableBody.innerHTML = rows.map(row =>
+                `<tr>
+                    <td>${escapeHtml(row.question)}</td>
+                    <td>${escapeHtml(row.model)}</td>
+                    <td>${row.is_cached ? 'Yes' : 'No'}</td>
+                    <td>${row.last_accessed ? escapeHtml(row.last_accessed) : ''}</td>
+                    <td>${row.cache_hit_count > 0 ? '' : 'Hidden'}</td>
+                </tr>`
+            ).join("");
+        } catch (error) {
+            tableBody.innerHTML = `<tr><td colspan="5">Error loading cache report: ${escapeHtml(error.message)}</td></tr>`;
+        }
+    }
     function wireGlobalActions() {
         const saveButton = document.getElementById("save-all");
         if (saveButton) {
@@ -730,6 +753,15 @@
         }
         loadDraftIfAny();
         renderAll();
+        // Load cache report when cache tab is shown
+        const cacheTab = document.querySelector('[data-tab="cache"]');
+        if (cacheTab) {
+            cacheTab.addEventListener('click', loadCacheReport);
+        }
+        // Optionally load cache report immediately if cache panel is default
+        if (document.querySelector('.tab-btn.is-active[data-tab="cache"]')) {
+            loadCacheReport();
+        }
         window.setInterval(saveDraft, 15000);
     }
     init();
