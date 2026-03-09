@@ -16,8 +16,49 @@ router.get('/admin/monthly-cost', async (req, res) => {
 });
 
 async function getAzureCost() {
-  // Placeholder: integrate with Azure Cost Management API
-  return '$123.45';
+  const clientId = process.env.AZURE_CLIENT_ID;
+  const clientSecret = process.env.AZURE_CLIENT_SECRET;
+  const tenantId = process.env.AZURE_TENANT_ID;
+  const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID;
+  if (!clientId || !clientSecret || !tenantId || !subscriptionId) return 'Missing Azure credentials';
+  try {
+    // 1. Get Azure AD token
+    const tokenResponse = await axios.post(
+      `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
+      new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+        scope: 'https://management.azure.com/.default'
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+    const accessToken = tokenResponse.data.access_token;
+    // 2. Query Cost Management API for current month
+    const now = new Date();
+    const start = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+    const end = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const costResponse = await axios.post(
+      `https://management.azure.com/subscriptions/${subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2023-05-01`,
+      {
+        type: 'Usage',
+        timeframe: 'Custom',
+        timePeriod: { from: start, to: end },
+        dataset: {
+          granularity: 'Monthly',
+          aggregation: { totalCost: { name: 'Cost', function: 'Sum' } }
+        }
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const rows = costResponse.data.rows;
+    if (rows && rows.length && rows[0].length) {
+      return `$${rows[0][0].toFixed(2)}`;
+    }
+    return 'N/A';
+  } catch (error) {
+    return 'Error';
+  }
 }
 
 async function getClaudeCost() {
