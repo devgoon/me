@@ -718,6 +718,21 @@
             tableBody.innerHTML = `<tr><td colspan="5">Error loading cache report: ${escapeHtml(error.message)}</td></tr>`;
         }
     }
+    async function loadMonthlyCost() {
+        const azureCostEl = document.getElementById("azure-cost");
+        const claudeCostEl = document.getElementById("claude-cost");
+        if (!azureCostEl || !claudeCostEl) return;
+        azureCostEl.textContent = 'Loading...';
+        claudeCostEl.textContent = 'Loading...';
+        try {
+            const result = await apiRequest("/api/admin/monthly-cost", { method: "GET" });
+            azureCostEl.textContent = result.azure || 'N/A';
+            claudeCostEl.textContent = result.claude || 'N/A';
+        } catch (error) {
+            azureCostEl.textContent = 'Error';
+            claudeCostEl.textContent = 'Error';
+        }
+    }
     function wireGlobalActions() {
         const saveButton = document.getElementById("save-all");
         if (saveButton) {
@@ -761,6 +776,14 @@
         // Optionally load cache report immediately if cache panel is default
         if (document.querySelector('.tab-btn.is-active[data-tab="cache"]')) {
             loadCacheReport();
+        }
+        // Load monthly cost when cost tab is shown
+        const costTab = document.querySelector('[data-tab="cost"]');
+        if (costTab) {
+            costTab.addEventListener('click', loadMonthlyCost);
+        }
+        if (document.querySelector('.tab-btn.is-active[data-tab="cost"]')) {
+            loadMonthlyCost();
         }
         window.setInterval(saveDraft, 15000);
     }
