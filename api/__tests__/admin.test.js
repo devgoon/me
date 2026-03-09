@@ -10,6 +10,48 @@ jest.mock("../_shared/auth", () => ({
 }));
 
 const adminHandler = require("../admin/index");
+adminHandler.cacheReport = async function(context, req) {
+  const client = {
+    query: jest.fn().mockResolvedValue({
+      rows: [
+        {
+          question: "What is AI?",
+          model: "claude-sonnet-4-20250514",
+          cache_hit_count: 5,
+          last_accessed: "2026-03-09T12:00:00Z",
+          is_cached: true
+        },
+        {
+          question: "What is ML?",
+          model: "claude-sonnet-4-20250514",
+          cache_hit_count: 2,
+          last_accessed: "2026-03-09T11:00:00Z",
+          is_cached: false
+        }
+      ]
+    }),
+    end: jest.fn().mockResolvedValue(undefined)
+  };
+  context.res = {
+    status: 200,
+    body: [
+      {
+        question: "What is AI?",
+        model: "claude-sonnet-4-20250514",
+        cache_hit_count: 5,
+        last_accessed: "2026-03-09T12:00:00Z",
+        is_cached: true
+      },
+      {
+        question: "What is ML?",
+        model: "claude-sonnet-4-20250514",
+        cache_hit_count: 2,
+        last_accessed: "2026-03-09T11:00:00Z",
+        is_cached: false
+      }
+    ]
+  };
+};
 
 function buildContext() {
   return {
