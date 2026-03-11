@@ -65,17 +65,6 @@
         el.classList.toggle("error", Boolean(text && isError));
         el.classList.toggle("ok", Boolean(text && !isError));
     }
-    // Last saved fingerprint (stringified payload) to avoid no-op saves
-    let lastSavedFingerprint = "";
-
-    function fingerprintPayload(payload) {
-        try {
-            return JSON.stringify(payload || {});
-        }
-        catch (e) {
-            return "";
-        }
-    }
     async function apiRequest(url, options) {
         const response = await fetch(url, {
             ...options,
@@ -117,64 +106,16 @@
             state.aiInstructions.rules = Array.isArray(payload.aiInstructions.rules) ? payload.aiInstructions.rules : [];
         }
     }
-    async function loadCacheReport() {
-        setMessage("Loading cache report...", false);
-        let data = [];
-            try {
-                data = await apiRequest("/api/cache-report", { method: "GET" });
-        }
-        catch (error) {
-            setMessage(error.message || "Failed to load cache report", true);
-            renderCacheReport([]);
-            return;
-        }
-        setMessage("Cache report loaded.", false);
-        renderCacheReport(data);
-    }
-
-    function renderCacheReport(report) {
-        const table = document.getElementById("cache-table");
-        if (!table)
-            return;
-        const tbody = table.querySelector("tbody");
-        if (!tbody)
-            return;
-        if (!Array.isArray(report) || report.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='6'>No cache records found.</td></tr>";
-            return;
-        }
-        tbody.innerHTML = report.map((item) => {
-            const last = item.lastAccessed ? (new Date(item.lastAccessed)).toLocaleString() : "";
-            const invalidated = item.invalidatedAt ? (new Date(item.invalidatedAt)).toLocaleString() : "";
-            const hiddenText = item.hidden ? "Yes" : "No";
-            return `<tr>`
-                + `<td class="left">${escapeHtml(item.question || "")}</td>`
-                + `<td class="left">${escapeHtml(item.model || "")}</td>`
-                + `<td class="num">${escapeHtml(String(item.cached || ""))}</td>`
-                + `<td class="left">${escapeHtml(String(last))}</td>`
-                + `<td class="left">${escapeHtml(String(invalidated))}</td>`
-                + `<td class="center">${escapeHtml(String(hiddenText))}</td>`
-                + `</tr>`;
-        }).join("");
-    }
     function wireTabs() {
         const tabs = Array.from(document.querySelectorAll("[data-tab]"));
         const panels = Array.from(document.querySelectorAll("[data-panel]"));
         tabs.forEach((tab) => {
-            tab.addEventListener("click", async () => {
+            tab.addEventListener("click", () => {
                 const panelName = tab.dataset.tab;
                 tabs.forEach((btn) => btn.classList.toggle("is-active", btn === tab));
                 panels.forEach((panel) => {
                     panel.hidden = panel.dataset.panel !== panelName;
                 });
-                if (panelName === "cache") {
-                    try {
-                        await loadCacheReport();
-                    }
-                    catch (e) {
-                        // ignore - loadCacheReport handles messaging
-                    }
-                }
             });
         });
     }
@@ -664,16 +605,10 @@
         setMessage("Saving all changes...", false);
         const payload = sanitizeForSave();
         validateSalaryRange(payload);
-        const fp = fingerprintPayload(payload);
-        if (fp === lastSavedFingerprint) {
-            setMessage("No changes to save.", false);
-            return;
-        }
         await apiRequest("/api/panel-data", {
             method: "POST",
             body: JSON.stringify(payload)
         });
-        lastSavedFingerprint = fp;
         localStorage.removeItem(DRAFT_KEY);
         setMessage("All changes saved successfully.", false);
     }
@@ -759,12 +694,6 @@
         const data = await apiRequest("/api/panel-data", { method: "GET" });
         mergeState(data);
         setMessage("Admin data loaded.", false);
-        // mark current server state as saved to avoid immediate no-op saves
-        try {
-            lastSavedFingerprint = fingerprintPayload(sanitizeForSave());
-        } catch (e) {
-            // ignore fingerprint errors
-        }
     }
     function wireGlobalActions() {
         const saveButton = document.getElementById("save-all");
@@ -783,17 +712,6 @@
             signOut.addEventListener("click", () => {
                 localStorage.removeItem(DRAFT_KEY);
                 window.location.href = LOGOUT_URL;
-            });
-        }
-        const cacheRefreshBtn = document.getElementById("cache-refresh");
-        if (cacheRefreshBtn) {
-            cacheRefreshBtn.addEventListener("click", async () => {
-                try {
-                    await loadCacheReport();
-                }
-                catch (error) {
-                    setMessage(error.message || "Failed to load cache report", true);
-                }
             });
         }
     }
