@@ -1,6 +1,6 @@
 const { Client } = require("pg");
-const { getClientPrincipal } = require("../../_shared/auth");
-const { beginRequest, endRequest, failRequest, withRequestId } = require("../../_shared/observability");
+const { getClientPrincipal } = require("../_shared/auth");
+const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 15000;
@@ -30,7 +30,7 @@ function requireAuth(req) {
 }
 
 module.exports = async function(context, req) {
-	const obs = beginRequest(context, req, "admin.cacheReport");
+	const obs = beginRequest(context, req, "cacheReport");
 	const auth = requireAuth(req);
 	if (!auth) {
 		context.res = {

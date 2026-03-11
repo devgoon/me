@@ -109,8 +109,8 @@
     async function loadCacheReport() {
         setMessage("Loading cache report...", false);
         let data = [];
-        try {
-            data = await apiRequest("/api/admin/cache-report", { method: "GET" });
+            try {
+                data = await apiRequest("/api/cache-report", { method: "GET" });
         }
         catch (error) {
             setMessage(error.message || "Failed to load cache report", true);
