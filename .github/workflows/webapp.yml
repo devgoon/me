@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ci:
-    name: Quality and Security
+    name: Quality and Security Checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

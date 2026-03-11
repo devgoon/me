@@ -561,20 +561,28 @@ module.exports.cacheReport = async function(context, req) {
     endRequest(context, obs, 401);
     return;
   }
-  const client = getDbClient();
-  await client.connect();
-  try {
-    const result = await client.query(
-      `SELECT question, model, cache_hit_count, last_accessed, is_cached
-       FROM ai_response_cache
-       ORDER BY cache_hit_count DESC, last_accessed DESC`
-    );
-    context.res = {
-      status: 200,
-      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
-      body: result.rows
-    };
-    endRequest(context, obs, 200);
+    const client = getDbClient();
+    await client.connect();
+    try {
+      const result = await client.query(
+        `SELECT question, model, cache_hit_count, last_accessed, is_cached
+         FROM ai_response_cache
+         ORDER BY cache_hit_count DESC, last_accessed DESC`
+      );
+      // Map DB fields to frontend keys
+      const mappedRows = result.rows.map(row => ({
+        question: row.question,
+        model: row.model,
+        cached: row.cache_hit_count,
+        lastAccessed: row.last_accessed,
+        hidden: !row.is_cached
+      }));
+      context.res = {
+        status: 200,
+        headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
+        body: mappedRows
+      };
+      endRequest(context, obs, 200);
   } catch (error) {
     failRequest(context, obs, error, 500);
     context.res = {
