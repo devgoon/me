@@ -65,6 +65,17 @@
         el.classList.toggle("error", Boolean(text && isError));
         el.classList.toggle("ok", Boolean(text && !isError));
     }
+    // Last saved fingerprint (stringified payload) to avoid no-op saves
+    let lastSavedFingerprint = "";
+
+    function fingerprintPayload(payload) {
+        try {
+            return JSON.stringify(payload || {});
+        }
+        catch (e) {
+            return "";
+        }
+    }
     async function apiRequest(url, options) {
         const response = await fetch(url, {
             ...options,
@@ -653,10 +664,16 @@
         setMessage("Saving all changes...", false);
         const payload = sanitizeForSave();
         validateSalaryRange(payload);
+        const fp = fingerprintPayload(payload);
+        if (fp === lastSavedFingerprint) {
+            setMessage("No changes to save.", false);
+            return;
+        }
         await apiRequest("/api/panel-data", {
             method: "POST",
             body: JSON.stringify(payload)
         });
+        lastSavedFingerprint = fp;
         localStorage.removeItem(DRAFT_KEY);
         setMessage("All changes saved successfully.", false);
     }
@@ -742,6 +759,12 @@
         const data = await apiRequest("/api/panel-data", { method: "GET" });
         mergeState(data);
         setMessage("Admin data loaded.", false);
+        // mark current server state as saved to avoid immediate no-op saves
+        try {
+            lastSavedFingerprint = fingerprintPayload(sanitizeForSave());
+        } catch (e) {
+            // ignore fingerprint errors
+        }
     }
     function wireGlobalActions() {
         const saveButton = document.getElementById("save-all");
