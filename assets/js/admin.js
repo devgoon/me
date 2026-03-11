@@ -129,18 +129,22 @@
         if (!tbody)
             return;
         if (!Array.isArray(report) || report.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='5'>No cache records found.</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='6'>No cache records found.</td></tr>";
             return;
         }
-        tbody.innerHTML = report.map((item) =>
-            `<tr>`
-            + `<td>${escapeHtml(item.question || "")}</td>`
-            + `<td>${escapeHtml(item.model || "")}</td>`
-            + `<td>${escapeHtml(String(item.cached || ""))}</td>`
-            + `<td>${escapeHtml(String(item.lastAccessed || ""))}</td>`
-            + `<td>${escapeHtml(String(item.hidden || ""))}</td>`
-            + `</tr>`
-        ).join("");
+        tbody.innerHTML = report.map((item) => {
+            const last = item.lastAccessed ? (new Date(item.lastAccessed)).toLocaleString() : "";
+            const invalidated = item.invalidatedAt ? (new Date(item.invalidatedAt)).toLocaleString() : "";
+            const hiddenText = item.hidden ? "Yes" : "No";
+            return `<tr>`
+                + `<td class="left">${escapeHtml(item.question || "")}</td>`
+                + `<td class="left">${escapeHtml(item.model || "")}</td>`
+                + `<td class="num">${escapeHtml(String(item.cached || ""))}</td>`
+                + `<td class="left">${escapeHtml(String(last))}</td>`
+                + `<td class="left">${escapeHtml(String(invalidated))}</td>`
+                + `<td class="center">${escapeHtml(String(hiddenText))}</td>`
+                + `</tr>`;
+        }).join("");
     }
     function wireTabs() {
         const tabs = Array.from(document.querySelectorAll("[data-tab]"));

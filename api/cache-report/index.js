@@ -46,7 +46,7 @@ module.exports = async function(context, req) {
 	await client.connect();
 	try {
 		const result = await client.query(
-			`SELECT question, model, cache_hit_count, last_accessed, is_cached
+			`SELECT question, model, cache_hit_count, last_accessed, is_cached, invalidated_at
 			 FROM ai_response_cache
 			 ORDER BY cache_hit_count DESC, last_accessed DESC`
 		);
@@ -56,6 +56,7 @@ module.exports = async function(context, req) {
 			model: row.model,
 			cached: row.cache_hit_count,
 			lastAccessed: row.last_accessed,
+			invalidatedAt: row.invalidated_at || null,
 			hidden: !row.is_cached
 		}));
 

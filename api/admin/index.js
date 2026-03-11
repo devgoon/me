@@ -565,7 +565,7 @@ module.exports.cacheReport = async function(context, req) {
     await client.connect();
     try {
       const result = await client.query(
-        `SELECT question, model, cache_hit_count, last_accessed, is_cached
+        `SELECT question, model, cache_hit_count, last_accessed, is_cached, invalidated_at
          FROM ai_response_cache
          ORDER BY cache_hit_count DESC, last_accessed DESC`
       );
@@ -575,6 +575,7 @@ module.exports.cacheReport = async function(context, req) {
         model: row.model,
         cached: row.cache_hit_count,
         lastAccessed: row.last_accessed,
+        invalidatedAt: row.invalidated_at || null,
         hidden: !row.is_cached
       }));
       context.res = {
@@ -596,5 +597,5 @@ module.exports.cacheReport = async function(context, req) {
 };
 
 module.exports.hideCacheRecords = async function(client) {
-  await client.query(`UPDATE ai_response_cache SET is_cached = FALSE WHERE is_cached = TRUE`);
+  await client.query(`UPDATE ai_response_cache SET is_cached = FALSE, invalidated_at = NOW() WHERE is_cached = TRUE`);
 };
