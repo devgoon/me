@@ -518,7 +518,15 @@ module.exports = async function(context, req) {
     }
 
     if (String(req.method || "").toUpperCase() === "POST") {
-      await saveAll(client, candidateId, req.body || {}, String(auth.email).toLowerCase());
+        await saveAll(client, candidateId, req.body || {}, String(auth.email).toLowerCase());
+        // Invalidate AI cache after profile updates that affect generated responses
+        try {
+          if (module.exports && typeof module.exports.hideCacheRecords === "function") {
+            await module.exports.hideCacheRecords(client);
+          }
+        } catch (err) {
+          // don't fail the save because cache invalidation failed; log and continue
+        }
       context.res = {
         status: 200,
         headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
