@@ -35,7 +35,6 @@
         <button class="tab-btn" data-tab="faq" type="button">FAQ</button>
         <button class="tab-btn" data-tab="ai" type="button">AI Instructions</button>
         <button class="tab-btn" data-tab="cache" type="button">Cache Report</button>
-          <button class="tab-btn" data-tab="cost" type="button">Monthly Cost</button>
       </aside>
 
       <section class="panel-stack">
@@ -147,7 +146,7 @@
         </section>
 
         <section class="panel tab-panel" data-panel="cache" hidden>
-          <h2>Cache Report</h2>
+          <h2>Cache Report <button id="cache-refresh" class="ghost-btn" type="button">Refresh</button></h2>
           <input id="cache-search" type="text" placeholder="Search questions..." style="width: 100%; margin-bottom: 1em;">
           <table id="cache-table" class="admin-table">
             <thead>
@@ -162,21 +161,6 @@
             <tbody></tbody>
           </table>
         </section>
-          <section class="panel tab-panel" data-panel="cost" hidden>
-            <h2>Monthly Cost</h2>
-            <table id="cost-table" class="admin-table">
-              <thead>
-                <tr>
-                  <th>Service</th>
-                  <th>Cost</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Azure</td><td id="azure-cost">Loading...</td></tr>
-                <tr><td>Claude</td><td id="claude-cost">Loading...</td></tr>
-              </tbody>
-            </table>
-          </section>
       </section>
     </div>
   </main>

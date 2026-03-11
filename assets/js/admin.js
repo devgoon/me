@@ -11,36 +11,6 @@
         "Public",
         "Enterprise"
     ];
-        async function loadCacheReport() {
-            setMessage("Loading cache report...", false);
-            let data = [];
-            try {
-                data = await apiRequest("/api/admin/cache-report", { method: "GET" });
-            } catch (error) {
-                setMessage(error.message || "Failed to load cache report", true);
-                return;
-            }
-            setMessage("Cache report loaded.", false);
-            renderCacheReport(data);
-        }
-
-        function renderCacheReport(report) {
-            const table = document.getElementById("cache-table");
-            if (!table) return;
-            const tbody = table.querySelector("tbody");
-            if (!tbody) return;
-            tbody.innerHTML = Array.isArray(report)
-                ? report.map(item =>
-                    `<tr>
-                        <td>${escapeHtml(item.question || "")}</td>
-                        <td>${escapeHtml(item.model || "")}</td>
-                        <td>${escapeHtml(String(item.cached || ""))}</td>
-                        <td>${escapeHtml(item.lastAccessed || "")}</td>
-                        <td>${escapeHtml(String(item.hidden || ""))}</td>
-                    </tr>`
-                ).join("")
-                : "<tr><td colspan='5'>No cache data found.</td></tr>";
-        }
     const DEFAULT_FAQ = [
         { question: "What are your strongest skills?", answer: "", isCommonQuestion: true },
         { question: "What are your biggest gaps right now?", answer: "", isCommonQuestion: true },
@@ -140,12 +110,20 @@
         const tabs = Array.from(document.querySelectorAll("[data-tab]"));
         const panels = Array.from(document.querySelectorAll("[data-panel]"));
         tabs.forEach((tab) => {
-            tab.addEventListener("click", () => {
+            tab.addEventListener("click", async () => {
                 const panelName = tab.dataset.tab;
                 tabs.forEach((btn) => btn.classList.toggle("is-active", btn === tab));
                 panels.forEach((panel) => {
                     panel.hidden = panel.dataset.panel !== panelName;
                 });
+                if (panelName === "cache") {
+                    try {
+                        await loadCacheReport();
+                    }
+                    catch (e) {
+                        // ignore - loadCacheReport handles messaging
+                    }
+                }
             });
         });
     }
@@ -744,6 +722,17 @@
                 window.location.href = LOGOUT_URL;
             });
         }
+        const cacheRefreshBtn = document.getElementById("cache-refresh");
+        if (cacheRefreshBtn) {
+            cacheRefreshBtn.addEventListener("click", async () => {
+                try {
+                    await loadCacheReport();
+                }
+                catch (error) {
+                    setMessage(error.message || "Failed to load cache report", true);
+                }
+            });
+        }
     }
     async function init() {
         wireTabs();
@@ -752,11 +741,6 @@
         const ok = await authenticate();
         if (!ok)
             return;
-            // Wire cache report tab
-            const cacheTab = document.querySelector(".tab-btn[data-tab='cache']");
-            if (cacheTab) {
-                cacheTab.addEventListener("click", loadCacheReport);
-            }
         try {
             await loadServerData();
         }
