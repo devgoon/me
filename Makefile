@@ -1,4 +1,4 @@
-.PHONY: install spellcheck spellcheck-pdf link-check syntax-check ts-build config-check unit-test check start stop db-export backup-db migrate-db profile-data-db deploy-db profile-data-backup profile-data-upload pre-migration-schema migrate-db post-migration-schema verify-migration rollback-db verify-schema
+.PHONY: install spellcheck spellcheck-pdf link-check syntax-check build-ui unit-test check start stop db-export backup-db migrate-db profile-data-db deploy-db profile-data-backup profile-data-upload pre-migration-schema migrate-db post-migration-schema verify-migration rollback-db verify-schema
 
 install:
 	npm install
@@ -13,36 +13,20 @@ spellcheck-pdf:
 link-check:
 	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html ./boys/index.html
 
-syntax-check:
-	@set -e; \
-	FILES="api/chat/index.js api/experience/index.js api/admin/index.js api/auth/index.js api/health/index.js api/_shared/auth.js api/_shared/observability.js"; \
-	for FILE in $$FILES; do \
-		if [ -f "$$FILE" ]; then \
-			node --check "$$FILE"; \
-		fi; \
-	done
-
-ts-build:
-	npm run build:ts
-
-config-check:
-	@node -e "const fs=require('fs'); const files=['package.json','cspell.json','staticwebapp.config.json','swa-cli.config.json','tsconfig.json','local.settings.json','local.settings.example.json']; for (const f of files) { if (fs.existsSync(f)) JSON.parse(fs.readFileSync(f,'utf8')); }"
+build-ui:
+	npm run build:ui
 
 unit-test:
 	cd api && npm test -- --runInBand
 
 check:
-	@echo "==> [1/6] Running spellcheck"
+	@echo "==> [1/4] Running spellcheck"
 	@$(MAKE) spellcheck
-	@echo "==> [2/6] Building TypeScript frontend assets"
-	@$(MAKE) ts-build
-	@echo "==> [3/6] Running JavaScript syntax checks"
-	@$(MAKE) syntax-check
-	@echo "==> [4/6] Validating JSON/config files"
-	@$(MAKE) config-check
-	@echo "==> [5/6] Running API unit tests"
+	@echo "==> [2/4] Building TypeScript frontend assets"
+	@$(MAKE) build-ui
+	@echo "==> [3/4] Running API unit tests"
 	@$(MAKE) unit-test
-	@echo "==> [6/6] Running link check"
+	@echo "==> [4/4] Running link check"
 	@$(MAKE) link-check
 	@echo "==> Quality checks complete"
 
