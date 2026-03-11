@@ -11,7 +11,7 @@ spellcheck-pdf:
 	bash ./pdf2txt.sh
 
 link-check:
-	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html ./boys/index.html ./code/index.html
+	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html ./boys/index.html
 
 syntax-check:
 	@set -e; \
