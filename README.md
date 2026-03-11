@@ -22,17 +22,28 @@
 Personal website and AI-assisted portfolio for Lodovico Minnocci. The site combines static marketing pages, an interactive admin surface for profile management, serverless API endpoints, and AI-assisted features powered by cached model responses.
 
 Key features
+- Key features
+
+*Note: This project is Azure-centric — designed for deployment on Azure Static Web Apps with Azure PostgreSQL for persistence.*
+
 - Static frontend: public pages including home, resume, experience, projects, and specialty AI-assisted views (`experience-ai`, `fit-ai`). These are located in the project root HTML and `assets/` for CSS/JS.
+
 - Authentication: Azure Static Web Apps (SWA) authentication with provider integrations (AAD and other providers). Admin pages are protected and require sign-in.
+
 - Admin panel: full profile editing (personal details, experiences, skills, gaps, values/culture, FAQ, AI instruction rules). Features include:
   - Draft autosave to `localStorage` and manual `Save All` to persist to the backend.
   - Client-side no-op save guard that avoids unnecessary POSTs when nothing changed.
   - Cache Report tab to inspect AI response cache and client-side filtering of the last-fetched report.
+  - Cache Report: admin-only UI to view, refresh, and inspect AI response cache (calls `GET /api/cache-report`).
+
 - AI/chat features: server endpoints that forward prompts to an AI model (configured via `ANTHROPIC_API_KEY`/`AI_MODEL`) and return responses to the frontend.
   - Responses are cached in PostgreSQL (`ai_response_cache`) to reduce model calls and improve latency.
   - Cache invalidation is triggered by profile changes in the admin panel and recorded with `invalidated_at` timestamps.
+
 - Backend/API: Azure Functions (Node.js) under `api/` exposing endpoints for authentication (`/api/auth/*`), admin panel data (`/api/panel-data`), cache report (`/api/cache-report`), chat (`/api/chat`), health checks, and other utilities.
+
 - Database: PostgreSQL schema and migration files in `db/` and `migrations/`. The project includes Makefile targets and utilities to backup, migrate, and verify schema changes.
+
 - Observability & testing: lightweight request tracing helpers in `api/_shared/observability`, unit tests under `api/__tests__`, and CI checks in the repository's workflows.
 
 Deployment & development
@@ -65,11 +76,11 @@ flowchart LR
   end
 
   subgraph API[Azure Functions]
-    P1[/api/panel-data]\n(api/admin/index.js)
-    P2[/api/cache-report]\n(api/cache-report/index.js)
-    P3[/api/chat]\n(api/chat/index.js)
-    P4[/api/auth/*]\n(api/auth/index.js)
-    P5[/api/health]\n(api/health/index.js)
+    P1["/api/panel-data<br/>(api/admin/index.js)"]
+    P2["/api/cache-report<br/>(api/cache-report/index.js)"]
+    P3["/api/chat<br/>(api/chat/index.js)"]
+    P4["/api/auth/*<br/>(api/auth/index.js)"]
+    P5["/api/health<br/>(api/health/index.js)"]
   end
 
   A -->|auth| API
@@ -138,7 +149,7 @@ Stop local stack:
 make stop
 ```
 SWA local config: `swa-cli.config.json` (host `127.0.0.1`, port `4280`, API `7071`)
-
+ 
 ## 6. Quality Checks & Testing
 Run the full quality pipeline that the project uses:
 
@@ -253,50 +264,50 @@ erDiagram
     id BIGINT PK
     name TEXT
     email TEXT
-    ...
+    %% additional fields omitted
   }
   experiences {
     id BIGINT PK
     candidate_id BIGINT FK
     company_name TEXT
-    ...
+    %% additional fields omitted
   }
   skills {
     id BIGINT PK
     candidate_id BIGINT FK
     skill_name TEXT
-    ...
+    %% additional fields omitted
   }
   gaps_weaknesses {
     id BIGINT PK
     candidate_id BIGINT FK
     gap_type TEXT
-    ...
+    %% additional fields omitted
   }
   values_culture {
     id BIGINT PK
     candidate_id BIGINT FK
     must_haves TEXT[]
-    ...
+    %% additional fields omitted
   }
   faq_responses {
     id BIGINT PK
     candidate_id BIGINT FK
     question TEXT
-    ...
+    %% additional fields omitted
   }
   ai_instructions {
     id BIGINT PK
     candidate_id BIGINT FK
     instruction_type TEXT
-    ...
+    %% additional fields omitted
   }
   ai_response_cache {
     hash TEXT PK
     question TEXT
     model TEXT
     response TEXT
-    ...
+    %% additional fields omitted
   }
 ````
 
@@ -358,5 +369,3 @@ sequenceDiagram
 ````
 
 ---
-
-### API flows are now documented for quick reference and onboarding.

@@ -7,6 +7,8 @@
   "license": "MIT",
   "scripts": {
     "build:ui": "tsc --project tsconfig.json",
+    "build": "npm run build:ui",
+    "clean": "rm -f assets/js/*.js && rm -rf .azurite || true",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "migrate": "node-pg-migrate -d $DATABASE_URL -m migrations",
     "migrate:up": "node-pg-migrate up -d $DATABASE_URL -m migrations",
