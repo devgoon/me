@@ -11,6 +11,36 @@
         "Public",
         "Enterprise"
     ];
+        async function loadCacheReport() {
+            setMessage("Loading cache report...", false);
+            let data = [];
+            try {
+                data = await apiRequest("/api/admin/cache-report", { method: "GET" });
+            } catch (error) {
+                setMessage(error.message || "Failed to load cache report", true);
+                return;
+            }
+            setMessage("Cache report loaded.", false);
+            renderCacheReport(data);
+        }
+
+        function renderCacheReport(report) {
+            const table = document.getElementById("cache-table");
+            if (!table) return;
+            const tbody = table.querySelector("tbody");
+            if (!tbody) return;
+            tbody.innerHTML = Array.isArray(report)
+                ? report.map(item =>
+                    `<tr>
+                        <td>${escapeHtml(item.question || "")}</td>
+                        <td>${escapeHtml(item.model || "")}</td>
+                        <td>${escapeHtml(String(item.cached || ""))}</td>
+                        <td>${escapeHtml(item.lastAccessed || "")}</td>
+                        <td>${escapeHtml(String(item.hidden || ""))}</td>
+                    </tr>`
+                ).join("")
+                : "<tr><td colspan='5'>No cache data found.</td></tr>";
+        }
     const DEFAULT_FAQ = [
         { question: "What are your strongest skills?", answer: "", isCommonQuestion: true },
         { question: "What are your biggest gaps right now?", answer: "", isCommonQuestion: true },
@@ -722,6 +752,11 @@
         const ok = await authenticate();
         if (!ok)
             return;
+            // Wire cache report tab
+            const cacheTab = document.querySelector(".tab-btn[data-tab='cache']");
+            if (cacheTab) {
+                cacheTab.addEventListener("click", loadCacheReport);
+            }
         try {
             await loadServerData();
         }
