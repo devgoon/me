@@ -245,6 +245,7 @@ Deployment workflow (CI/CD)
 
 - Local auth uses SWA emulator flow
 - Run `make stop` before `make start` if port/process issues
+ - Running locally is not fully functional: the SWA emulator does not fully mimic provider auth flows (AAD, social providers) and some authenticated API behavior may differ from a deployed Azure environment. For full auth behavior deploy to Azure Static Web Apps.
 
 ## 12. Database Schema
 
