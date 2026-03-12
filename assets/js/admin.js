@@ -106,16 +106,60 @@
             state.aiInstructions.rules = Array.isArray(payload.aiInstructions.rules) ? payload.aiInstructions.rules : [];
         }
     }
+    async function loadCacheReport() {
+        setMessage("Loading cache report...", false);
+        let data = [];
+        try {
+            data = await apiRequest("/api/admin/cache-report", { method: "GET" });
+        }
+        catch (error) {
+            setMessage(error.message || "Failed to load cache report", true);
+            renderCacheReport([]);
+            return;
+        }
+        setMessage("Cache report loaded.", false);
+        renderCacheReport(data);
+    }
+
+    function renderCacheReport(report) {
+        const table = document.getElementById("cache-table");
+        if (!table)
+            return;
+        const tbody = table.querySelector("tbody");
+        if (!tbody)
+            return;
+        if (!Array.isArray(report) || report.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='5'>No cache records found.</td></tr>";
+            return;
+        }
+        tbody.innerHTML = report.map((item) =>
+            `<tr>`
+            + `<td>${escapeHtml(item.question || "")}</td>`
+            + `<td>${escapeHtml(item.model || "")}</td>`
+            + `<td>${escapeHtml(String(item.cached || ""))}</td>`
+            + `<td>${escapeHtml(String(item.lastAccessed || ""))}</td>`
+            + `<td>${escapeHtml(String(item.hidden || ""))}</td>`
+            + `</tr>`
+        ).join("");
+    }
     function wireTabs() {
         const tabs = Array.from(document.querySelectorAll("[data-tab]"));
         const panels = Array.from(document.querySelectorAll("[data-panel]"));
         tabs.forEach((tab) => {
-            tab.addEventListener("click", () => {
+            tab.addEventListener("click", async () => {
                 const panelName = tab.dataset.tab;
                 tabs.forEach((btn) => btn.classList.toggle("is-active", btn === tab));
                 panels.forEach((panel) => {
                     panel.hidden = panel.dataset.panel !== panelName;
                 });
+                if (panelName === "cache") {
+                    try {
+                        await loadCacheReport();
+                    }
+                    catch (e) {
+                        // ignore - loadCacheReport handles messaging
+                    }
+                }
             });
         });
     }
@@ -712,6 +756,17 @@
             signOut.addEventListener("click", () => {
                 localStorage.removeItem(DRAFT_KEY);
                 window.location.href = LOGOUT_URL;
+            });
+        }
+        const cacheRefreshBtn = document.getElementById("cache-refresh");
+        if (cacheRefreshBtn) {
+            cacheRefreshBtn.addEventListener("click", async () => {
+                try {
+                    await loadCacheReport();
+                }
+                catch (error) {
+                    setMessage(error.message || "Failed to load cache report", true);
+                }
             });
         }
     }
