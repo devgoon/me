@@ -231,46 +231,73 @@ async function loadCandidateContext(client) {
 }
 
 async function callAnthropic(systemPrompt, userMessage, apiKey) {
-  const timeout = timeoutSignal(AI_TIMEOUT_MS);
-  let response;
-  try {
-    response = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: MAX_TOKENS,
-        system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: userMessage
-          }
-        ]
-      }),
-      signal: timeout.signal
-    });
-  } catch (error) {
-    if (error && error.name === "AbortError") {
-      throw new Error("Anthropic API timeout");
+  const maxAttempts = 3;
+  let attempt = 0;
+  let lastErr = null;
+
+  while (attempt < maxAttempts) {
+    attempt++;
+    const timeout = timeoutSignal(AI_TIMEOUT_MS);
+    try {
+      const response = await fetch(ANTHROPIC_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: AI_MODEL,
+          max_tokens: MAX_TOKENS,
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: userMessage
+            }
+          ]
+        }),
+        signal: timeout.signal
+      });
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        const status = response.status;
+        lastErr = new Error(`Anthropic API error: ${status} ${errText}`);
+        // Retry on transient server-side errors
+        if (status === 429 || status === 503 || status === 529) {
+          const backoff = 200 * Math.pow(2, attempt - 1);
+          await new Promise((r) => setTimeout(r, backoff));
+          continue;
+        }
+        throw lastErr;
+      }
+
+      const data = await response.json().catch(() => null);
+      const textBlock = (data && (data.content || data.data || []) )
+        ? (Array.isArray(data.content) ? data.content.find((item) => item.type === "text") : null)
+        : null;
+      if (textBlock && textBlock.text) return textBlock.text;
+
+      // Some Anthropic responses may return a top-level text field
+      if (data && typeof data.text === "string") return data.text;
+
+      return "I do not have an answer for that yet.";
+    } catch (error) {
+      if (error && error.name === "AbortError") {
+        lastErr = new Error("Anthropic API timeout");
+      } else {
+        lastErr = error;
+      }
+      // exponential backoff before retrying
+      const backoff = 200 * Math.pow(2, attempt - 1);
+      await new Promise((r) => setTimeout(r, backoff));
+    } finally {
+      try { timeout.clear(); } catch (_) {}
     }
-    throw error;
-  } finally {
-    timeout.clear();
   }
 
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Anthropic API error: ${response.status} ${errText}`);
-  }
-
-  const data = await response.json();
-  const textBlock = (data.content || []).find((item) => item.type === "text");
-  return textBlock ? textBlock.text : "I do not have an answer for that yet.";
+  throw lastErr || new Error("Anthropic API failure");
 }
 
 async function getCache(client, model, question) {
@@ -304,6 +331,17 @@ module.exports = async function(context, req) {
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     const databaseUrl = process.env.DATABASE_URL;
+
+      // Log the AI model being used for this request
+      try {
+        const modelLog = { event: "chat.model", requestId: obs.requestId, model: AI_MODEL };
+        if (context && context.log) {
+          if (typeof context.log.info === "function") context.log.info(JSON.stringify(modelLog));
+          else if (typeof context.log === "function") context.log(JSON.stringify(modelLog));
+        }
+      } catch (e) {
+        // ignore logging errors
+      }
 
     if (!apiKey) {
       context.res = {

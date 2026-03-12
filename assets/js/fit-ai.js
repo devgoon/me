@@ -26,17 +26,24 @@
         { keys: ['unity', '3d', 'graphics'], text: 'Specialized graphics/rendering stack requirements are outside my usual delivery scope.' }
     ];
     function includesAny(text, terms) {
-        return terms.some((term) => text.includes(term));
+        function escapeForRegex(s) {
+            return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        }
+
+        return terms.some((term) => {
+            const re = new RegExp(`\\b${escapeForRegex(term)}\\b`, "i");
+            return re.test(text);
+        });
     }
     function buildFollowUpAnswer(question, verdict) {
         const q = question.toLowerCase();
-        if (q.includes('salary') || q.includes('compensation')) {
+            if (/\b(salary|compensation)\b/i.test(q)) {
             return 'I would discuss compensation only after we validate scope, expectations, and impact ownership. Strong fit should map to strong leveling and comp.';
         }
-        if (q.includes('remote') || q.includes('onsite') || q.includes('hybrid')) {
+            if (/\b(remote|onsite|hybrid)\b/i.test(q)) {
             return 'Work model matters less than execution clarity. If the role is otherwise aligned, I would evaluate remote/on-site expectations based on collaboration needs and outcomes.';
         }
-        if (q.includes('risk') || q.includes('gap')) {
+            if (/\b(risk|gap)\b/i.test(q)) {
             return verdict === 'Strong Fit'
                 ? 'Main risk is usually domain ramp time, not core engineering capability. I would de-risk with a scoped technical plan in the first 30-60 days.'
                 : 'The highest risk is mismatch in core stack expectations. I would only proceed if the team values transferable systems and architecture experience over exact stack history.';
