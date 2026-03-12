@@ -110,7 +110,8 @@
         setMessage("Loading cache report...", false);
         let data = [];
         try {
-            data = await apiRequest("/api/admin/cache-report", { method: "GET" });
+            // Use top-level API path
+            data = await apiRequest("/api/cache-report", { method: "GET" });
         }
         catch (error) {
             setMessage(error.message || "Failed to load cache report", true);
@@ -129,16 +130,17 @@
         if (!tbody)
             return;
         if (!Array.isArray(report) || report.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='5'>No cache records found.</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='6'>No cache records found.</td></tr>";
             return;
         }
         tbody.innerHTML = report.map((item) =>
             `<tr>`
             + `<td>${escapeHtml(item.question || "")}</td>`
             + `<td>${escapeHtml(item.model || "")}</td>`
-            + `<td>${escapeHtml(String(item.cached || ""))}</td>`
+            + `<td>${escapeHtml(String(item.cached || "0"))}</td>`
             + `<td>${escapeHtml(String(item.lastAccessed || ""))}</td>`
-            + `<td>${escapeHtml(String(item.hidden || ""))}</td>`
+            + `<td>${escapeHtml(String(item.invalidatedAt || ""))}</td>`
+            + `<td>${item.hidden ? 'Yes' : 'No'}</td>`
             + `</tr>`
         ).join("");
     }
