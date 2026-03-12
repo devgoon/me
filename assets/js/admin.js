@@ -140,7 +140,7 @@
             + `<td>${escapeHtml(String(item.cached || "0"))}</td>`
             + `<td>${escapeHtml(String(item.lastAccessed || ""))}</td>`
             + `<td>${escapeHtml(String(item.invalidatedAt || ""))}</td>`
-            + `<td>${item.hidden ? 'Yes' : 'No'}</td>`
+            + `<td>${escapeHtml(String(typeof item.is_cached !== 'undefined' ? item.is_cached : !item.hidden))}</td>`
             + `</tr>`
         ).join("");
     }

@@ -36,6 +36,10 @@ start:
 	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
 	AZURITE_PID=$$!; \
 	trap 'kill $$AZURITE_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
+	# Load .env.local into environment for child processes (single source of truth)
+	if [ -f .env.local ]; then \
+		set -a; . .env.local; set +a; \
+	fi; \
 	npx swa start --config swa-cli.config.json --config-name me-local
 
 stop:

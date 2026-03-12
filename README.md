@@ -30,21 +30,19 @@ Key features
 
 - Authentication: Azure Static Web Apps (SWA) authentication with provider integrations (AAD and other providers). Admin pages are protected and require sign-in.
 
-- Admin panel: full profile editing (personal details, experiences, skills, gaps, values/culture, FAQ, AI instruction rules). Features include:
+- Admin panel: full profile editing (personal details, experiences, skills, gaps, values/culture, FAQ, AI instruction rules, Cache Report). Features include:
   - Draft autosave to `localStorage` and manual `Save All` to persist to the backend.
   - Client-side no-op save guard that avoids unnecessary POSTs when nothing changed.
-  - Cache Report tab to inspect AI response cache and client-side filtering of the last-fetched report.
-  - Cache Report: admin-only UI to view, refresh, and inspect AI response cache (calls `GET /api/cache-report`).
+  - Cache Report: admin-only UI to view, refresh, and inspect AI response cache
 
 - AI/chat features: server endpoints that forward prompts to an AI model (configured via `ANTHROPIC_API_KEY`/`AI_MODEL`) and return responses to the frontend.
   - Responses are cached in PostgreSQL (`ai_response_cache`) to reduce model calls and improve latency.
-  - Cache invalidation is triggered by profile changes in the admin panel and recorded with `invalidated_at` timestamps.
+  - Cache invalidation is triggered by profile changes in the admin panel or changes to the AI Model and recorded with `invalidated_at` timestamps.
 
 - Backend/API: Azure Functions (Node.js) under `api/` exposing endpoints for authentication (`/api/auth/*`), admin panel data (`/api/panel-data`), cache report (`/api/cache-report`), chat (`/api/chat`), health checks, and other utilities.
 
 - Database: PostgreSQL schema and migration files in `db/` and `migrations/`. The project includes Makefile targets and utilities to backup, migrate, and verify schema changes.
 
-- Observability & testing: lightweight request tracing helpers in `api/_shared/observability`, unit tests under `api/__tests__`, and CI checks in the repository's workflows.
 
 Deployment & development
 - Local development: `make start` brings up the local stack; `swa` emulator settings found in `swa-cli.config.json` and `local.settings.example.json` for Functions runtime.
@@ -111,16 +109,31 @@ brew install poppler
 ```
 
 ### Environment setup
-1. Copy `.env.example` values into your local environment file(s)
-2. Copy `local.settings.example.json` to `local.settings.json`
-3. Keep `local.settings.json` untracked
-4. Set values: `ANTHROPIC_API_KEY`, `AI_MODEL`, `DATABASE_URL`
+1. Copy `.env.local.example` to `.env.local` and fill secret values (DO NOT commit `.env.local`).
+2. Optionally copy `local.settings.example.json` to `local.settings.json` for Functions defaults — remove secrets before committing.
+3. Ensure the following values are set: `ANTHROPIC_API_KEY`, `AI_MODEL`, `DATABASE_URL`, and `AzureWebJobsStorage`.
 
-Example:
+Example `.env.local`:
 ```env
+FUNCTIONS_WORKER_RUNTIME=node
+AzureWebJobsStorage=UseDevelopmentStorage=true
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
-AI_MODEL=claude-sonnet-4-20250514
 DATABASE_URL=postgresql://username:password@server.postgres.database.azure.com:5432/database?sslmode=require
+AI_MODEL=claude-sonnet-4-20250514
+```
+
+## Local environment variables
+
+Keep secrets in an untracked `.env.local` file. Copy `.env.local.example` to `.env.local` and fill in values.
+
+Example `.env.local` entries:
+
+```env
+FUNCTIONS_WORKER_RUNTIME=node
+AzureWebJobsStorage=UseDevelopmentStorage=true
+ANTHROPIC_API_KEY=sk-ant-...      # keep secret
+DATABASE_URL=postgresql://user:pw@host:5432/dbname?sslmode=require  # keep secret
+AI_MODEL=claude-sonnet-4-20250514
 ```
 
 ## 4. Install & Build
