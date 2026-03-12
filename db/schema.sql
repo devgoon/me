@@ -162,6 +162,7 @@ CREATE TABLE IF NOT EXISTS ai_response_cache (
   cache_hit_count INTEGER NOT NULL DEFAULT 0,
   last_accessed TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  invalidated_at TIMESTAMPTZ,
   is_cached BOOLEAN NOT NULL DEFAULT FALSE
 );
 

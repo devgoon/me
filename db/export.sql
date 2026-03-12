@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QfMA2rvFMIpkOKLaOEIvImJdpaOCXNLn7bm3WCCOgnVrAZn4dVPbkVdt5QoIedf
+\restrict V6cimolRlygJ0JCKCBeYmhNSVMYqJ5rZtuYGLfRxeMDW0AQynthjv4fLlDHEV2b
 
 -- Dumped from database version 16.12
 -- Dumped by pg_dump version 18.3 (Homebrew)
@@ -380,6 +380,10 @@ COPY public.ai_instructions (id, candidate_id, created_at, instruction_type, ins
 --
 
 COPY public.ai_response_cache (hash, question, model, response, cache_hit_count, last_accessed, updated_at, is_cached) FROM stdin;
+458128a52b16814ef7c683c9d05b53baf8a632f6f399b8d064cd2b0ddd0af988	What's your biggest weakness?	claude-sonnet-4-20250514	I can over-index on architecture rigor too early in a project. When I see a technical challenge, my instinct is to design for scale, resilience, and maintainability right from the start — which is usually good, but sometimes I'll spend time on architectural patterns before we've validated that we're even solving the right problem.\n\nI've learned to mitigate this by right-sizing my process to the project phase. For early-stage work or prototypes, I now focus on speed and learning first, then gradually introduce more structured architecture as requirements become clearer and the system proves its value.\n\nThe flip side is that when we do need robust, scalable systems — which is most of my career — this tendency serves me well. But I've had to learn when to dial it back and when to lean into it.	8	2026-03-11 16:25:22.293314+00	2026-03-09 17:08:07.739453+00	t
+d25f2f2af5c149ed10c9b0bed66de8ddb9a8b9691c79dea1b1cb615b11f745ed	What would your last manager say about you?	claude-sonnet-4-20250514	My last manager would say I'm someone who takes high ownership of complex problems and delivers reliable solutions even when requirements aren't perfectly clear upfront. \n\nAt Torc, I consistently raised quality standards - whether that was implementing proper SLOs in Datadog, designing clean OpenAPI contracts for our internal tools, or building React applications that actually helped operations teams triage incidents faster. \n\nThey'd probably mention that I don't just write code - I think about the whole system. When I built our fleet telemetry monitoring tools, I wasn't just focused on getting the UI working. I was thinking about data contracts, error handling, observability, and how the system would behave under load or when things went wrong.\n\nI think they'd also say I'm direct and transparent in my communication. If I see a technical decision that's going to cause problems down the road, I speak up early with data and alternative approaches rather than just going along with it.\n\nThe one area they might push me on is that I can sometimes over-engineer early - I care deeply about building things right, which occasionally means I need to be reminded to balance architectural rigor with delivery timelines. But they'd probably also say that this attention to quality usually pays off in reduced operational overhead later.	1	2026-03-10 20:12:26.558992+00	2026-03-10 20:12:26.558992+00	t
+ff2e54c35785ea9d01df6b0fbdf6f2b5b50e11da6685fa10e2d812012f61ab85	Tell me about a project that failed	claude-sonnet-4-20250514	During the height of the microservices and Kubernetes hype cycle, I watched many organizations rush to break apart their monolithic applications simply because it was the trend — not because it solved a real problem. Teams were eager to "modernize," but often without understanding where the actual separation of concerns should be, or whether microservices were even the right architectural fit.\n\nFrom my perspective, leadership seemed more focused on projecting modernity — adopting microservices, containers, service meshes, CI/CD tools — instead of stepping back and asking the critical question: "What is the root cause of our problems, and will this architecture actually address it?"\n\nToo often, the answer was no.\n\nWhat I saw repeatedly were situations where:\n- The monolith's issues were caused by poor domain boundaries, not its size\n- Teams lacked the operational maturity for distributed systems — observability, SLOs, dependency mapping, on-call readiness\n- The organization underestimated the complexity tax of microservices: networking, data consistency, orchestration, deployment pipelines, incident surface area\n- Architectures became fragmented, harder to test, harder to reason about, and more failure‑prone\n- The "modernization effort" consumed enormous engineering time while failing to address the original bottlenecks\n\nWhat was missing was problem-first thinking. Instead of asking, "How do we adopt Kubernetes?" the real questions should have been: "What pain are we trying to relieve? Is the issue architectural… or organizational? Do we understand our domains well enough to split them correctly?"\n\nIn many cases, companies didn't need microservices — what they needed was clearer ownership boundaries, better CI/CD, stronger testing strategies, improved observability, and cultural changes, not technological ones.\n\nThis period taught me that modern technology doesn't fix fundamental problems if you don't understand the system well enough to diagnose them. It reinforced my belief that architecture should always follow context, constraints, and clarity — not trends.	6	2026-03-11 15:29:32.806476+00	2026-03-09 17:08:20.522231+00	t
+d113a09f7c73fb8d35ffe1c87cf6d7d691559fc0b133cc6a298ee0b9710b2080	Why did you leave [Company]?	claude-sonnet-4-20250514	I'd be happy to answer that, but I need to know which company you're asking about. I've worked at several places recently:\n\n- **Torc Robotics** (where I currently work)\n- **Ancera** (left in 2024)\n- **Subway** (left in 2020)\n\nWhich one were you curious about? Each transition had different reasons, and I'm happy to be direct about what drove those decisions.	1	2026-03-11 16:53:51.859498+00	2026-03-11 16:53:51.859498+00	t
 \.
 
 
@@ -447,11 +451,32 @@ COPY public.pgmigrations (id, name, run_on) FROM stdin;
 --
 
 COPY public.skills (id, candidate_id, created_at, skill_name, category, self_rating, evidence, honest_notes, years_experience, last_used) FROM stdin;
-116	1	2026-03-08 20:47:43.46842+00	React	moderate	3	Operational dashboards and interfaces for fleet tooling.	Strong in product-facing engineering with performance awareness.	2.0	2026-03-06
-117	1	2026-03-08 20:47:43.46842+00	TypeScript	moderate	3	Delivered React and backend API contracts in recent roles.	Strong practical fluency and tooling habits.	2.0	2026-03-06
-118	1	2026-03-08 20:47:43.46842+00	AWS	strong	5	Production systems using Lambda, API Gateway, DynamoDB, and observability tooling.	Confident in architecture and operational tradeoffs at scale. Certifications:  AWS Developer Associate,\nAWS Solutions Architect Associate	8.0	2026-03-06
-119	1	2026-03-08 20:47:43.46842+00	Azure	strong	4	Led administration and DevOps workflows at Ancera.	Strong operational experience; less recent than AWS-heavy work but used in personal work. I hold a number of certifications. Azure DevOps Expert\nAzure Administration Expert \nAzure Fundamentals\nAzure Administration	6.0	2024-09-01
-120	1	2026-03-08 20:47:43.46842+00	Terraform	moderate	3	Used Terraform to build and deploy React applications, APIs, and DynamoDB	Familiar with IaC principles from Cloud Formation, Azure Resource Manager, and Terraform	2.0	\N
+199	1	2026-03-09 16:53:35.081186+00	TypeScript	strong	\N	Used for React apps, REST APIs, and platform development at Torc Robotics and Thermo Fisher.	Confident in modern TypeScript, but always learning new patterns.	\N	\N
+200	1	2026-03-09 16:53:35.081186+00	React	strong	\N	Built monitoring and visualization apps for vehicle data at Torc Robotics.	Strong with React, but want to deepen advanced hooks and performance optimization.	\N	\N
+201	1	2026-03-09 16:53:35.081186+00	Software Architecture	strong	\N	Designed cloud-native, microservices, and enterprise systems for Fortune 500 and startups.	Enjoy architecting scalable systems, but always refining design for maintainability.	\N	\N
+202	1	2026-03-09 16:53:35.081186+00	AWS Lambda	strong	\N	Implemented serverless APIs and integrations at Subway and Thermo Fisher.	Solid with Lambda, but want to explore more advanced event-driven patterns.	\N	\N
+203	1	2026-03-09 16:53:35.081186+00	AWS API Gateway	strong	\N	Designed REST APIs with API Gateway for client SDK generation.	Comfortable, but want to master complex routing and security features.	\N	\N
+204	1	2026-03-09 16:53:35.081186+00	AWS S3	strong	\N	Used for storage in serverless and data pipelines.	Experienced, but want to optimize for cost and performance.	\N	\N
+205	1	2026-03-09 16:53:35.081186+00	AWS DynamoDB	strong	\N	Integrated with REST APIs and configuration management systems.	Confident, but want to deepen understanding of advanced indexing and scaling.	\N	\N
+206	1	2026-03-09 16:53:35.081186+00	API Design and Development	strong	\N	Designed and developed APIs for mobile, web, and B2B integrations serving millions.	Always striving for clarity and maintainability in API design.	\N	\N
+207	1	2026-03-09 16:53:35.081186+00	Datadog / Observability	strong	\N	Authored dashboards, SLOs, and monitoring tests for multiple services.	Strong in observability, but want to learn more about distributed tracing.	\N	\N
+208	1	2026-03-09 16:53:35.081186+00	Python	strong	\N	Used for ML-Ops, scripting, and backend development.	Confident, but want to improve in advanced Python and ML frameworks.	\N	\N
+209	1	2026-03-09 16:53:35.081186+00	Terraform	strong	\N	Infrastructure as code for Azure and AWS, including SOC 2 compliance.	Experienced, but want to master complex module composition.	\N	\N
+210	1	2026-03-09 16:53:35.081186+00	Azure DevOps	moderate	\N	Led DevOps strategy and CI/CD pipelines at Ancera.	Moderate, want to deepen automation and pipeline customization.	\N	\N
+211	1	2026-03-09 16:53:35.081186+00	Azure Cloud	moderate	\N	Managed Azure infrastructure and administration.	Moderate, want to explore more advanced Azure services.	\N	\N
+212	1	2026-03-09 16:53:35.081186+00	Azure Administration	moderate	\N	Administered Azure for edge AI and agri-tech solutions.	Moderate, want to improve in security and cost optimization.	\N	\N
+213	1	2026-03-09 16:53:35.081186+00	Docker / Containerization	moderate	\N	Designed edge AI solutions and platform apps using Docker.	Comfortable, but want to deepen orchestration and security.	\N	\N
+214	1	2026-03-09 16:53:35.081186+00	DevSecOps	moderate	\N	Implemented DevSecOps practices with Snyk and Beagle Security.	Moderate, want to learn more about automated security testing.	\N	\N
+215	1	2026-03-09 16:53:35.081186+00	SNYK	moderate	\N	Used for vulnerability scanning in CI/CD pipelines.	Moderate, want to improve in remediation and reporting.	\N	\N
+216	1	2026-03-09 16:53:35.081186+00	Cryptography and Security Concepts	moderate	\N	Worked on SOC 2 compliance and secure pipelines.	Moderate, want to deepen practical cryptography.	\N	\N
+217	1	2026-03-09 16:53:35.081186+00	Pen Testing Tools	moderate	\N	Used Beagle Security and other tools for DevSecOps.	Moderate, want to learn more about manual and automated pen testing.	\N	\N
+218	1	2026-03-09 16:53:35.081186+00	C#	moderate	\N	Developed enterprise apps at The Hartford and Neopost.	Moderate, want to refresh skills for modern .NET.	\N	\N
+219	1	2026-03-09 16:53:35.081186+00	Object-Oriented Design	moderate	\N	Designed OO systems for multiple enterprise projects.	Solid, but always refining design patterns.	\N	\N
+220	1	2026-03-09 16:53:35.081186+00	Java	moderate	\N	Developed platform apps and document management systems.	Moderate, want to deepen modern Java and JVM performance.	\N	\N
+221	1	2026-03-09 16:53:35.081186+00	Relational Databases	moderate	\N	Designed and managed databases for multiple projects.	Moderate, want to improve in advanced SQL and optimization.	\N	\N
+222	1	2026-03-09 16:53:35.081186+00	Node.js	moderate	\N	Taught Node.js and built APIs for web and mobile.	Moderate, want to deepen async and performance patterns.	\N	\N
+223	1	2026-03-09 16:53:35.081186+00	Agile / Scrum	moderate	\N	Led and participated in Agile teams across roles.	Moderate, want to improve in facilitation and delivery.	\N	\N
+224	1	2026-03-09 16:53:35.081186+00	Jenkins	moderate	\N	Used Jenkins for CI/CD in multiple projects.	Moderate, want to deepen pipeline scripting and automation.	\N	\N
 \.
 
 
@@ -517,7 +542,7 @@ SELECT pg_catalog.setval('public.pgmigrations_id_seq', 3, true);
 -- Name: skills_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.skills_id_seq', 120, true);
+SELECT pg_catalog.setval('public.skills_id_seq', 224, true);
 
 
 --
@@ -757,5 +782,5 @@ ALTER TABLE ONLY public.values_culture
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QfMA2rvFMIpkOKLaOEIvImJdpaOCXNLn7bm3WCCOgnVrAZn4dVPbkVdt5QoIedf
+\unrestrict V6cimolRlygJ0JCKCBeYmhNSVMYqJ5rZtuYGLfRxeMDW0AQynthjv4fLlDHEV2b
 

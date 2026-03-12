@@ -106,16 +106,62 @@
             state.aiInstructions.rules = Array.isArray(payload.aiInstructions.rules) ? payload.aiInstructions.rules : [];
         }
     }
+    async function loadCacheReport() {
+        setMessage("Loading cache report...", false);
+        let data = [];
+        try {
+            // Use top-level API path
+            data = await apiRequest("/api/cache-report", { method: "GET" });
+        }
+        catch (error) {
+            setMessage(error.message || "Failed to load cache report", true);
+            renderCacheReport([]);
+            return;
+        }
+        setMessage("Cache report loaded.", false);
+        renderCacheReport(data);
+    }
+
+    function renderCacheReport(report) {
+        const table = document.getElementById("cache-table");
+        if (!table)
+            return;
+        const tbody = table.querySelector("tbody");
+        if (!tbody)
+            return;
+        if (!Array.isArray(report) || report.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='6'>No cache records found.</td></tr>";
+            return;
+        }
+        tbody.innerHTML = report.map((item) =>
+            `<tr>`
+            + `<td>${escapeHtml(item.question || "")}</td>`
+            + `<td>${escapeHtml(item.model || "")}</td>`
+            + `<td>${escapeHtml(String(item.cached || "0"))}</td>`
+            + `<td>${escapeHtml(String(item.lastAccessed || ""))}</td>`
+            + `<td>${escapeHtml(String(item.invalidatedAt || ""))}</td>`
+            + `<td>${item.hidden ? 'Yes' : 'No'}</td>`
+            + `</tr>`
+        ).join("");
+    }
     function wireTabs() {
         const tabs = Array.from(document.querySelectorAll("[data-tab]"));
         const panels = Array.from(document.querySelectorAll("[data-panel]"));
         tabs.forEach((tab) => {
-            tab.addEventListener("click", () => {
+            tab.addEventListener("click", async () => {
                 const panelName = tab.dataset.tab;
                 tabs.forEach((btn) => btn.classList.toggle("is-active", btn === tab));
                 panels.forEach((panel) => {
                     panel.hidden = panel.dataset.panel !== panelName;
                 });
+                if (panelName === "cache") {
+                    try {
+                        await loadCacheReport();
+                    }
+                    catch (e) {
+                        // ignore - loadCacheReport handles messaging
+                    }
+                }
             });
         });
     }
@@ -695,44 +741,6 @@
         mergeState(data);
         setMessage("Admin data loaded.", false);
     }
-    async function loadCacheReport() {
-        const tableBody = document.querySelector("#cache-table tbody");
-        if (!tableBody) return;
-        tableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
-        try {
-            const rows = await apiRequest("/api/admin/cache-report", { method: "GET" });
-            if (!Array.isArray(rows) || !rows.length) {
-                tableBody.innerHTML = '<tr><td colspan="5">No cache data found.</td></tr>';
-                return;
-            }
-            tableBody.innerHTML = rows.map(row =>
-                `<tr>
-                    <td>${escapeHtml(row.question)}</td>
-                    <td>${escapeHtml(row.model)}</td>
-                    <td>${row.is_cached ? 'Yes' : 'No'}</td>
-                    <td>${row.last_accessed ? escapeHtml(row.last_accessed) : ''}</td>
-                    <td>${row.cache_hit_count > 0 ? '' : 'Hidden'}</td>
-                </tr>`
-            ).join("");
-        } catch (error) {
-            tableBody.innerHTML = `<tr><td colspan="5">Error loading cache report: ${escapeHtml(error.message)}</td></tr>`;
-        }
-    }
-    async function loadMonthlyCost() {
-        const azureCostEl = document.getElementById("azure-cost");
-        const claudeCostEl = document.getElementById("claude-cost");
-        if (!azureCostEl || !claudeCostEl) return;
-        azureCostEl.textContent = 'Loading...';
-        claudeCostEl.textContent = 'Loading...';
-        try {
-            const result = await apiRequest("/api/admin/monthly-cost", { method: "GET" });
-            azureCostEl.textContent = result.azure || 'N/A';
-            claudeCostEl.textContent = result.claude || 'N/A';
-        } catch (error) {
-            azureCostEl.textContent = 'Error';
-            claudeCostEl.textContent = 'Error';
-        }
-    }
     function wireGlobalActions() {
         const saveButton = document.getElementById("save-all");
         if (saveButton) {
@@ -752,6 +760,17 @@
                 window.location.href = LOGOUT_URL;
             });
         }
+        const cacheRefreshBtn = document.getElementById("cache-refresh");
+        if (cacheRefreshBtn) {
+            cacheRefreshBtn.addEventListener("click", async () => {
+                try {
+                    await loadCacheReport();
+                }
+                catch (error) {
+                    setMessage(error.message || "Failed to load cache report", true);
+                }
+            });
+        }
     }
     async function init() {
         wireTabs();
@@ -768,23 +787,6 @@
         }
         loadDraftIfAny();
         renderAll();
-        // Load cache report when cache tab is shown
-        const cacheTab = document.querySelector('[data-tab="cache"]');
-        if (cacheTab) {
-            cacheTab.addEventListener('click', loadCacheReport);
-        }
-        // Optionally load cache report immediately if cache panel is default
-        if (document.querySelector('.tab-btn.is-active[data-tab="cache"]')) {
-            loadCacheReport();
-        }
-        // Load monthly cost when cost tab is shown
-        const costTab = document.querySelector('[data-tab="cost"]');
-        if (costTab) {
-            costTab.addEventListener('click', loadMonthlyCost);
-        }
-        if (document.querySelector('.tab-btn.is-active[data-tab="cost"]')) {
-            loadMonthlyCost();
-        }
         window.setInterval(saveDraft, 15000);
     }
     init();

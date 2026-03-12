@@ -518,7 +518,15 @@ module.exports = async function(context, req) {
     }
 
     if (String(req.method || "").toUpperCase() === "POST") {
-      await saveAll(client, candidateId, req.body || {}, String(auth.email).toLowerCase());
+        await saveAll(client, candidateId, req.body || {}, String(auth.email).toLowerCase());
+        // Invalidate AI cache after profile updates that affect generated responses
+        try {
+          if (module.exports && typeof module.exports.hideCacheRecords === "function") {
+            await module.exports.hideCacheRecords(client);
+          }
+        } catch (err) {
+          // don't fail the save because cache invalidation failed; log and continue
+        }
       context.res = {
         status: 200,
         headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
@@ -561,20 +569,29 @@ module.exports.cacheReport = async function(context, req) {
     endRequest(context, obs, 401);
     return;
   }
-  const client = getDbClient();
-  await client.connect();
-  try {
-    const result = await client.query(
-      `SELECT question, model, cache_hit_count, last_accessed, is_cached
-       FROM ai_response_cache
-       ORDER BY cache_hit_count DESC, last_accessed DESC`
-    );
-    context.res = {
-      status: 200,
-      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
-      body: result.rows
-    };
-    endRequest(context, obs, 200);
+    const client = getDbClient();
+    await client.connect();
+    try {
+      const result = await client.query(
+        `SELECT question, model, cache_hit_count, last_accessed, is_cached, invalidated_at
+         FROM ai_response_cache
+         ORDER BY cache_hit_count DESC, last_accessed DESC`
+      );
+      // Map DB fields to frontend keys
+      const mappedRows = result.rows.map(row => ({
+        question: row.question,
+        model: row.model,
+        cached: row.cache_hit_count,
+        lastAccessed: row.last_accessed,
+        invalidatedAt: row.invalidated_at || null,
+        hidden: !row.is_cached
+      }));
+      context.res = {
+        status: 200,
+        headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
+        body: mappedRows
+      };
+      endRequest(context, obs, 200);
   } catch (error) {
     failRequest(context, obs, error, 500);
     context.res = {
@@ -588,5 +605,5 @@ module.exports.cacheReport = async function(context, req) {
 };
 
 module.exports.hideCacheRecords = async function(client) {
-  await client.query(`UPDATE ai_response_cache SET is_cached = FALSE WHERE is_cached = TRUE`);
+  await client.query(`UPDATE ai_response_cache SET is_cached = FALSE, invalidated_at = NOW() WHERE is_cached = TRUE`);
 };

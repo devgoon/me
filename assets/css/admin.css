@@ -294,6 +294,32 @@ select:focus {
   margin-bottom: 12px;
 }
 
+/* Cache table gridlines and alignment */
+#cache-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+#cache-table thead th,
+#cache-table tbody td {
+  border: 1px solid #30363d;
+  padding: 8px 10px;
+}
+#cache-table thead th {
+  background: rgba(48,54,61,0.6);
+  font-weight: 700;
+  text-align: left;
+}
+#cache-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+#cache-table td.center {
+  text-align: center;
+}
+#cache-table td.left {
+  text-align: left;
+}
+
 @media (max-width: 900px) {
   .admin-layout {
     grid-template-columns: 1fr;
