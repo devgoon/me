@@ -18,7 +18,7 @@ module.exports = async function(context, req) {
   const databaseUrl = process.env.DATABASE_URL;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const aiModel = process.env.AI_MODEL;
-  const azureStorage = process.env.AzureWebJobsStorage || process.env.AZURE_WEBJOBS_STORAGE;
+ 
 
   const baseBody = {
     ok: true,
@@ -28,8 +28,7 @@ module.exports = async function(context, req) {
       env: {
         databaseUrl: databaseUrl ? "ok" : "not_configured",
         anthropicKey: anthropicKey ? "ok" : "not_configured",
-        aiModel: aiModel ? "ok" : "not_configured",
-        azureWebJobsStorage: azureStorage ? "ok" : "not_configured"
+        aiModel: aiModel ? "ok" : "not_configured"
       },
       database: "unknown",
       anthropic: "unknown"
