@@ -1,4 +1,4 @@
-const handler = require("../admin");
+const handler = require("../admin/index");
 
 describe("admin API", () => {
   test("handler sets a response", async () => {

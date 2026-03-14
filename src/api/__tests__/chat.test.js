@@ -1,4 +1,4 @@
-const handler = require("../chat");
+const handler = require("../chat/index");
 
 describe("chat API", () => {
   test("handler sets a response for missing or present message", async () => {
