@@ -23,7 +23,7 @@ build-api:
 test:
 	cd src/api && npm test -- --runInBand
 
-build:
+build:clean
 	@echo "==> [1/2] Building TypeScript frontend assets"
 	@$(MAKE) build-ui
 	@echo "==> [2/2] Building TypeScript API assets"

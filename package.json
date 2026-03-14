@@ -17,17 +17,15 @@
     "migrate:down": "node-pg-migrate down -d $DATABASE_URL -m migrations"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "@typescript-eslint/eslint-plugin": "^8.57.0",
     "@typescript-eslint/parser": "^8.57.0",
     "copyfiles": "^2.4.1",
     "cspell": "latest",
     "eslint": "^10.0.3",
     "eslint-plugin-jsdoc": "^62.8.0",
-    "http-server": "latest",
     "linkinator": "latest",
     "node-pg-migrate": "^8.0.4",
-    "pa11y": "^9.1.1",
-    "tscp": "^1.0.0",
     "typescript": "^5.8.2"
   },
   "dependencies": {
