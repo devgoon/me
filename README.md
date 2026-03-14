@@ -1,5 +1,4 @@
 
-
 # me: AI-Assisted Portfolio
 
 ## Table of Contents
@@ -18,25 +17,23 @@
 12. [Database Schema](#12-database-schema)
 13. [API Flow Diagrams](#13-api-flow-diagrams)
 
-## 1. Project Overview
-Personal website and AI-assisted portfolio for Lodovico Minnocci. The site combines static marketing pages, an interactive admin surface for profile management, serverless API endpoints, and AI-assisted features powered by cached model responses.
 
-Key features
-- Key features
+## 1. Project Overview
+Personal website and AI-assisted portfolio for Lodovico Minnocci. Combines static marketing pages, an interactive admin panel, serverless API endpoints, and AI-powered features.
+
+**Key features:**
 
 *Note: This project is Azure-centric — designed for deployment on Azure Static Web Apps with Azure PostgreSQL for persistence.*
 
-- Static frontend: public pages including home, resume, experience, projects, and specialty AI-assisted views (`experience-ai`, `fit-ai`). These are located in the project root HTML and `assets/` for CSS/JS.
 
-- Authentication: Azure Static Web Apps (SWA) authentication with provider integrations (AAD and other providers). Admin pages are protected and require sign-in.
+- **Static frontend:** Public pages (home, resume, experience, projects, AI-assisted views) in root HTML and `assets/` for CSS/JS. Source: `src/ui/`, output: `assets/js/` (not versioned).
+- **Authentication:** Azure Static Web Apps (SWA) auth with AAD and other providers. Admin pages require sign-in.
+- **Admin panel:** Full profile editing, autosave, manual save, cache report, and change tracking.
+- **AI/chat features:** API endpoints forward prompts to an AI model (Claude, etc.), cache responses in PostgreSQL, and support cache invalidation on profile/model changes.
+- **Backend/API:** Azure Functions (Node.js, TypeScript) in `src/api/`, built to `api/`. Endpoints: auth, admin data, cache report, chat, health, etc.
+- **Database:** PostgreSQL schema and migrations in `db/` and `migrations/`. Makefile targets for backup, migration, and validation.
 
-- Admin panel: full profile editing (personal details, experiences, skills, gaps, values/culture, FAQ, AI instruction rules, Cache Report). Features include:
-  - Draft autosave to `localStorage` and manual `Save All` to persist to the backend.
-  - Client-side no-op save guard that avoids unnecessary POSTs when nothing changed.
-  - Cache Report: admin-only UI to view, refresh, and inspect AI response cache
-
-- AI/chat features: server endpoints that forward prompts to an AI model (configured via `ANTHROPIC_API_KEY`/`AI_MODEL`) and return responses to the frontend.
-  - Responses are cached in PostgreSQL (`ai_response_cache`) to reduce model calls and improve latency.
+**Find the admin client source in `src/ui/admin.ts` (compiled to `assets/js/admin.js`), API handlers in `src/api/`, and database objects in `db/`.**
   - Cache invalidation is triggered by profile changes in the admin panel or changes to the AI Model and recorded with `invalidated_at` timestamps.
 
 - Backend/API: Azure Functions (Node.js) under `api/` exposing endpoints for authentication (`/api/auth/*`), admin panel data (`/api/panel-data`), cache report (`/api/cache-report`), chat (`/api/chat`), health checks, and other utilities.
@@ -44,16 +41,11 @@ Key features
 - Database: PostgreSQL schema and migration files in `db/` and `migrations/`. The project includes Makefile targets and utilities to backup, migrate, and verify schema changes.
 
 
-Deployment & development
-- Local development: `make start` brings up the local stack; `swa` emulator settings found in `swa-cli.config.json` and `local.settings.example.json` for Functions runtime.
-- Build: frontend TypeScript and asset build via `npm run build` (and `npm run build:ts`).
-- CI/CD: GitHub Actions workflow (webapp.yml) builds and deploys the static site and functions to Azure Static Web Apps.
 
-- Build: frontend TypeScript and asset build via `make build-ui` or `npm run build` (compiles `src/ui` → `assets/js`).
-- Note: `assets/js/` is a generated output directory and is not versioned in the repository; CI builds the frontend during deploy.
-- CI/CD: GitHub Actions workflow (webapp.yml) builds and deploys the static site and functions to Azure Static Web Apps.
-
-Find the admin client source in `src/ui/admin.ts` (compiled output: `assets/js/admin.js`), server handlers under `api/`, and database objects in `db/`.
+**Development & deployment:**
+- Local: `make start` launches the stack (see `swa-cli.config.json` for emulator settings).
+- Build: `make build-ui` (frontend), `make build-api` (API), or `make build` (both). Output: `assets/js/` and `api/`.
+- CI/CD: GitHub Actions workflow builds and deploys static site and API to Azure Static Web Apps. All build output is generated at deploy time.
 
 ## 2. Architecture & Visual Documentation
 
@@ -96,7 +88,9 @@ flowchart LR
 
 ## 3. Prerequisites & Environment Setup
 
+
 Required:
+- Azure subscription (for deployment and cloud resources)
 - Node.js 20+
 - npm
 - GNU Make
@@ -112,33 +106,31 @@ brew install postgresql
 brew install poppler
 ```
 
+
 ### Environment setup
-1. Copy `.env.local.example` to `.env.local` and fill secret values (DO NOT commit `.env.local`).
+1. Copy `.env.local.example` to `.env.local` and fill in all required values (DO NOT commit `.env.local`).
 2. Optionally copy `local.settings.example.json` to `local.settings.json` for Functions defaults — remove secrets before committing.
-3. Ensure the following values are set: `ANTHROPIC_API_KEY`, `AI_MODEL`, `DATABASE_URL`, and `AzureWebJobsStorage`.
 
-Example `.env.local`:
-```env
-FUNCTIONS_WORKER_RUNTIME=node
-AzureWebJobsStorage=UseDevelopmentStorage=true
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-DATABASE_URL=postgresql://username:password@server.postgres.database.azure.com:5432/database?sslmode=require
-AI_MODEL=claude-sonnet-4-20250514
-```
 
-## Local environment variables
+**Required environment keys in `.env.local`:**
 
-Keep secrets in an untracked `.env.local` file. Copy `.env.local.example` to `.env.local` and fill in values.
+- `FUNCTIONS_WORKER_RUNTIME` — must be `node` (required by Azure Functions)
+- `AzureWebJobsStorage` — local or Azure storage connection string (e.g., `UseDevelopmentStorage=true` for local dev)
+- `ANTHROPIC_API_KEY` — your Anthropic API key (required for AI features)
+- `DATABASE_URL` — PostgreSQL connection string (required for all data features)
+- `AI_MODEL` — AI model name (e.g., `claude-sonnet-4-20250514`)
 
-Example `.env.local` entries:
+**Required GitHub Actions secrets and variables for CI/CD:**
 
-```env
-FUNCTIONS_WORKER_RUNTIME=node
-AzureWebJobsStorage=UseDevelopmentStorage=true
-ANTHROPIC_API_KEY=sk-ant-...      # keep secret
-DATABASE_URL=postgresql://user:pw@host:5432/dbname?sslmode=require  # keep secret
-AI_MODEL=claude-sonnet-4-20250514
-```
+- `ANTHROPIC_API_KEY` (Secret) — Anthropic API key for deploy job
+- `DATABASE_URL` (Secret) — PostgreSQL connection string for deploy job
+- `AZURE_STATIC_WEB_APPS_API_TOKEN` (Secret) — Azure Static Web Apps deploy token
+- `AI_MODEL` (Variable) — AI model name
+- `AZURE_RESOURCE_GROUP` (Variable) — Azure resource group name
+- `SITE_HOSTNAME` (Variable) — Site hostname (e.g., `lodovi.co`)
+- `AZURE_STATIC_WEB_APP_NAME` (Variable) — Azure Static Web App name
+
+
 
 ## 4. Install & Build
 
@@ -146,9 +138,9 @@ Install dependencies:
 ```bash
 make install
 ```
-Build frontend assets (TypeScript):
+Build all assets (UI & API):
 ```bash
-make build-ui
+make build
 ```
 Typecheck only:
 ```bash
@@ -167,30 +159,31 @@ make stop
 ```
 SWA local config: `swa-cli.config.json` (host `127.0.0.1`, port `4280`, API `7071`)
  
+
 ## 6. Quality Checks & Testing
-Run the full quality pipeline that the project uses:
+Run the full quality pipeline:
 
 ```bash
 make check
 ```
 
-What `make check` runs:
+This runs:
+- **Spellcheck:** `cspell` and PDF text extraction
+- **API unit tests:** Jest tests in `src/api/__tests__/`
+- **Link check:** Validates internal links with `linkinator`
 
-- **Spellcheck**: runs `cspell` and a PDF text extraction helper (via `spellcheck` target).
-- **Build UI**: compiles frontend TypeScript assets (`make build-ui`).
-- **API unit tests**: runs Jest tests under `api/` (`make unit-test` or `cd api && npm test -- --runInBand`).
-- **Link check**: validates internal links with `linkinator` (`make link-check`).
-
-Run individual checks:
-
+Build separately with:
+```bash
+make build
+```
+Or run individual steps:
 ```bash
 make spellcheck
 make build-ui
+make build-api
 make unit-test
 make link-check
 ```
-
-API tests include cache report and `is_cached` flag validation.
 
 ## 7. Database
 
@@ -199,26 +192,13 @@ Schema and export files:
 
 ## 8. AI Response Cache
 
-AI responses are cached in the PostgreSQL table `ai_response_cache` to avoid redundant AI calls and improve performance.
-- `is_cached` flag indicates valid cache
-- Cache invalidated after relevant data changes
-- Records are never deleted
-- Admin page includes Cache Report tab
+AI responses are cached in the PostgreSQL table `ai_response_cache` to avoid redundant AI calls and improve performance. The admin panel includes a Cache Report tab for inspection and management.
 
-### Example cache record
-The `ai_response_cache` table stores cached AI responses and metadata. Columns:
+Key columns:
+- `hash` (PK): deterministic hash key
+- `question`, `model`, `response`, `cache_hit_count`, `last_accessed`, `updated_at`, `invalidated_at`, `is_cached`
 
-- `hash` (TEXT, PK): deterministic hash key for the request/response pair.
-- `question` (TEXT): the user prompt or question cached.
-- `model` (TEXT): model identifier used for the response (e.g., `claude-sonnet-4-20250514`).
-- `response` (TEXT): the model's response (stored but not shown in the admin cache table by default).
-- `cache_hit_count` (INTEGER): number of times this cached response was used.
-- `last_accessed` (TIMESTAMPTZ): most recent timestamp the cache entry was read.
-- `updated_at` (TIMESTAMPTZ): last time the cache row was written/updated.
-- `invalidated_at` (TIMESTAMPTZ, nullable): timestamp when the cache was invalidated (set when related profile data changed).
-- `is_cached` (BOOLEAN): whether the entry is currently considered valid (true) or hidden/invalidated (false).
-
-Admin Cache Report shows a subset of these fields (question, model, cache hits, last accessed, invalidated at, and hidden state). Example:
+Example:
 
 | Question | Model | Cache Hits | Last Accessed | Updated At | Invalidated At | Cached? |
 |---|---:|---:|---|---|---|---|

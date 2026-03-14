@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build:ui": "tsc --project tsconfig.json",
-    "build:api": "tsc --project tsconfig.api.json",
+    "build:api": "tsc --project tsconfig.api.json && npx copyfiles -u 2 src/api/host.json src/api/local.settings.json src/api/**/function.json api/",
     "build": "npm run build:ui && npm run build:api",
     "clean": "rm -f assets/js/*.js && rm -rf .azurite || true",
     "typecheck": "tsc --project tsconfig.json --noEmit",
@@ -16,11 +16,13 @@
     "migrate:down": "node-pg-migrate down -d $DATABASE_URL -m migrations"
   },
   "devDependencies": {
+    "copyfiles": "^2.4.1",
     "cspell": "latest",
     "http-server": "latest",
     "linkinator": "latest",
     "node-pg-migrate": "^8.0.4",
     "pa11y": "latest",
+    "tscp": "^1.0.0",
     "typescript": "^5.8.2"
   },
   "dependencies": {

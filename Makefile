@@ -1,3 +1,4 @@
+
 .PHONY: clean install spellcheck spellcheck-pdf link-check syntax-check build-ui unit-test check start stop db-export backup-db migrate-db profile-data-db deploy-db profile-data-backup profile-data-upload pre-migration-schema migrate-db post-migration-schema verify-migration rollback-db verify-schema
 
 install:
@@ -22,24 +23,30 @@ build-api:
 	npm run build:api
 
 
-unit-test:
+test:
 	cd src/api && npm test -- --runInBand
 
-check:
-	@echo "==> [1/5] Running spellcheck"
-	@$(MAKE) spellcheck
-	@echo "==> [2/5] Building TypeScript frontend assets"
+
+build:
+	@echo "==> [1/2] Building TypeScript frontend assets"
 	@$(MAKE) build-ui
-	@echo "==> [3/5] Building TypeScript API assets"
+	@echo "==> [2/2] Building TypeScript API assets"
 	@$(MAKE) build-api
-	@echo "==> [4/5] Running API unit tests"
-	@$(MAKE) unit-test
-	@echo "==> [5/5] Running link check"
+	@echo "==> Build complete"
+
+check:
+	@echo "==> [1/3] Running spellcheck"
+	@$(MAKE) spellcheck
+	@echo "==> [2/3] Running API unit tests"
+	@$(MAKE) test
+	@echo "==> [3/3] Running link check"
 	@$(MAKE) link-check
 	@echo "==> Quality checks complete"
 
  
 start:
+	@echo "==> Building project before starting local stack..."
+	@$(MAKE) build
 	@mkdir -p .azurite
 	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
 	AZURITE_PID=$$!; \
