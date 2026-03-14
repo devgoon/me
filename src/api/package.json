@@ -4,7 +4,7 @@
   "private": true,
   "main": "chat/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest --config ./jest.config.js"
   },
   "dependencies": {
     "pg": "^8.13.1"
