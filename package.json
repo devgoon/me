@@ -1,13 +1,14 @@
 {
   "name": "me",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Personal website for Lodovico Minnocci",
   "main": "index.html",
   "author": "Lodovico Minnocci",
   "license": "MIT",
   "scripts": {
     "build:ui": "tsc --project tsconfig.json",
-    "build": "npm run build:ui",
+    "build:api": "tsc --project tsconfig.api.json",
+    "build": "npm run build:ui && npm run build:api",
     "clean": "rm -f assets/js/*.js && rm -rf .azurite || true",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "migrate": "node-pg-migrate -d $DATABASE_URL -m migrations",

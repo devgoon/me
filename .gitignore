@@ -84,3 +84,4 @@ migrations/*.sql
  
 # Ignore compiled frontend output
 assets/js/
+api/

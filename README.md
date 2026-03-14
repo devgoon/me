@@ -49,7 +49,11 @@ Deployment & development
 - Build: frontend TypeScript and asset build via `npm run build` (and `npm run build:ts`).
 - CI/CD: GitHub Actions workflow (webapp.yml) builds and deploys the static site and functions to Azure Static Web Apps.
 
-Find the admin client code in `assets/js/admin.js`, server handlers under `api/`, and database objects in `db/`.
+- Build: frontend TypeScript and asset build via `make build-ui` or `npm run build` (compiles `src/ui` → `assets/js`).
+- Note: `assets/js/` is a generated output directory and is not versioned in the repository; CI builds the frontend during deploy.
+- CI/CD: GitHub Actions workflow (webapp.yml) builds and deploys the static site and functions to Azure Static Web Apps.
+
+Find the admin client source in `src/ui/admin.ts` (compiled output: `assets/js/admin.js`), server handlers under `api/`, and database objects in `db/`.
 
 ## 2. Architecture & Visual Documentation
 

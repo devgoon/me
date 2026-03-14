@@ -13,20 +13,28 @@ spellcheck-pdf:
 link-check:
 	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html
 
+	npm run build:ui
+
 build-ui:
 	npm run build:ui
 
+build-api:
+	npm run build:api
+
+
 unit-test:
-	cd api && npm test -- --runInBand
+	cd src/api && npm test -- --runInBand
 
 check:
-	@echo "==> [1/4] Running spellcheck"
+	@echo "==> [1/5] Running spellcheck"
 	@$(MAKE) spellcheck
-	@echo "==> [2/4] Building TypeScript frontend assets"
+	@echo "==> [2/5] Building TypeScript frontend assets"
 	@$(MAKE) build-ui
-	@echo "==> [3/4] Running API unit tests"
+	@echo "==> [3/5] Building TypeScript API assets"
+	@$(MAKE) build-api
+	@echo "==> [4/5] Running API unit tests"
 	@$(MAKE) unit-test
-	@echo "==> [4/4] Running link check"
+	@echo "==> [5/5] Running link check"
 	@$(MAKE) link-check
 	@echo "==> Quality checks complete"
 
@@ -113,7 +121,7 @@ stop:
 	fi; \
 	echo "Local app stack stopped."
 	
- backup-db:
+backup-db:
 	@echo "Backing up database..."
 	@DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2-) ; \
 	pg_dump --no-owner --no-acl --format=plain --file=db/backup-$(shell date +%Y%m%d%H%M%S).sql "$$DB_URL"
@@ -189,9 +197,9 @@ verify-schema:
 	@echo "\nSCHEMA MATCH: Migration successful."
 
 
-.PHONY: clean
 clean:
 	@echo "Cleaning build artifacts..."
-	@rm -f assets/js/admin.js assets/js/auth.js assets/js/experience-ai.js assets/js/fit-ai.js assets/js/main.js || true
+	@rm -f assets/js/*.js || true
+	@find api -type f -name '*.js' -not -path 'api/node_modules/*' -delete || true
 	@rm -rf .azurite || true
 	@echo "Clean complete."
