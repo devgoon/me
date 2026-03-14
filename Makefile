@@ -21,7 +21,8 @@ build-api:
 	npm run build:api
 
 test:
-	cd "$(CURDIR)/src/api" && npm test -- --runInBand
+	@echo "==> Running API tests"
+	@cd "$(shell pwd)/src/api" && npm test -- --runInBand
 
 build:clean
 	@echo "==> [1/2] Building TypeScript frontend assets"
