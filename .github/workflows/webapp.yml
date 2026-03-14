@@ -79,6 +79,12 @@ jobs:
         with:
           submodules: false
 
+      - name: Install dependencies (deploy)
+        run: make install
+
+      - name: Build TypeScript frontend assets (deploy)
+        run: make build-ui
+
       - name: Validate AI deployment settings
         shell: bash
         run: |

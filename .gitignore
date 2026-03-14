@@ -81,3 +81,6 @@ azurite_storage/
 
 db/export.sql
 migrations/*.sql
+ 
+# Ignore compiled frontend output
+assets/js/
