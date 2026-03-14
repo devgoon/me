@@ -3,12 +3,12 @@
     "target": "ES2019",
     "module": "none",
     "lib": ["DOM", "ES2019"],
-    "rootDir": "src/ts",
+    "rootDir": "src/ui",
     "outDir": "assets/js",
     "strict": false,
     "noEmitOnError": true,
     "skipLibCheck": true,
     "removeComments": false
   },
-  "include": ["src/ts/**/*.ts"]
+  "include": ["src/ui/**/*.ts"]
 }

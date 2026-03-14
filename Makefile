@@ -5,10 +5,10 @@ install:
 	cd api && npm install
 
 spellcheck:spellcheck-pdf
-	npx cspell "**/*.{html,css,js,ts}" "assets/*.txt" "src/ts/*.ts" "api/**/*.js" --verbose
+	npx cspell "**/*.{html,css,js,ts}" "assets/*.txt" "src/ui/*.ts" "api/**/*.js" --verbose
 
 spellcheck-pdf:
-	bash ./pdf2txt.sh
+	bash ./scripts/pdf2txt.sh
 
 link-check:
 	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html
