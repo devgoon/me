@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "lint": "npx eslint src/ui src/api --ext .ts,.tsx",
+    "test": "cd src/api && npm test",
     "build:ui": "tsc --project tsconfig.json",
     "build:api": "tsc --project tsconfig.api.json && npx copyfiles -u 2 src/api/host.json src/api/local.settings.json src/api/**/function.json api/",
     "build": "npm run build:ui && npm run build:api",
