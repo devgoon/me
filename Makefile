@@ -3,7 +3,7 @@
 
 install:
 	npm install
-	cd api && npm install
+	cd src/api && npm install
 
 spellcheck:spellcheck-pdf
 	npx cspell "**/*.{html,css,js,ts}" "assets/*.txt" "src/ui/*.ts" "api/**/*.js" --verbose
