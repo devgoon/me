@@ -11,5 +11,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/api/**/*.ts", "src/api/**/*.js"]
+  "include": ["src/api/**/*.ts", "src/api/**/*.js"],
+  "exclude": ["src/api/__tests__", "src/api/**/__tests__", "src/api/**/*.test.js", "src/api/**/*.test.ts"]
 }
