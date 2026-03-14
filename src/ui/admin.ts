@@ -60,6 +60,12 @@
     }
   };
 
+  /**
+   * Sets the admin panel message in the UI.
+   * @param {string} text - The message text.
+   * @param {boolean} isError - Whether the message is an error.
+   * @returns {void}
+   */
   function setMessage(text, isError) {
     const el = document.getElementById("admin-message");
     if (!el) return;
@@ -69,6 +75,12 @@
     el.classList.toggle("ok", Boolean(text && !isError));
   }
 
+  /**
+   * Makes an API request with credentials and JSON handling.
+   * @param {string} url - The API endpoint URL.
+   * @param {object} [options] - Fetch options.
+   * @returns {Promise<object>}
+   */
   async function apiRequest(url, options) {
     const response = await fetch(url, {
       ...options,
@@ -93,6 +105,11 @@
     return data;
   }
 
+  /**
+   * Merges the given payload into the current state.
+   * @param {object} payload - The payload to merge.
+   * @returns {void}
+   */
   function mergeState(payload) {
     if (!payload || typeof payload !== "object") return;
     if (payload.profile) Object.assign(state.profile, payload.profile);
@@ -107,6 +124,9 @@
     }
   }
 
+  /**
+   *
+   */
   function wireTabs() {
     const tabs = Array.from(document.querySelectorAll("[data-tab]"));
     const panels = Array.from(document.querySelectorAll("[data-panel]"));
@@ -122,6 +142,9 @@
     });
   }
 
+  /**
+   *
+   */
   function fillSimpleFields() {
     const mappings = [
       ["profile-fullName", "profile", "fullName"],
@@ -174,6 +197,9 @@
     }
   }
 
+  /**
+   *
+   */
   function renderTargetTitles() {
     const list = document.getElementById("target-title-list");
     if (!list) return;
@@ -191,6 +217,9 @@
     });
   }
 
+  /**
+   *
+   */
   function renderCompanyStages() {
     const wrap = document.getElementById("company-stage-list");
     if (!wrap) return;
@@ -214,6 +243,9 @@
     });
   }
 
+  /**
+   *
+   */
   function renderExperiences() {
     const list = document.getElementById("experience-list");
     if (!list) return;
@@ -319,6 +351,9 @@
     });
   }
 
+  /**
+   *
+   */
   function renderSkills() {
     const list = document.getElementById("skills-list");
     if (!list) return;
@@ -364,6 +399,9 @@
     });
   }
 
+  /**
+   *
+   */
   function renderGaps() {
     const list = document.getElementById("gaps-list");
     if (!list) return;
@@ -403,6 +441,9 @@
     });
   }
 
+  /**
+   *
+   */
   function renderFaq() {
     const list = document.getElementById("faq-list");
     if (!list) return;
@@ -437,6 +478,9 @@
     });
   }
 
+  /**
+   *
+   */
   function renderAiRules() {
     const list = document.getElementById("ai-rule-list");
     if (!list) return;
@@ -474,6 +518,9 @@
     });
   }
 
+  /**
+   *
+   */
   function defaultExperience() {
     return {
       companyName: "",
@@ -498,6 +545,9 @@
     };
   }
 
+  /**
+   *
+   */
   function defaultSkill() {
     return {
       skillName: "",
@@ -510,6 +560,9 @@
     };
   }
 
+  /**
+   *
+   */
   function defaultGap() {
     return {
       gapType: "skill",
@@ -519,6 +572,9 @@
     };
   }
 
+  /**
+   *
+   */
   function defaultFaq() {
     return {
       question: "",
@@ -527,6 +583,9 @@
     };
   }
 
+  /**
+   *
+   */
   function defaultRule() {
     return {
       instructionType: "tone",
@@ -535,6 +594,9 @@
     };
   }
 
+  /**
+   *
+   */
   function wireAddButtons() {
     const targetInput = document.getElementById("target-title-input");
     const addTarget = document.getElementById("add-target-title");
@@ -589,6 +651,9 @@
     }
   }
 
+  /**
+   *
+   */
   function sanitizeForSave() {
     const payload = JSON.parse(JSON.stringify(state));
 
@@ -615,6 +680,10 @@
     return payload;
   }
 
+  /**
+   *
+   * @param value
+   */
   function parseNullableNumber(value) {
     if (value === null || value === undefined) {
       return null;
@@ -627,6 +696,10 @@
     return Number.isFinite(parsed) ? parsed : null;
   }
 
+  /**
+   *
+   * @param payload
+   */
   function validateSalaryRange(payload) {
     const profile = payload && payload.profile ? payload.profile : {};
     const salaryMin = parseNullableNumber(profile.salaryMin);
@@ -637,6 +710,9 @@
     }
   }
 
+  /**
+   *
+   */
   async function saveAll() {
     setMessage("Saving all changes...", false);
     const payload = sanitizeForSave();
@@ -649,6 +725,9 @@
     setMessage("All changes saved successfully.", false);
   }
 
+  /**
+   *
+   */
   function saveDraft() {
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
@@ -664,6 +743,9 @@
     }
   }
 
+  /**
+   *
+   */
   function loadDraftIfAny() {
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
@@ -677,6 +759,10 @@
     }
   }
 
+  /**
+   *
+   * @param value
+   */
   function escapeHtml(value) {
     return String(value || "")
       .replace(/&/g, "&amp;")
@@ -686,10 +772,19 @@
       .replace(/'/g, "&#39;");
   }
 
+  /**
+   *
+   * @param value
+   */
   function escapeAttr(value) {
     return escapeHtml(value).replace(/\n/g, "&#10;");
   }
 
+  /**
+   *
+   * @param current
+   * @param values
+   */
   function buildSelectOptions(current, values) {
     return values.map((value) => {
       const selected = String(current || "") === String(value) ? " selected" : "";
@@ -697,6 +792,9 @@
     }).join("");
   }
 
+  /**
+   *
+   */
   function renderAll() {
     fillSimpleFields();
     renderTargetTitles();
@@ -708,6 +806,9 @@
     renderAiRules();
   }
 
+  /**
+   *
+   */
   async function authenticate() {
     try {
       const data = await apiRequest("/api/auth/me", { method: "GET" });
@@ -728,6 +829,9 @@
     }
   }
 
+  /**
+   *
+   */
   async function loadServerData() {
     setMessage("Loading admin data...", false);
     const data = await apiRequest("/api/panel-data", { method: "GET" });
@@ -735,6 +839,9 @@
     setMessage("Admin data loaded.", false);
   }
 
+  /**
+   *
+   */
   function wireGlobalActions() {
     const saveButton = document.getElementById("save-all");
     if (saveButton) {
@@ -756,6 +863,9 @@
     }
   }
 
+  /**
+   *
+   */
   async function init() {
     wireTabs();
     wireAddButtons();

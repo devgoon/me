@@ -8,6 +8,11 @@
     return;
   }
 
+  /**
+   * Escapes HTML special characters in a string.
+   * @param {string} value - The string to escape.
+   * @returns {string}
+   */
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, "&amp;")
@@ -17,6 +22,13 @@
       .replace(/'/g, "&#39;");
   }
 
+  /**
+   * Formats a date range for display.
+   * @param {string|Date} startDate - The start date.
+   * @param {string|Date} endDate - The end date.
+   * @param {boolean} isCurrent - Whether the role is current.
+   * @returns {string}
+   */
   function formatDateRange(startDate, endDate, isCurrent) {
     const fmt = (dateValue) => {
       if (!dateValue) {
@@ -34,6 +46,11 @@
     return `${start} - ${end}`;
   }
 
+  /**
+   * Renders the experience list in the UI.
+   * @param {Array} experiences - The experiences to render.
+   * @returns {void}
+   */
   function renderExperience(experiences) {
     experienceList.innerHTML = experiences
       .map((exp) => {
@@ -67,6 +84,13 @@
       .join("");
   }
 
+  /**
+   * Renders a skill column for the UI.
+   * @param {string} title - The column title.
+   * @param {string} className - The CSS class name.
+   * @param {Array} items - The skill items.
+   * @returns {string}
+   */
   function renderSkillColumn(title, className, items) {
     const list = items && items.length
       ? items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")
@@ -80,6 +104,10 @@
     `;
   }
 
+  /**
+   * Renders all skill columns in the UI.
+   * @param {object} skills - The skills object.
+   */
   function renderSkills(skills) {
     skillsList.innerHTML = [
       renderSkillColumn("STRONG ✓", "skills-card--strong", skills.strong || []),
@@ -88,6 +116,10 @@
     ].join("");
   }
 
+  /**
+   * Loads experience and skills data from the API and renders them.
+   * @returns {Promise<void>}
+   */
   async function loadData() {
     experienceList.innerHTML = "<article class=\"role-card\"><p>AI analyzing experience data...</p></article>";
     skillsList.innerHTML = "<article class=\"role-card\"><p>AI analyzing skills profile...</p></article>";

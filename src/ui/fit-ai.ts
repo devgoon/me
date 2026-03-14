@@ -29,10 +29,22 @@
     { keys: ['unity', '3d', 'graphics'], text: 'Specialized graphics/rendering stack requirements are outside my usual delivery scope.' }
   ];
 
+  /**
+   * Checks if any term is included in the text.
+   * @param {string} text - The text to search.
+   * @param {string[]} terms - The terms to check for.
+   * @returns {boolean}
+   */
   function includesAny(text, terms) {
     return terms.some((term) => text.includes(term));
   }
 
+  /**
+   * Builds a follow-up answer based on the question and verdict.
+   * @param {string} question - The follow-up question.
+   * @param {string} verdict - The fit verdict.
+   * @returns {string}
+   */
   function buildFollowUpAnswer(question, verdict) {
     const q = question.toLowerCase();
 
@@ -53,6 +65,10 @@
     return 'I would use this assessment as a filter, then ask one high-signal question: What must this person deliver in 90 days to be considered a clear success?';
   }
 
+  /**
+   * Main React component for the Fit AI app.
+   * @returns {JSX.Element}
+   */
   function FitApp() {
     const [jobDescription, setJobDescription] = React.useState('');
     const [result, setResult] = React.useState(null);

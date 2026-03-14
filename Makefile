@@ -13,19 +13,15 @@ spellcheck-pdf:
 
 link-check:
 	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html
-
-	npm run build:ui
-
+	
 build-ui:
 	npm run build:ui
 
 build-api:
 	npm run build:api
 
-
 test:
 	cd src/api && npm test -- --runInBand
-
 
 build:
 	@echo "==> [1/2] Building TypeScript frontend assets"
@@ -34,16 +30,16 @@ build:
 	@$(MAKE) build-api
 	@echo "==> Build complete"
 
-check:
+check:build
 	@echo "==> [1/3] Running spellcheck"
 	@$(MAKE) spellcheck
 	@echo "==> [2/3] Running API unit tests"
 	@$(MAKE) test
-	@echo "==> [3/3] Running link check"
+	@echo "==> [3/4] Running link check"
 	@$(MAKE) link-check
+	@echo "==> [4/4] ESLint disabled (skipped)"
 	@echo "==> Quality checks complete"
 
- 
 start:
 	@echo "==> Building project before starting local stack..."
 	@$(MAKE) build
@@ -202,7 +198,6 @@ verify-schema:
 	@echo "Diffing db/live-schema.sql against db/schema.sql..."
 	@diff -u db/schema.sql db/live-schema.sql || (echo "\nSCHEMA MISMATCH: Migration did not produce expected schema." && exit 1)
 	@echo "\nSCHEMA MATCH: Migration successful."
-
 
 clean:
 	@echo "Cleaning build artifacts..."

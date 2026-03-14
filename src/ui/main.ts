@@ -1,15 +1,18 @@
 // @ts-nocheck
 /**
-* Template Name: MyResume - v4.9.2
-* Template URL: https://bootstrapmade.com/free-html-bootstrap-template-my-resume/
-* Author: BootstrapMade.com
-* License: https://bootstrapmade.com/license/
-*/
+ * Template Name: MyResume - v4.9.2
+ * Template URL: https://bootstrapmade.com/free-html-bootstrap-template-my-resume/
+ * Author: BootstrapMade.com
+ * License: https://bootstrapmade.com/license/
+ */
 (function() {
   "use strict";
 
   /**
    * Easy selector helper function
+   * @param {string} el - The selector string.
+   * @param {boolean} [all] - Whether to select all matches.
+   * @returns {Element|Element[]|null}
    */
   const select = (el, all = false) => {
     el = el.trim()
@@ -22,6 +25,11 @@
 
   /**
    * Easy event listener function
+   * @param {string} type - Event type.
+   * @param {string} el - Selector string.
+   * @param {Function} listener - Event handler.
+   * @param {boolean} [all] - Whether to add to all matches.
+   * @returns {void}
    */
   const on = (type, el, listener, all = false) => {
     let selectEl = select(el, all)
@@ -35,7 +43,10 @@
   }
 
   /**
-   * Easy on scroll event listener 
+   * Easy on scroll event listener
+   * @param {Element} el - The element to listen on.
+   * @param {Function} listener - The scroll event handler.
+   * @returns {void}
    */
   const onscroll = (el, listener) => {
     el.addEventListener('scroll', listener)
@@ -121,6 +132,7 @@
 
   /**
    * Scrolls to an element with header offset
+   * @param el
    */
   const scrollto = (el) => {
     let elementPos = select(el).offsetTop
@@ -156,7 +168,7 @@
   })
 
   /**
-  * Scroll with offset on links with a class name .scrollto
+   * Scroll with offset on links with a class name .scrollto
    */
   on('click', '.scrollto', function(e) {
     if (select(this.hash)) {
@@ -174,7 +186,7 @@
   }, true)
 
   /**
-  * Scroll with offset on page load with hash links in the url
+   * Scroll with offset on page load with hash links in the url
    */
   window.addEventListener('load', () => {
     if (window.location.hash) {
