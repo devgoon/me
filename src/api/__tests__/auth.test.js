@@ -1,4 +1,4 @@
-const handler = require("../auth/index");
+const handler = require("../auth");
 
 describe("auth API", () => {
   test("handler sets a response", async () => {
