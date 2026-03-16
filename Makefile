@@ -110,8 +110,10 @@ stop:
 	
  backup-db:
 	@echo "Backing up database..."
-	@DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2-) ; \
-	pg_dump --no-owner --no-acl --format=plain --file=db/backup-$(shell date +%Y%m%d%H%M%S).sql "$$DB_URL"
+	@DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) ; \
+	TIMESTAMP=$$(date +%Y%m%d%H%M%S) ; \
+	pg_dump --no-owner --no-acl --format=plain --file=db/backup-$$TIMESTAMP.sql "$$DB_URL" ; \
+	mv db/backup-$$TIMESTAMP.sql db/export.sql
 
 profile-data-backup:
 	@echo "Creating profile data backup..."

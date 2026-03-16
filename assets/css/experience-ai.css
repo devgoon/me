@@ -82,6 +82,15 @@ body {
   font-weight: 600;
 }
 
+/* Current job star */
+.current-star {
+  color: #ffd700; /* gold */
+  font-size: 1.5rem; /* large */
+  margin-left: 0.25rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+
 .role-title {
   margin: 8px 0 14px;
   color: #58a6ff;

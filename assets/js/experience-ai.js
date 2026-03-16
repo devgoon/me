@@ -31,7 +31,13 @@
         return `${start} - ${end}`;
     }
     function renderExperience(experiences) {
-        experienceList.innerHTML = experiences
+        // Sort experiences by start date descending (most recent first)
+        const sorted = (experiences || []).slice().sort((a, b) => {
+            const ta = a && a.startDate ? new Date(a.startDate).getTime() : 0;
+            const tb = b && b.startDate ? new Date(b.startDate).getTime() : 0;
+            return tb - ta;
+        });
+        experienceList.innerHTML = sorted
             .map((exp) => {
             const contextId = `context-${exp.id}`;
             const bullets = (exp.bulletPoints || [])
@@ -39,10 +45,10 @@
                 .join("");
             return `
           <article class="role-card">
-            <div class="role-meta">
-              <h2>${escapeHtml(exp.companyName)}</h2>
-              <span>${escapeHtml(formatDateRange(exp.startDate, exp.endDate, exp.isCurrent))}</span>
-            </div>
+                        <div class="role-meta">
+                              <h2>${escapeHtml(exp.companyName)}${exp.isCurrent ? ' <span class="current-star" aria-hidden="true" style="color:#ffd700;font-size:1.5rem;">★</span>' : ''}</h2>
+                            <span>${escapeHtml(formatDateRange(exp.startDate, exp.endDate, exp.isCurrent))}</span>
+                        </div>
             <p class="role-title">${escapeHtml(exp.title || "")}</p>
             <ul class="achievement-list">${bullets || "<li>No public achievements provided.</li>"}</ul>
             <button class="ai-context-toggle" type="button" aria-expanded="false" aria-controls="${contextId}" data-target="${contextId}">✨ Show AI Context</button>
