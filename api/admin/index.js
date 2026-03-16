@@ -143,6 +143,14 @@ async function loadAll(client, candidateId) {
     [candidateId]
   );
 
+  const educationRes = await client.query(
+    `SELECT *
+     FROM education
+     WHERE candidate_id = $1
+     ORDER BY display_order ASC, start_date DESC NULLS LAST`,
+    [candidateId]
+  );
+
   const valuesRes = await client.query(
     `SELECT *
      FROM values_culture
@@ -246,6 +254,17 @@ async function loadAll(client, candidateId) {
       description: row.description || "",
       whyItsAGap: row.why_its_a_gap || "",
       interestedInLearning: Boolean(row.interest_in_learning)
+    })),
+    education: educationRes.rows.map((row) => ({
+      institution: row.institution || "",
+      degree: row.degree || "",
+      fieldOfStudy: row.field_of_study || "",
+      startDate: row.start_date || "",
+      endDate: row.end_date || "",
+      current: Boolean(row.is_current),
+      grade: row.grade || "",
+      notes: row.notes || "",
+      displayOrder: row.display_order || 0
     })),
     valuesCulture: {
       mustHaves: (values.must_haves || []).join("\n"),
@@ -416,6 +435,28 @@ async function saveAll(client, candidateId, payload, authEmail) {
           asText(item.description),
           asText(item.whyItsAGap),
           Boolean(item.interestedInLearning)
+        ]
+      );
+    }
+
+    await client.query("DELETE FROM education WHERE candidate_id = $1", [candidateId]);
+    const validEducation = education.filter((item) => asText(item.institution) || asText(item.degree));
+    for (const [index, item] of validEducation.entries()) {
+      await client.query(
+        `INSERT INTO education (
+          candidate_id, institution, degree, field_of_study, start_date, end_date, is_current, grade, notes, display_order
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [
+          candidateId,
+          asText(item.institution),
+          asText(item.degree),
+          asText(item.fieldOfStudy),
+          asDate(item.startDate),
+          item.current ? null : asDate(item.endDate),
+          Boolean(item.current),
+          asText(item.grade),
+          asText(item.notes),
+          Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : index
         ]
       );
     }

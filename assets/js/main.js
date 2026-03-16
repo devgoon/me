@@ -1,3 +1,24 @@
+// Minimal main script to ensure homepage removes preloader and chat toggles
+(function(){
+  'use strict';
+  function select(sel){ try { return document.querySelector(sel); } catch(e){return null;} }
+  // Remove preloader when page fully loads
+  window.addEventListener('load', function(){
+    var pre = select('#preloader');
+    if(pre && pre.parentNode) pre.parentNode.removeChild(pre);
+  });
+
+  // Simple AI chat toggle handlers
+  var chatToggle = select('#ask-ai-toggle');
+  var chatPanel = select('#ai-chat-panel');
+  var chatOverlay = select('#ai-chat-overlay');
+  var chatClose = select('#ai-chat-close');
+  function openChat(){ document.body.classList.add('ai-chat-open'); if(chatPanel) chatPanel.setAttribute('aria-hidden','false'); if(chatOverlay) chatOverlay.setAttribute('aria-hidden','false'); }
+  function closeChat(){ document.body.classList.remove('ai-chat-open'); if(chatPanel) chatPanel.setAttribute('aria-hidden','true'); if(chatOverlay) chatOverlay.setAttribute('aria-hidden','true'); }
+  if(chatToggle) chatToggle.addEventListener('click', openChat);
+  if(chatClose) chatClose.addEventListener('click', closeChat);
+  if(chatOverlay) chatOverlay.addEventListener('click', closeChat);
+})();
 // @ts-nocheck
 /**
 * Template Name: MyResume - v4.9.2

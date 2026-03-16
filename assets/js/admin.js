@@ -41,6 +41,7 @@
         experiences: [],
         skills: [],
         gaps: [],
+        education: [],
         valuesCulture: {
             mustHaves: "",
             dealbreakers: "",
@@ -93,6 +94,8 @@
             Object.assign(state.profile, payload.profile);
         if (Array.isArray(payload.experiences))
             state.experiences = payload.experiences;
+            if (Array.isArray(payload.education))
+                state.education = payload.education;
         if (Array.isArray(payload.skills))
             state.skills = payload.skills;
         if (Array.isArray(payload.gaps))
@@ -356,6 +359,66 @@
             });
         });
     }
+    function defaultEducation() {
+        return {
+            institution: "",
+            degree: "",
+            fieldOfStudy: "",
+            startDate: "",
+            endDate: "",
+            current: false,
+            grade: "",
+            notes: "",
+            displayOrder: state.education.length
+        };
+    }
+    function renderEducation() {
+        const list = document.getElementById("education-list");
+        if (!list)
+            return;
+        list.innerHTML = state.education.map((item, index) => {
+            const currentChecked = item.current ? " checked" : "";
+            return "<article class=\"item-card\">"
+                + "<header><h3>Education " + (index + 1) + "</h3><button class=\"mini-btn danger\" data-remove-education=\"" + index + "\" type=\"button\">Remove</button></header>"
+                + "<div class=\"form-grid two-col\">"
+                + "<label>Institution<input data-edu=\"" + index + "\" data-field=\"institution\" type=\"text\" value=\"" + escapeAttr(item.institution || "") + "\"></label>"
+                + "<label>Degree<input data-edu=\"" + index + "\" data-field=\"degree\" type=\"text\" value=\"" + escapeAttr(item.degree || "") + "\"></label>"
+                + "<label>Field of study<input data-edu=\"" + index + "\" data-field=\"fieldOfStudy\" type=\"text\" value=\"" + escapeAttr(item.fieldOfStudy || "") + "\"></label>"
+                + "<label>Display order<input data-edu=\"" + index + "\" data-field=\"displayOrder\" type=\"number\" value=\"" + escapeAttr(String(item.displayOrder || index)) + "\"></label>"
+                + "</div>"
+                + "<div class=\"form-grid two-col\">"
+                + "<label>Start date<input data-edu=\"" + index + "\" data-field=\"startDate\" type=\"date\" value=\"" + escapeAttr(item.startDate || "") + "\"></label>"
+                + "<label>End date<input data-edu=\"" + index + "\" data-field=\"endDate\" type=\"date\" value=\"" + escapeAttr(item.endDate || "") + "\"></label>"
+                + "<label>Current<input data-edu=\"" + index + "\" data-field=\"current\" type=\"checkbox\"" + currentChecked + "></label>"
+                + "<label>Grade<input data-edu=\"" + index + "\" data-field=\"grade\" type=\"text\" value=\"" + escapeAttr(item.grade || "") + "\"></label>"
+                + "</div>"
+                + "<label>Notes<textarea data-edu=\"" + index + "\" data-field=\"notes\" rows=\"2\">" + escapeHtml(item.notes || "") + "</textarea></label>"
+                + "</article>";
+        }).join("");
+        list.querySelectorAll("[data-edu]").forEach((input) => {
+            const handler = () => {
+                const i = Number(input.dataset.edu);
+                const field = input.dataset.field;
+                if (!state.education[i] || !field)
+                    return;
+                if (input.type === "checkbox") {
+                    state.education[i][field] = Boolean(input.checked);
+                }
+                else {
+                    state.education[i][field] = input.value;
+                }
+            };
+            input.addEventListener("input", handler);
+            input.addEventListener("change", handler);
+        });
+        list.querySelectorAll("[data-remove-education]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const i = Number(button.dataset.removeEducation);
+                state.education.splice(i, 1);
+                renderEducation();
+            });
+        });
+    }
     function renderSkills() {
         const list = document.getElementById("skills-list");
         if (!list)
@@ -587,6 +650,13 @@
                 renderSkills();
             });
         }
+        const addEducation = document.getElementById("add-education");
+        if (addEducation) {
+            addEducation.addEventListener("click", () => {
+                state.education.push(defaultEducation());
+                renderEducation();
+            });
+        }
         const addGap = document.getElementById("add-gap");
         if (addGap) {
             addGap.addEventListener("click", () => {
@@ -681,7 +751,36 @@
             const parsed = JSON.parse(raw);
             if (!parsed || typeof parsed !== "object")
                 return;
-            mergeState(parsed);
+            // Apply draft conservatively: only merge fields that are meaningfully present
+            const safe = {};
+            if (parsed.profile && Object.keys(parsed.profile).some((k) => parsed.profile[k] !== undefined && parsed.profile[k] !== "")) {
+                safe.profile = parsed.profile;
+            }
+            if (Array.isArray(parsed.experiences) && parsed.experiences.length > 0) {
+                safe.experiences = parsed.experiences;
+            }
+            if (Array.isArray(parsed.skills) && parsed.skills.length > 0) {
+                safe.skills = parsed.skills;
+            }
+            if (Array.isArray(parsed.gaps) && parsed.gaps.length > 0) {
+                safe.gaps = parsed.gaps;
+            }
+            if (Array.isArray(parsed.education) && parsed.education.length > 0) {
+                safe.education = parsed.education;
+            }
+            if (parsed.valuesCulture && Object.keys(parsed.valuesCulture).some((k) => parsed.valuesCulture[k] !== undefined && parsed.valuesCulture[k] !== "")) {
+                safe.valuesCulture = parsed.valuesCulture;
+            }
+            if (Array.isArray(parsed.faq) && parsed.faq.length > 0) {
+                safe.faq = parsed.faq;
+            }
+            if (parsed.aiInstructions) {
+                safe.aiInstructions = parsed.aiInstructions;
+            }
+            if (Object.keys(safe).length === 0) {
+                return;
+            }
+            mergeState(safe);
             setMessage("Recovered unsaved draft from this browser.", false);
         }
         catch (error) {
@@ -710,6 +809,7 @@
         renderTargetTitles();
         renderCompanyStages();
         renderExperiences();
+        renderEducation();
         renderSkills();
         renderGaps();
         renderFaq();

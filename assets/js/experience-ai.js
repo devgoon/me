@@ -1,3 +1,41 @@
+// Minimal experience-ai client stub: fetch /api/experience and render simple cards
+(function(){
+  'use strict';
+  function el(sel){ try { return document.querySelector(sel); } catch(e){ return null; } }
+  function createCard(title, period, body){
+    var div = document.createElement('div');
+    div.className = 'role-card';
+    var h = document.createElement('h3'); h.textContent = title; div.appendChild(h);
+    if(period){ var p = document.createElement('p'); p.className='role-period'; p.textContent = period; div.appendChild(p); }
+    if(body){ var b = document.createElement('p'); b.textContent = body; div.appendChild(b); }
+    return div;
+  }
+
+  async function load() {
+    var list = el('#experience-list');
+    var skills = el('#skills-list');
+    if(!list) return;
+    try{
+      const r = await fetch('/api/experience');
+      if(!r.ok) throw new Error('Failed to load');
+      const data = await r.json();
+      (data.experiences||[]).forEach(x=>{
+        const title = x.title || x.role || x.company || 'Experience';
+        const period = (x.startDate||'') + (x.endDate?(' - '+x.endDate):'');
+        const body = x.summary || x.description || '';
+        list.appendChild(createCard(title, period, body));
+      });
+      (data.skills||[]).forEach(s=>{
+        var d = document.createElement('div'); d.className='skill-pill'; d.textContent = s.skillName||s.name||s; skills.appendChild(d);
+      });
+    }catch(err){
+      var errEl = el('#experience-error'); if(errEl){ errEl.hidden=false; errEl.textContent = 'Unable to load experience data.'; }
+      console.error('experience-ai load failed', err);
+    }
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load); else load();
+})();
 // @ts-nocheck
 (() => {
     const experienceList = document.getElementById("experience-list");

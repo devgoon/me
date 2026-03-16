@@ -46,7 +46,7 @@ Key features
 
 Deployment & development
 - Local development: `make start` brings up the local stack; `swa` emulator settings found in `swa-cli.config.json` and `local.settings.example.json` for Functions runtime.
-- Build: frontend TypeScript and asset build via `npm run build` (and `npm run build:ts`).
+- Frontend assets: `assets/js` is the source of truth; `npm run build` is retained as a no-op helper.
 - CI/CD: GitHub Actions workflow (webapp.yml) builds and deploys the static site and functions to Azure Static Web Apps.
 
 Find the admin client code in `assets/js/admin.js`, server handlers under `api/`, and database objects in `db/`.
@@ -142,13 +142,10 @@ Install dependencies:
 ```bash
 make install
 ```
-Build frontend assets (TypeScript):
+Build frontend assets (no-op — assets/js is source of truth):
 ```bash
-make build-ui
-```
-Typecheck only:
-```bash
-npm run typecheck
+# No UI build required; assets/js is source of truth
+npm run build
 ```
 
 ## 5. Run Locally
@@ -173,7 +170,7 @@ make check
 What `make check` runs:
 
 - **Spellcheck**: runs `cspell` and a PDF text extraction helper (via `spellcheck` target).
-- **Build UI**: compiles frontend TypeScript assets (`make build-ui`).
+-- **Build UI**: no-op in CI; assets/js is the source of truth (run `npm run build`).
 - **API unit tests**: runs Jest tests under `api/` (`make unit-test` or `cd api && npm test -- --runInBand`).
 - **Link check**: validates internal links with `linkinator` (`make link-check`).
 
@@ -181,7 +178,7 @@ Run individual checks:
 
 ```bash
 make spellcheck
-make build-ui
+npm run build   # no-op; assets/js is source of truth
 make unit-test
 make link-check
 ```

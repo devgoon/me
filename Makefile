@@ -1,11 +1,11 @@
-.PHONY: clean install spellcheck spellcheck-pdf link-check syntax-check build-ui unit-test check start stop db-export backup-db migrate-db profile-data-db deploy-db profile-data-backup profile-data-upload pre-migration-schema migrate-db post-migration-schema verify-migration rollback-db verify-schema
+.PHONY: clean install spellcheck spellcheck-pdf link-check syntax-check unit-test check start stop db-export backup-db migrate-db profile-data-db deploy-db profile-data-backup profile-data-upload pre-migration-schema migrate-db post-migration-schema verify-migration rollback-db verify-schema
 
 install:
 	npm install
 	cd api && npm install
 
 spellcheck:spellcheck-pdf
-	npx cspell "**/*.{html,css,js,ts}" "assets/*.txt" "src/ts/*.ts" "api/**/*.js" --verbose
+	npx cspell "**/*.{html,css,js,ts}" "assets/*.txt" "api/**/*.js" --verbose
 
 spellcheck-pdf:
 	bash ./pdf2txt.sh
@@ -13,20 +13,15 @@ spellcheck-pdf:
 link-check:
 	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html
 
-build-ui:
-	npm run build:ui
-
 unit-test:
 	cd api && npm test -- --runInBand
 
 check:
-	@echo "==> [1/4] Running spellcheck"
+	@echo "==> [1/3] Running spellcheck"
 	@$(MAKE) spellcheck
-	@echo "==> [2/4] Building TypeScript frontend assets"
-	@$(MAKE) build-ui
-	@echo "==> [3/4] Running API unit tests"
+	@echo "==> [2/3] Running API unit tests"
 	@$(MAKE) unit-test
-	@echo "==> [4/4] Running link check"
+	@echo "==> [3/3] Running link check"
 	@$(MAKE) link-check
 	@echo "==> Quality checks complete"
 
@@ -192,6 +187,6 @@ verify-schema:
 .PHONY: clean
 clean:
 	@echo "Cleaning build artifacts..."
-	@rm -f assets/js/admin.js assets/js/auth.js assets/js/experience-ai.js assets/js/fit-ai.js assets/js/main.js || true
+	@rm -f assets/js/* || true
 	@rm -rf .azurite || true
 	@echo "Clean complete."
