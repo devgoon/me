@@ -91,9 +91,6 @@
 
 .jd-input {
   width: 100%;
-  box-sizing: border-box;
-  max-width: 100%;
-  display: block;
   min-height: 240px;
   border-radius: 14px;
   border: 1px solid #30363d;

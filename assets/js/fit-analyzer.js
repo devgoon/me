@@ -16,7 +16,7 @@ function skillLinesFromEntries(skills, text) {
   if (!Array.isArray(skills)) return [];
   const lower = String(text || "").toLowerCase();
   function hasQualifierInSameSentence(text, key) {
-    const qualifiers = ['experience', 'proven', 'proven experience', 'required', 'preferred', 'familiarity', 'familiarity with', 'experience with', 'proven in', 'proven with'];
+    const qualifiers = ['must haves', 'must have','experience', 'proven', 'proven experience', 'required', 'preferred', 'familiarity', 'familiarity with', 'experience with', 'proven in', 'proven with'];
     // split into sentences (rough)
     const sentences = String(text || '').split(/[\.\n\?\!]+/).map(s => s.trim()).filter(Boolean);
     const k = String(key || '').toLowerCase();

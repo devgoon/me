@@ -38,7 +38,10 @@ body {
   margin: 10px 0 0;
   color: #8b949e;
   font-size: 1.02rem;
-  max-width: 760px;
+  max-width: none;
+  width: 100%;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .ask-status {
