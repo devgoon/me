@@ -200,7 +200,7 @@ async function loadCandidateData(client) {
   );
 
   const gapsResult = await client.query(
-    `SELECT description
+    `SELECT description, interest_in_learning
      FROM gaps_weaknesses
      WHERE candidate_id = $1
      ORDER BY id ASC`,
@@ -211,7 +211,7 @@ async function loadCandidateData(client) {
     profile,
     experiences: experiencesResult.rows,
     skills: skillsResult.rows,
-    gaps: gapsResult.rows
+    gaps: gapsResult.rows.map((row) => ({ description: row.description, interestedInLearning: Boolean(row.interest_in_learning) }))
   };
 }
 
@@ -264,8 +264,8 @@ module.exports = async function(context) {
     const skills = {
       strong: payload.skills.filter((s) => s.category === "strong").map((s) => s.skill_name),
       moderate: payload.skills.filter((s) => s.category === "moderate").map((s) => s.skill_name),
-      gap: payload.skills.filter((s) => s.category === "gap").map((s) => s.skill_name)
-        .concat((payload.gaps || []).map((g) => g.description).filter(Boolean))
+      gap: (payload.skills.filter((s) => s.category === "gap").map((s) => s.skill_name))
+        .concat((payload.gaps || []).map((g) => ({ description: g.description, interestedInLearning: Boolean(g.interestedInLearning) })).filter(Boolean))
     };
 
     context.res = {

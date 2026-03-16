@@ -23,19 +23,23 @@
   function renderResult(container, res){
         container.innerHTML = '';
         if(!res) return;
-        const card = ce('article',{class:'role-card fit-card'},
-            ce('div',{class:'fit-verdict-row'},
-                ce('h2',null,'Assessment'),
-                ce('span',{class: 'verdict-badge '+(res.verdictClass||'mid')}, res.verdict)
-            ),
-            ce('p',{class:'opening-assessment'}, res.opening||''),
-            ce('h3',null,"WHERE I DON'T FIT"),
-            ce('ul',{class:'achievement-list'}, (res.gaps||[]).map(g=>ce('li',null,g))),
-            ce('h3',null,'WHAT TRANSFERS'),
-            ce('ul',{class:'achievement-list'}, (res.transfers||[]).map(t=>ce('li',null,t))),
-            ce('h3',null,'MY RECOMMENDATION'),
-            ce('p',{class:'recommendation'}, res.recommendation||'')
-        );
+      const gapsContent = (Array.isArray(res.gaps) && res.gaps.length > 0)
+        ? ce('ul',{class:'achievement-list'}, (res.gaps||[]).map(g=>ce('li',null,g)))
+        : ce('p',{class:'subtle'}, 'No JD-specific gaps identified.');
+
+      const card = ce('article',{class:'role-card fit-card'},
+        ce('div',{class:'fit-verdict-row'},
+          ce('h2',null,'Assessment'),
+          ce('span',{class: 'verdict-badge '+(res.verdictClass||'mid')}, res.verdict)
+        ),
+        ce('p',{class:'opening-assessment'}, res.opening||''),
+        ce('h3',null,"WHERE I DON'T FIT"),
+        gapsContent,
+        ce('h3',null,'WHAT TRANSFERS'),
+        ce('ul',{class:'achievement-list'}, (res.transfers||[]).map(t=>ce('li',null,t))),
+        ce('h3',null,'MY RECOMMENDATION'),
+        ce('p',{class:'recommendation'}, res.recommendation||'')
+      );
         container.appendChild(card);
   }
 
@@ -55,9 +59,12 @@
     root.appendChild(panel); root.appendChild(output);
 
     let profile = null;
+    let lastAnalysis = null;
     const status = qs('#fit-status');
     const data = await fetchFit();
     if(data){ profile = data; status.textContent = 'Profile loaded.'; console.debug('fit-ai: profile fetched', data); } else { status.textContent = 'Profile unavailable — using local analyzer only.'; console.debug('fit-ai: no profile fetched'); }
+
+    // follow-up UI removed per user request
 
     qs('#analyze-btn').addEventListener('click', async ()=>{
       const jd = qs('#job-description').value.trim();
@@ -67,15 +74,19 @@
         if(window.fitAnalyzer && typeof window.fitAnalyzer.analyzeJD === 'function'){
           const strengths = (profile && profile.skills) ? profile.skills.map(s=>({key:String((s.skillName||'').toLowerCase()), label: s.skillName||''})) : [];
           console.debug('fit-ai: using fitAnalyzer', {strengthsLength: strengths.length, gapsLength: (profile&&profile.gaps)?profile.gaps.length:0, educationLength: (profile&&profile.education)?profile.education.length:0});
-          const gaps = (profile && profile.gaps) ? profile.gaps.map((g,idx)=>({keys: String((g.description||g.whyItsAGap||'')).toLowerCase().split(/\W+/).filter(Boolean).slice(0,6), text: g.description||g.whyItsAGap||`gap-${idx}`})) : [];
+          // Do not pass profile-level gaps into JD analysis — hide profile gaps
+          // so they don't affect JD-specific recommendations.
+          const gaps = [];
           const education = (profile && profile.education) ? profile.education.map(e=>({degree: e.degree||'', fieldOfStudy: e.fieldOfStudy||e.field_of_study||'', institution: e.institution||''})) : [];
           analysis = window.fitAnalyzer.analyzeJD(jd, strengths, gaps, education);
+          lastAnalysis = analysis;
         } else {
           console.debug('fit-ai: fitAnalyzer not available, using canned fallback');
           analysis = { verdict: 'Worth a Conversation', verdictClass: 'mid', opening: 'Analyzer not available', recommendation: 'Ensure fit-analyzer.js is loaded', gaps: [], transfers: [] };
         }
       }catch(err){ console.error(err); analysis = { verdict: 'Worth a Conversation', opening: 'Analyzer error', recommendation: String(err), gaps: [], transfers: [] }; }
-      renderResult(output, analysis);
+        renderResult(output, analysis);
+        // follow-up UI removed; nothing to show
     });
   }
 

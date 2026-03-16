@@ -72,37 +72,48 @@ function educationLinesFromEntries(education, text) {
 function gapLinesFromEntries(gaps, text) {
   if (!Array.isArray(gaps)) return [];
   const lower = String(text || "").toLowerCase();
-  return gaps.filter((entry) => {
-    const keys = Array.isArray(entry.keys) ? entry.keys : [];
-    return keys.some((k) => {
-      if (!k) return false;
-      const kk = String(k).toLowerCase().trim();
-      // ignore very short tokens (e.g., single-letter 'c' from 'C++')
-      if (kk.length < 2) return false;
-      const re = new RegExp("\\b" + escapeForRegex(kk) + "\\b", "i");
-      return re.test(text);
-    });
-  }).map((g) => g.text || g.key);
+  // Return objects: { text: string, interested: boolean }
+  return gaps
+    .filter((entry) => {
+      const keys = Array.isArray(entry.keys) ? entry.keys : [];
+      return keys.some((k) => {
+        if (!k) return false;
+        const kk = String(k).toLowerCase().trim();
+        if (kk.length < 2) return false;
+        const re = new RegExp("\\b" + escapeForRegex(kk) + "\\b", "i");
+        return re.test(text);
+      });
+    })
+    .map((entry) => ({ text: entry.text || entry.key || '', interested: Boolean(entry.interested) }));
 }
 
 function analyzeJD(jobDescription, profileStrengths = [], possibleGaps = [], education = []) {
   const jd = String(jobDescription || "").trim();
   const transfers = skillLinesFromEntries(profileStrengths, jd);
-  const gaps = gapLinesFromEntries(possibleGaps, jd);
+  const gapObjs = gapLinesFromEntries(possibleGaps, jd);
   const educationMatches = educationLinesFromEntries(education, jd);
 
   // educationMatches are a positive signal but usually weaker than direct skills
-  const score = (transfers.length * 2) + (educationMatches.length * 1) - (gaps.length * 2);
+  // gaps penalize the score; gaps the candidate is "interested" in learning penalize less
+  const gapPenalty = gapObjs.reduce((sum, g) => sum + (g.interested ? 1 : 2), 0);
+  const score = (transfers.length * 2) + (educationMatches.length * 1) - gapPenalty;
   let verdict = 'Worth a Conversation';
   let verdictClass = 'mid';
   let opening = "I'd call this a mixed fit: I can likely deliver meaningful value here, but I would want to align expectations on the few areas that are less direct matches.";
   let recommendation = 'Proceed to a technical conversation focused on the highest-risk requirements, then decide quickly based on concrete gap tolerance.';
-  if (score >= 5 && gaps.length <= 1) {
+  // Count hard gaps (not marked as interested) for strict checks
+  const hardGaps = gapObjs.filter(g => !g.interested).length;
+  // If there is any hard gap (not interested in learning), do NOT recommend.
+  if (hardGaps > 0) {
+    verdict = 'Probably Not Your Person';
+    verdictClass = 'weak';
+    recommendation = 'I do not recommend pursuing this role unless these gaps are addressed.';
+  } else if (score >= 5 && hardGaps <= 1) {
     verdict = 'Strong Fit';
     verdictClass = 'strong';
     opening = "I'm a strong fit for this role based on direct overlap in cloud architecture, API delivery, and production reliability outcomes.";
     recommendation = 'Move forward with a scoped technical interview centered on architecture depth and execution speed in your domain.';
-  } else if (score <= 0 || gaps.length >= 3) {
+  } else if (score <= 0 || hardGaps >= 3) {
     verdict = 'Probably Not Your Person';
     verdictClass = 'weak';
     opening = "I'm probably not your person for this specific role as written, and I'd rather be direct about that than force a weak match.";
@@ -114,7 +125,7 @@ function analyzeJD(jobDescription, profileStrengths = [], possibleGaps = [], edu
     verdictClass,
     opening,
     recommendation,
-    gaps: gaps.length > 0 ? gaps : ['No major red flags in the JD wording, but I would still validate role scope, seniority expectations, and team operating model in conversation.'],
+    gaps: gapObjs.length > 0 ? gapObjs.map(g => g.interested ? `${g.text} (interested in learning)` : g.text) : ['No major red flags in the JD wording, but I would still validate role scope, seniority expectations, and team operating model in conversation.'],
     transfers: transfers.length > 0 ? transfers.concat(educationMatches) : (educationMatches.length > 0 ? educationMatches : ['My transferable strengths are broad cloud architecture, systems design, and shipping reliable software in high-stakes environments.']),
     educationMatches
   };
