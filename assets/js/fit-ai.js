@@ -62,7 +62,7 @@
     let lastAnalysis = null;
     const status = qs('#fit-status');
     const data = await fetchFit();
-    if(data){ profile = data; status.textContent = 'Profile loaded.'; console.debug('fit-ai: profile fetched', data); } else { status.textContent = 'Profile unavailable — using local analyzer only.'; console.debug('fit-ai: no profile fetched'); }
+    if (data) { profile = data; status.textContent = ''; console.debug('fit-ai: profile fetched', data); } else { status.textContent = 'Profile unavailable — using local analyzer only.'; console.debug('fit-ai: no profile fetched'); }
 
     // follow-up UI removed per user request
 
