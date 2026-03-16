@@ -1,5 +1,5 @@
 const { Client } = require('pg');
-const fitHandler = require('../fit-check/index');
+const fitHandler = require('../fit/index');
 
 jest.mock('pg', () => ({ Client: jest.fn() }));
 
