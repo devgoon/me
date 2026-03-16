@@ -112,6 +112,12 @@ function buildPrompt(payload) {
         .join("\n")
     : "- No FAQ responses available";
 
+  const educationText = payload.education && payload.education.length
+    ? payload.education
+        .map((ed) => `- ${textOrNA(ed.institution)} — ${textOrNA(ed.degree)}${ed.field_of_study ? ' (' + textOrNA(ed.field_of_study) + ')' : ''} (${dateOrPresent(ed.start_date)} to ${dateOrPresent(ed.end_date)})${ed.grade ? ' — ' + textOrNA(ed.grade) : ''}`)
+        .join("\n")
+    : "- No education records found.";
+
   return [
     `You are an AI assistant representing ${profile.name}, a ${textOrNA(profile.title)}. You speak in first person AS ${profile.name}.`,
     "## YOUR CORE DIRECTIVE",
@@ -132,6 +138,8 @@ function buildPrompt(payload) {
     `What I'm NOT looking for: ${textOrNA(profile.not_looking_for)}`,
     "## WORK EXPERIENCE",
     experiencesText,
+    "## EDUCATION",
+    educationText,
     "## SKILLS SELF-ASSESSMENT",
     "### Strong",
     skillLines(strongSkills),
@@ -219,11 +227,20 @@ async function loadCandidateContext(client) {
     [candidateId]
   );
 
+  const educationResult = await client.query(
+    `SELECT *
+     FROM education
+     WHERE candidate_id = $1
+     ORDER BY display_order ASC, start_date DESC NULLS LAST`,
+    [candidateId]
+  );
+
   return {
     profile,
     experiences: experiencesResult.rows,
     skills: skillsResult.rows,
     gaps: gapsResult.rows,
+    education: educationResult.rows,
     values: valuesResult.rows[0] || null,
     faq: faqResult.rows,
     aiInstructions: aiInstructionsResult.rows

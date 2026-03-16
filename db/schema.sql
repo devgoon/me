@@ -136,6 +136,24 @@ CREATE INDEX IF NOT EXISTS faq_responses_candidate_id_idx
 CREATE INDEX IF NOT EXISTS faq_responses_common_idx
   ON faq_responses (candidate_id, is_common_question);
 
+CREATE TABLE IF NOT EXISTS education (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  candidate_id BIGINT NOT NULL REFERENCES candidate_profile(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  institution TEXT,
+  degree TEXT,
+  field_of_study TEXT,
+  start_date DATE,
+  end_date DATE,
+  is_current BOOLEAN NOT NULL DEFAULT FALSE,
+  grade TEXT,
+  notes TEXT,
+  display_order INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS education_candidate_id_idx
+  ON education (candidate_id);
+
 CREATE TABLE IF NOT EXISTS ai_instructions (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   candidate_id BIGINT NOT NULL REFERENCES candidate_profile(id) ON DELETE CASCADE,
@@ -170,6 +188,7 @@ CREATE INDEX IF NOT EXISTS ai_response_cache_last_accessed_idx
   ON ai_response_cache (last_accessed);
 
 -- Cache invalidation policy: Only invalidate after writes to candidate_profile, experiences, skills, gaps_weaknesses, values_culture, faq_responses, ai_instructions. Never invalidate after writes to ai_response_cache.
+-- Cache invalidation policy: Only invalidate after writes to candidate_profile, experiences, skills, gaps_weaknesses, values_culture, faq_responses, education, ai_instructions. Never invalidate after writes to ai_response_cache.
 
 COMMENT ON INDEX ai_response_cache_last_accessed_idx
   IS 'Cache invalidation policy: Only invalidate after writes to candidate_profile, experiences, skills, gaps_weaknesses, values_culture, faq_responses, ai_instructions. Never invalidate after writes to ai_response_cache';

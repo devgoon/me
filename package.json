@@ -6,13 +6,13 @@
   "author": "Lodovico Minnocci",
   "license": "MIT",
   "scripts": {
-    "build:ui": "tsc --project tsconfig.json",
+    "build:ui": "echo \"No UI build: assets/js is source of truth.\"",
     "build": "npm run build:ui",
     "clean": "rm -f assets/js/*.js && rm -rf .azurite || true",
-    "typecheck": "tsc --project tsconfig.json --noEmit",
     "migrate": "node-pg-migrate -d $DATABASE_URL -m migrations",
     "migrate:up": "node-pg-migrate up -d $DATABASE_URL -m migrations",
-    "migrate:down": "node-pg-migrate down -d $DATABASE_URL -m migrations"
+    "migrate:down": "node-pg-migrate down -d $DATABASE_URL -m migrations",
+    "test": "jest --runInBand"
   },
   "devDependencies": {
     "cspell": "latest",
@@ -20,7 +20,7 @@
     "linkinator": "latest",
     "node-pg-migrate": "^8.0.4",
     "pa11y": "latest",
-    "typescript": "^5.8.2"
+    "jest": "^29.6.0"
   },
   "dependencies": {
     "react": "^18.3.1",

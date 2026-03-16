@@ -130,7 +130,8 @@ describe("admin API", () => {
     client.query
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ id: 9 }] })
-      .mockResolvedValueOnce({ rows: [{ id: 9, name: "new user", email: "new.user@lodovi.co" }] })
+      .mockResolvedValueOnce({ rows: [{ id: 9, name: "new user", email: "new.user@lodovico.co" }] })
+      .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })

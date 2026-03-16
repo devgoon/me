@@ -1,385 +1,179 @@
+# me — AI-assisted portfolio (developer-focused README)
 
+Purpose
+- Personal portfolio site with AI-assisted admin and analysis features.
+- Static frontend served by Azure Static Web Apps and serverless APIs implemented as Azure Functions (Node.js).
 
-# me: AI-Assisted Portfolio
+Quick links
+- Admin UI client: assets/js/admin.js
+- Experience UI client: assets/js/experience-ai.js
+- Fit/Analyzer client: assets/js/fit-ai.js and assets/js/fit-analyzer.js
+- Server handlers: api/
+- DB schema: db/
 
-## Table of Contents
+## Architecture Diagram
 
-1. [Project Overview](#1-project-overview)
-2. [Architecture & Visual Documentation](#2-architecture--visual-documentation)
-3. [Prerequisites & Environment Setup](#3-prerequisites--environment-setup)
-4. [Install & Build](#4-install--build)
-5. [Run Locally](#5-run-locally)
-6. [Quality Checks & Testing](#6-quality-checks--testing)
-7. [Database](#7-database)
-8. [AI Response Cache](#8-ai-response-cache)
-9. [Database Migration & Validation Workflow](#9-database-migration--validation-workflow)
-10. [Deploy](#10-deploy)
-11. [Notes & Caveats](#11-notes--caveats)
-12. [Database Schema](#12-database-schema)
-13. [API Flow Diagrams](#13-api-flow-diagrams)
-
-## 1. Project Overview
-Personal website and AI-assisted portfolio for Lodovico Minnocci. The site combines static marketing pages, an interactive admin surface for profile management, serverless API endpoints, and AI-assisted features powered by cached model responses.
-
-Key features
-- Key features
-
-*Note: This project is Azure-centric — designed for deployment on Azure Static Web Apps with Azure PostgreSQL for persistence.*
-
-- Static frontend: public pages including home, resume, experience, projects, and specialty AI-assisted views (`experience-ai`, `fit-ai`). These are located in the project root HTML and `assets/` for CSS/JS.
-
-- Authentication: Azure Static Web Apps (SWA) authentication with provider integrations (AAD and other providers). Admin pages are protected and require sign-in.
-
-- Admin panel: full profile editing (personal details, experiences, skills, gaps, values/culture, FAQ, AI instruction rules, Cache Report). Features include:
-  - Draft autosave to `localStorage` and manual `Save All` to persist to the backend.
-  - Client-side no-op save guard that avoids unnecessary POSTs when nothing changed.
-  - Cache Report: admin-only UI to view, refresh, and inspect AI response cache
-
-- AI/chat features: server endpoints that forward prompts to an AI model (configured via `ANTHROPIC_API_KEY`/`AI_MODEL`) and return responses to the frontend.
-  - Responses are cached in PostgreSQL (`ai_response_cache`) to reduce model calls and improve latency.
-  - Cache invalidation is triggered by profile changes in the admin panel or changes to the AI Model and recorded with `invalidated_at` timestamps.
-
-- Backend/API: Azure Functions (Node.js) under `api/` exposing endpoints for authentication (`/api/auth/*`), admin panel data (`/api/panel-data`), cache report (`/api/cache-report`), chat (`/api/chat`), health checks, and other utilities.
-
-- Database: PostgreSQL schema and migration files in `db/` and `migrations/`. The project includes Makefile targets and utilities to backup, migrate, and verify schema changes.
-
-
-Deployment & development
-- Local development: `make start` brings up the local stack; `swa` emulator settings found in `swa-cli.config.json` and `local.settings.example.json` for Functions runtime.
-- Build: frontend TypeScript and asset build via `npm run build` (and `npm run build:ts`).
-- CI/CD: GitHub Actions workflow (webapp.yml) builds and deploys the static site and functions to Azure Static Web Apps.
-
-Find the admin client code in `assets/js/admin.js`, server handlers under `api/`, and database objects in `db/`.
-
-## 2. Architecture & Visual Documentation
-
-Mermaid diagrams are embedded in this README for quick reference (ERD and API flows).
-
-### Architecture Diagram
-````mermaid
-flowchart TD
-  User -->|Browser| SWA[Azure Static Web Apps]
-  SWA -->|API| Functions[Azure Functions]
-  Functions -->|DB| Postgres[Azure PostgreSQL]
-  Functions -->|AI| Anthropic[Claude API]
-````
-
-### Function Routes
-
-````mermaid
+```mermaid
 flowchart LR
-  subgraph Static
-    A[index.html]
-    B[admin.html]
-  end
+  Browser(Browser)
+  SWA(Static Web Apps)
+  Functions(Functions - api)
+  DB[(Postgres)]
+  AI(Anthropic)
+  CDN(CDN)
 
-  subgraph API[Azure Functions]
-    P1["/api/panel-data<br/>(api/admin/index.js)"]
-    P2["/api/cache-report<br/>(api/cache-report/index.js)"]
-    P3["/api/chat<br/>(api/chat/index.js)"]
-    P4["/api/auth/*<br/>(api/auth/index.js)"]
-    P5["/api/health<br/>(api/health/index.js)"]
-  end
+  Browser -->|requests pages/assets| SWA
+  Browser -->|calls API endpoints| Functions
+  SWA -->|serves static assets| CDN
+  Functions -->|reads/writes| DB
+  Functions -->|calls| AI
+  CDN -->|edge cache| Browser
+```
 
-  A -->|auth| API
-  B -->|admin| P1
-  B -->|cache UI| P2
-  A -->|chat| P3
-  P1 --> Postgres
-  P2 --> Postgres
-  P3 --> Anthropic
-````
+Architecture Diagram
 
-## 3. Prerequisites & Environment Setup
-
-Required:
-- Node.js 20+
-- npm
+Prerequisites
+- Node.js 20+ and npm
 - GNU Make
-- PostgreSQL client tools (pg_dump, psql)
+- PostgreSQL client tools (psql, pg_dump)
+- (Optional) Azure CLI for deployment
 
-Recommended:
-- Azure CLI (`az`)
-- pdftotext (poppler)
+Environment (local)
+- Copy and fill `.env.local` from `.env.local.example` (DO NOT commit secrets).
+- Key env vars:
+  - `DATABASE_URL` — Postgres connection (SSL recommended)
+  - `ANTHROPIC_API_KEY` — AI provider key
+  - `AI_MODEL` — model id (default used in code)
+  - `FUNCTIONS_WORKER_RUNTIME=node`
 
-macOS install example:
-```bash
-brew install postgresql
-brew install poppler
-```
+Start local dev stack
+- Start everything (SWA emulator + Functions):
 
-### Environment setup
-1. Copy `.env.local.example` to `.env.local` and fill secret values (DO NOT commit `.env.local`).
-2. Optionally copy `local.settings.example.json` to `local.settings.json` for Functions defaults — remove secrets before committing.
-3. Ensure the following values are set: `ANTHROPIC_API_KEY`, `AI_MODEL`, `DATABASE_URL`, and `AzureWebJobsStorage`.
-
-Example `.env.local`:
-```env
-FUNCTIONS_WORKER_RUNTIME=node
-AzureWebJobsStorage=UseDevelopmentStorage=true
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-DATABASE_URL=postgresql://username:password@server.postgres.database.azure.com:5432/database?sslmode=require
-AI_MODEL=claude-sonnet-4-20250514
-```
-
-## Local environment variables
-
-Keep secrets in an untracked `.env.local` file. Copy `.env.local.example` to `.env.local` and fill in values.
-
-Example `.env.local` entries:
-
-```env
-FUNCTIONS_WORKER_RUNTIME=node
-AzureWebJobsStorage=UseDevelopmentStorage=true
-ANTHROPIC_API_KEY=sk-ant-...      # keep secret
-DATABASE_URL=postgresql://user:pw@host:5432/dbname?sslmode=require  # keep secret
-AI_MODEL=claude-sonnet-4-20250514
-```
-
-## 4. Install & Build
-
-Install dependencies:
-```bash
-make install
-```
-Build frontend assets (TypeScript):
-```bash
-make build-ui
-```
-Typecheck only:
-```bash
-npm run typecheck
-```
-
-## 5. Run Locally
-
-Start local stack:
 ```bash
 make start
 ```
-Stop local stack:
+
+Database management
+- `make backup-db` — create a SQL dump of the current database into `db/backup-<timestamp>.sql`. Uses `DATABASE_URL` from `.env.local`.
+- `make deploy-db` — runs the full deployment workflow (pre/post schema dumps, migrations, verification). Review `Makefile` and ensure `.env.local` is configured before running.
+
+Quick commands:
+
+```bash
+# create a timestamped backup
+make backup-db
+
+# run full DB deployment workflow (use with caution)
+make deploy-db
+```
+
+- Stop local stack:
+
 ```bash
 make stop
 ```
-SWA local config: `swa-cli.config.json` (host `127.0.0.1`, port `4280`, API `7071`)
- 
-## 6. Quality Checks & Testing
-Run the full quality pipeline that the project uses:
+
+Open these pages in your browser once the emulator is running:
+
+- Admin UI: http://127.0.0.1:4280/admin.html
+- Experience UI: http://127.0.0.1:4280/experience-ai.html
+- Fit / Analyzer: http://127.0.0.1:4280/fit-ai.html
+
+Development notes
+- Frontend is served as static files; `assets/js` contains the client code (no frontend build step required).
+- The `dist/` directory contains bundled/minified artifacts used on some static pages; `assets/js` is the authoritative source during development.
+- The admin UI performs draft autosaves to `localStorage`; use the Admin page to persist changes to the DB.
+
+Testing & quality checks
+- Run the project quality pipeline (spellcheck, API unit tests, link checks):
 
 ```bash
 make check
 ```
 
-What `make check` runs:
-
-- **Spellcheck**: runs `cspell` and a PDF text extraction helper (via `spellcheck` target).
-- **Build UI**: compiles frontend TypeScript assets (`make build-ui`).
-- **API unit tests**: runs Jest tests under `api/` (`make unit-test` or `cd api && npm test -- --runInBand`).
-- **Link check**: validates internal links with `linkinator` (`make link-check`).
-
-Run individual checks:
+- Run only API unit tests:
 
 ```bash
-make spellcheck
-make build-ui
-make unit-test
-make link-check
+cd api && npm test -- --runInBand
 ```
 
-API tests include cache report and `is_cached` flag validation.
+API surface (high level)
+- `GET /api/experience` — returns profile, experiences, `skills` (strong/moderate/gap). `gaps` returned to the client include `interestedInLearning` boolean.
+- `GET/POST /api/admin` — admin panel data and save endpoint (requires authentication in production).
+- `POST /api/fit` — JD analysis endpoint (server-side AI-backed analysis). This endpoint consolidates the previous `/api/fit-check` behaviour; `/api/fit-check` has been removed. Request body must include `jobDescription`.
+- `POST /api/chat` — chat endpoint that proxies prompts to AI with caching.
 
-## 7. Database
+**API Diagram**
 
-Schema and export files:
-- `db/schema.sql`
+```mermaid
+flowchart LR
+  Client[Client / Browser]
+  Experience(Experience API)
+  Admin(Admin API)
+  Fit(Fit API)
+  Chat(Chat API)
+  AI(Anthropic API)
+  DB[(Postgres DB)]
 
-## 8. AI Response Cache
+  Client -->|GET /experience| Experience
+  Client -->|GET/POST /admin| Admin
+  Client -->|POST /fit| Fit
+  Client -->|POST /chat| Chat
 
-AI responses are cached in the PostgreSQL table `ai_response_cache` to avoid redundant AI calls and improve performance.
-- `is_cached` flag indicates valid cache
-- Cache invalidated after relevant data changes
-- Records are never deleted
-- Admin page includes Cache Report tab
+  Fit -->|calls| AI
+  Fit -->|reads/writes| DB
+  Admin -->|reads/writes| DB
+  Experience -->|reads| DB
+  Chat -->|calls| AI
+  Chat -->|may read/write| DB
+```
 
-### Example cache record
-The `ai_response_cache` table stores cached AI responses and metadata. Columns:
 
-- `hash` (TEXT, PK): deterministic hash key for the request/response pair.
-- `question` (TEXT): the user prompt or question cached.
-- `model` (TEXT): model identifier used for the response (e.g., `claude-sonnet-4-20250514`).
-- `response` (TEXT): the model's response (stored but not shown in the admin cache table by default).
-- `cache_hit_count` (INTEGER): number of times this cached response was used.
-- `last_accessed` (TIMESTAMPTZ): most recent timestamp the cache entry was read.
-- `updated_at` (TIMESTAMPTZ): last time the cache row was written/updated.
-- `invalidated_at` (TIMESTAMPTZ, nullable): timestamp when the cache was invalidated (set when related profile data changed).
-- `is_cached` (BOOLEAN): whether the entry is currently considered valid (true) or hidden/invalidated (false).
+**DB ER Diagram**
 
-Admin Cache Report shows a subset of these fields (question, model, cache hits, last accessed, invalidated at, and hidden state). Example:
-
-| Question | Model | Cache Hits | Last Accessed | Updated At | Invalidated At | Cached? |
-|---|---:|---:|---|---|---|---|
-| What is AI? | claude-sonnet-4-20250514 | 5 | 2026-03-09T12:00:00Z | 2026-03-09T12:00:00Z |  | Yes |
-| What is ML? | claude-sonnet-4-20250514 | 2 | 2026-03-09T11:00:00Z | 2026-03-09T11:00:00Z | 2026-03-10T09:00:00Z | No |
-
-## 9. Database Migration & Validation Workflow
-
-Robust Makefile-based workflow for migration, schema validation, and rollback.
-
-### Migration Workflow
-1. Dump pre-migration schema: `make pre-migration-schema`
-2. Apply migrations: `make migrate-db`
-3. Dump post-migration schema: `make post-migration-schema`
-4. Verify migration: `make verify-migration` (compares pre/post schemas and rolls back on mismatch)
-
-Notes:
-
-- `verify-migration` compares schemas while ignoring pg_dump metadata (comments, connection headers, etc.).
-- If a schema mismatch is detected, `verify-migration` will invoke `make rollback-db` to restore from the most recent backup.
-- Always create a backup before running migrations: `make backup-db`.
-
-### Database Operations
-- Backup: `make backup-db`
-- Profile data backup: `make profile-data-backup`
-- Profile data upload: `make profile-data-upload`
-- Deploy (all steps): `make deploy-db`
-
-### Quality & Utility
-- Schema validation: `make verify-schema`
-
-## 10. Deploy
-Deployment workflow (CI/CD)
-
-- Runs checks (`make check`): spellcheck, frontend build, API tests, link checks.
-- Builds frontend assets (TypeScript) and bundles static files.
-- Builds/packages Azure Functions (Oryx/runtime) and uploads them to the Static Web App.
-- Deploys the static site and function app together so the site and APIs remain in sync.
-
-## 11. Notes & Caveats
-
-- Local auth uses SWA emulator flow
-- Run `make stop` before `make start` if port/process issues
- - Running locally is not fully functional: the SWA emulator does not fully mimic provider auth flows (AAD, social providers) and some authenticated API behavior may differ from a deployed Azure environment. For full auth behavior deploy to Azure Static Web Apps.
-
-## 12. Database Schema
-
-### Entity Relationship Diagram (ERD)
-
-````mermaid
+```mermaid
 erDiagram
-  candidate_profile ||--o{ experiences : has
-  candidate_profile ||--o{ skills : has
-  candidate_profile ||--o{ gaps_weaknesses : has
-  candidate_profile ||--o{ values_culture : has
-  candidate_profile ||--o{ faq_responses : has
-  candidate_profile ||--o{ ai_instructions : has
-  ai_response_cache }|..|{ candidate_profile : cache_for
-
-  candidate_profile {
-    id BIGINT PK
-    name TEXT
-    email TEXT
-    %% additional fields omitted
+  CANDIDATE_PROFILE {
+    int id PK
+    string name
+    string email
+    string title
+    text elevator_pitch
   }
-  experiences {
-    id BIGINT PK
-    candidate_id BIGINT FK
-    company_name TEXT
-    %% additional fields omitted
+  EXPERIENCES {
+    int id PK
+    int candidate_id FK
+    string company_name
+    string title
+    date start_date
+    date end_date
+    text bullet_points
   }
-  skills {
-    id BIGINT PK
-    candidate_id BIGINT FK
-    skill_name TEXT
-    %% additional fields omitted
+  SKILLS {
+    int id PK
+    int candidate_id FK
+    string skill_name
+    string category
+    int self_rating
+    text honest_notes
   }
-  gaps_weaknesses {
-    id BIGINT PK
-    candidate_id BIGINT FK
-    gap_type TEXT
-    %% additional fields omitted
+  GAPS_WEAKNESSES {
+    int id PK
+    int candidate_id FK
+    text description
+    text why_its_a_gap
+    boolean interest_in_learning
   }
-  values_culture {
-    id BIGINT PK
-    candidate_id BIGINT FK
-    must_haves TEXT[]
-    %% additional fields omitted
+  EDUCATION {
+    int id PK
+    int candidate_id FK
+    string institution
+    string degree
+    string field_of_study
   }
-  faq_responses {
-    id BIGINT PK
-    candidate_id BIGINT FK
-    question TEXT
-    %% additional fields omitted
-  }
-  ai_instructions {
-    id BIGINT PK
-    candidate_id BIGINT FK
-    instruction_type TEXT
-    %% additional fields omitted
-  }
-  ai_response_cache {
-    hash TEXT PK
-    question TEXT
-    model TEXT
-    response TEXT
-    %% additional fields omitted
-  }
-````
 
-### Table Definitions
-
-- **candidate_profile**: Main candidate record, personal and professional info
-- **experiences**: Work history, achievements, challenges
-- **skills**: Skills, category, rating, evidence
-- **gaps_weaknesses**: Gaps, weaknesses, learning interests
-- **values_culture**: Values, dealbreakers, preferences
-- **faq_responses**: FAQ answers, common questions
-- **ai_instructions**: AI prompt instructions, tone, honesty, boundaries
-- **ai_response_cache**: AI response cache, keyed by hash, question, model
-
----
-
-### Schema is now documented for quick reference and onboarding.
-
-## 13. API Flow Diagrams
-
-### Chat API Flow
-
-````mermaid
-sequenceDiagram
-  participant User
-  participant Frontend
-  participant API
-  participant DB
-  participant AI
-
-  User->>Frontend: Submit question
-  Frontend->>API: POST /api/chat {message}
-  API->>DB: Check ai_response_cache (hash, is_cached)
-  DB-->>API: Return cached response (if found)
-  API-->>Frontend: Return cached response
-  Frontend-->>User: Show cached response
-  API->>AI: Call AI model (if not cached)
-  AI-->>API: Return AI response
-  API->>DB: Insert/Update ai_response_cache
-  API-->>Frontend: Return AI response
-  Frontend-->>User: Show AI response
-````
-
-### Admin Cache Report Flow
-
-````mermaid
-sequenceDiagram
-  participant Admin
-  participant Frontend
-  participant API
-  participant DB
-
-  Admin->>Frontend: Open Cache Report
-  Frontend->>API: GET /api/cache-report
-  API->>DB: Query ai_response_cache
-  DB-->>API: Return cache records
-  API-->>Frontend: Return cache data
-  Frontend-->>Admin: Display cache table (client-side filter)
-````
-
----
+  CANDIDATE_PROFILE ||--o{ EXPERIENCES: has
+  CANDIDATE_PROFILE ||--o{ SKILLS: has
+  CANDIDATE_PROFILE ||--o{ GAPS_WEAKNESSES: has
+  CANDIDATE_PROFILE ||--o{ EDUCATION: has
+```

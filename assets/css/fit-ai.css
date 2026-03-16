@@ -1,5 +1,5 @@
 .fit-page {
-  max-width: 980px;
+  max-width: 1225px; /* increased by ~25% */
 }
 
 .fit-panel {
@@ -107,6 +107,9 @@
   border-color: #58a6ff;
   box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.18);
 }
+
+/* follow-up textbox should be shorter than the main JD input and match styling */
+/* follow-up UI removed */
 
 .analyze-btn {
   margin-top: 14px;

@@ -1,4 +1,5 @@
 const { Client } = require("pg");
+const crypto = require("crypto");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
@@ -200,7 +201,7 @@ async function loadCandidateData(client) {
   );
 
   const gapsResult = await client.query(
-    `SELECT description
+    `SELECT description, interest_in_learning
      FROM gaps_weaknesses
      WHERE candidate_id = $1
      ORDER BY id ASC`,
@@ -211,7 +212,7 @@ async function loadCandidateData(client) {
     profile,
     experiences: experiencesResult.rows,
     skills: skillsResult.rows,
-    gaps: gapsResult.rows
+    gaps: gapsResult.rows.map((row) => ({ description: row.description, interestedInLearning: Boolean(row.interest_in_learning) }))
   };
 }
 
@@ -245,7 +246,67 @@ module.exports = async function(context) {
 
     let aiContexts = {};
     try {
-      aiContexts = await callAnthropicForContexts(payload.profile, payload.experiences, apiKey);
+      // Build a compact representation of experiences to form a stable cache key
+      const compactExperiences = payload.experiences.map((exp) => ({
+        id: exp.id,
+        company_name: exp.company_name,
+        title: exp.title,
+        start_date: exp.start_date,
+        end_date: exp.end_date,
+        bullet_points: exp.bullet_points || [],
+        why_joined: exp.why_joined,
+        actual_contributions: exp.actual_contributions,
+        proudest_achievement: exp.proudest_achievement,
+        lessons_learned: exp.lessons_learned,
+        challenges_faced: exp.challenges_faced
+      }));
+
+      const cacheKeyData = JSON.stringify({ model: AI_MODEL, profileId: payload.profile.id, experiences: compactExperiences });
+      const cacheHash = crypto.createHash("sha256").update(cacheKeyData).digest("hex");
+
+      // Try to read from cache table if it exists. Failures here should not block the response.
+      try {
+        const cacheSel = await client.query(
+          `SELECT hash, response
+           FROM ai_response_cache
+           WHERE model = $1 AND hash = $2
+           LIMIT 1`,
+          [AI_MODEL, cacheHash]
+        );
+
+        if (cacheSel.rows && cacheSel.rows.length > 0) {
+          const row = cacheSel.rows[0];
+          try {
+            aiContexts = JSON.parse(row.response || "{}");
+          } catch (err) {
+            aiContexts = {};
+          }
+
+          // update hit count and last_accessed (use hash as primary key)
+          await client.query(
+            `UPDATE ai_response_cache SET cache_hit_count = COALESCE(cache_hit_count,0) + 1, last_accessed = NOW() WHERE hash = $1`,
+            [row.hash]
+          );
+        } else {
+          // cache miss: call Anthropic and insert result
+          aiContexts = await callAnthropicForContexts(payload.profile, payload.experiences, apiKey);
+          try {
+            await client.query(
+              `INSERT INTO ai_response_cache (question, model, hash, response, cache_hit_count, last_accessed, updated_at, is_cached)
+               VALUES ($1, $2, $3, $4, 1, NOW(), NOW(), TRUE)
+               ON CONFLICT (hash) DO UPDATE SET response = EXCLUDED.response, updated_at = NOW(), is_cached = TRUE`,
+              ['', AI_MODEL, cacheHash, JSON.stringify(aiContexts || {})]
+            );
+          } catch (err) {
+            // ignore cache write errors
+            context.log && context.log.warn && context.log.warn("Failed to write AI cache", err.message || err);
+          }
+        }
+      } catch (err) {
+        // If cache table doesn't exist or query fails, fall back to calling Anthropic
+        context.log && context.log.debug && context.log.debug("AI cache lookup failed, calling Anthropic", err.message || err);
+        aiContexts = await callAnthropicForContexts(payload.profile, payload.experiences, apiKey);
+      }
     } catch (error) {
       context.log.warn("experience AI context generation failed, using fallback", error.message || error);
     }
@@ -264,8 +325,8 @@ module.exports = async function(context) {
     const skills = {
       strong: payload.skills.filter((s) => s.category === "strong").map((s) => s.skill_name),
       moderate: payload.skills.filter((s) => s.category === "moderate").map((s) => s.skill_name),
-      gap: payload.skills.filter((s) => s.category === "gap").map((s) => s.skill_name)
-        .concat((payload.gaps || []).map((g) => g.description).filter(Boolean))
+      gap: (payload.skills.filter((s) => s.category === "gap").map((s) => s.skill_name))
+        .concat((payload.gaps || []).map((g) => ({ description: g.description, interestedInLearning: Boolean(g.interestedInLearning) })).filter(Boolean))
     };
 
     context.res = {
