@@ -291,6 +291,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
   const profile = payload.profile || {};
   const experiences = Array.isArray(payload.experiences) ? payload.experiences : [];
   const skills = Array.isArray(payload.skills) ? payload.skills : [];
+  const education = Array.isArray(payload.education) ? payload.education : [];
   const gaps = Array.isArray(payload.gaps) ? payload.gaps : [];
   const valuesCulture = payload.valuesCulture || {};
   const faq = Array.isArray(payload.faq) ? payload.faq : [];

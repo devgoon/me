@@ -757,16 +757,20 @@
                 safe.profile = parsed.profile;
             }
             if (Array.isArray(parsed.experiences) && parsed.experiences.length > 0) {
-                safe.experiences = parsed.experiences;
+                const nonEmptyExp = parsed.experiences.filter((it) => it && (String(it.companyName || it.company || '').trim() || String(it.title || '').trim()));
+                if (nonEmptyExp.length > 0) safe.experiences = nonEmptyExp;
             }
             if (Array.isArray(parsed.skills) && parsed.skills.length > 0) {
-                safe.skills = parsed.skills;
+                const nonEmptySkills = parsed.skills.filter((it) => it && String(it.skillName || '').trim());
+                if (nonEmptySkills.length > 0) safe.skills = nonEmptySkills;
             }
             if (Array.isArray(parsed.gaps) && parsed.gaps.length > 0) {
-                safe.gaps = parsed.gaps;
+                const nonEmptyGaps = parsed.gaps.filter((it) => it && (String(it.description || it.whyItsAGap || '').trim()));
+                if (nonEmptyGaps.length > 0) safe.gaps = nonEmptyGaps;
             }
             if (Array.isArray(parsed.education) && parsed.education.length > 0) {
-                safe.education = parsed.education;
+                const nonEmptyEdu = parsed.education.filter((it) => it && (String(it.institution || it.degree || it.fieldOfStudy || it.field_of_study || '').trim()));
+                if (nonEmptyEdu.length > 0) safe.education = nonEmptyEdu;
             }
             if (parsed.valuesCulture && Object.keys(parsed.valuesCulture).some((k) => parsed.valuesCulture[k] !== undefined && parsed.valuesCulture[k] !== "")) {
                 safe.valuesCulture = parsed.valuesCulture;

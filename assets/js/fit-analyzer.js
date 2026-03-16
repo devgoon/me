@@ -15,7 +15,33 @@ function includesAny(text, terms) {
 function skillLinesFromEntries(skills, text) {
   if (!Array.isArray(skills)) return [];
   const lower = String(text || "").toLowerCase();
-  return skills.filter((entry) => lower.includes(String(entry.key || "").toLowerCase())).map((e) => e.label || e.key);
+  function hasQualifierInSameSentence(text, key) {
+    const qualifiers = ['experience', 'proven', 'proven experience', 'required', 'preferred', 'familiarity', 'familiarity with', 'experience with', 'proven in', 'proven with'];
+    // split into sentences (rough)
+    const sentences = String(text || '').split(/[\.\n\?\!]+/).map(s => s.trim()).filter(Boolean);
+    const k = String(key || '').toLowerCase();
+    for (const s of sentences) {
+      const sl = s.toLowerCase();
+      if (sl.includes(k)) {
+        for (const q of qualifiers) {
+          if (sl.includes(q)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  return skills.filter((entry) => {
+    const key = String(entry.key || '').toLowerCase();
+    if (!key) return false;
+    // If key is multi-word, match anywhere
+    if (key.split(/\s+/).length > 1) {
+      return lower.includes(key);
+    }
+    // For single-word tokens (languages), only match if a qualifier appears
+    // in the same sentence of the job description.
+    return hasQualifierInSameSentence(lower, key);
+  }).map((e) => e.label || e.key);
 }
 
 function educationLinesFromEntries(education, text) {
@@ -46,7 +72,17 @@ function educationLinesFromEntries(education, text) {
 function gapLinesFromEntries(gaps, text) {
   if (!Array.isArray(gaps)) return [];
   const lower = String(text || "").toLowerCase();
-  return gaps.filter((entry) => (entry.keys || []).some(k => lower.includes(String(k || "").toLowerCase()))).map((g) => g.text || g.key);
+  return gaps.filter((entry) => {
+    const keys = Array.isArray(entry.keys) ? entry.keys : [];
+    return keys.some((k) => {
+      if (!k) return false;
+      const kk = String(k).toLowerCase().trim();
+      // ignore very short tokens (e.g., single-letter 'c' from 'C++')
+      if (kk.length < 2) return false;
+      const re = new RegExp("\\b" + escapeForRegex(kk) + "\\b", "i");
+      return re.test(text);
+    });
+  }).map((g) => g.text || g.key);
 }
 
 function analyzeJD(jobDescription, profileStrengths = [], possibleGaps = [], education = []) {
