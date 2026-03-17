@@ -1,4 +1,4 @@
-.PHONY: clean install spellcheck spellcheck-pdf link-check syntax-check unit-test check start stop db-export backup-db migrate-db profile-data-db deploy-db profile-data-backup profile-data-upload pre-migration-schema migrate-db post-migration-schema verify-migration rollback-db verify-schema
+.PHONY: clean install spellcheck spellcheck-pdf link-check syntax-check unit-test check start stop db-export backup-db migrate-db profile-data-db deploy-db profile-data-backup profile-data-upload pre-migration-schema migrate-db post-migration-schema verify-migration rollback-db verify-schema run-sql-file print-table
 
 install:
 	npm install
@@ -185,10 +185,23 @@ verify-schema:
 	@diff -u db/schema.sql db/live-schema.sql || (echo "\nSCHEMA MISMATCH: Migration did not produce expected schema." && exit 1)
 	@echo "\nSCHEMA MATCH: Migration successful."
 
+run-sql-file:
+	@echo "Running SQL file: $(file)"
+	@set -a; . .env.local; set +a; \
+	db_url=$$DATABASE_URL; \
+	if [ -z "$$db_url" ]; then echo "DATABASE_URL not set"; exit 1; fi; \
+	psql "$$db_url" -f $(file)
 
-.PHONY: clean
-clean:
-	@echo "Cleaning build artifacts..."
-	@rm -f assets/js/* || true
-	@rm -rf .azurite || true
-	@echo "Clean complete."
+print-table:
+	@table=$(TABLE); \
+	if [ -z "$$table" ]; then \
+		echo "Usage: make print-table TABLE=<table_name>"; exit 1; \
+	fi; \
+	if [ -f .env.local ]; then \
+		set -a; . .env.local; set +a; \
+	fi; \
+	psql "$${DATABASE_URL}" -c "SELECT * FROM $$table LIMIT 50;"
+
+# Usage:
+# make run-sql-file file=path/to/file.sql
+# Loads DATABASE_URL from .env.local

@@ -47,7 +47,14 @@ module.exports = async function(context, req) {
       function textOrNA(value) { if (value === null || value === undefined || value === '') return 'N/A'; return String(value); }
       function dateOrPresent(value) { if (!value) return 'Present'; return String(value); }
       function listLines(items, emptyLine) { if (!items || items.length === 0) return emptyLine; return items.map((item) => `- ${item}`).join('\n'); }
-      function skillLines(skills) { if (!skills || skills.length === 0) return '- None listed'; return skills.map((skill) => `- ${skill.skill_name}: ${textOrNA(skill.honest_notes)}`).join('\n'); }
+      function skillLines(skills) {
+        if (!skills || skills.length === 0) return '- None listed';
+        return skills.map((skill) => {
+          const lastUsed = skill.last_used ? String(skill.last_used) : 'current';
+          const yearsExp = (skill.years_experience !== undefined && skill.years_experience !== null) ? `${skill.years_experience} yrs` : 'n/a';
+          return `- ${skill.skill_name} (last used: ${lastUsed}, years: ${yearsExp}): ${textOrNA(skill.honest_notes)}`;
+        }).join('\n');
+      }
 
       function buildPrompt(payload) {
         const profile = payload.profile;
@@ -78,7 +85,10 @@ module.exports = async function(context, req) {
           : 'No experience records found.';
 
         const gapsText = payload.gaps.length
-          ? payload.gaps.map((gap) => `- ${gap.description}: ${textOrNA(gap.why_its_a_gap)}`).join('\n')
+          ? payload.gaps.map((gap) => {
+              const interested = gap.interest_in_learning ? ' (interested in learning)' : '';
+              return `- ${gap.description}${interested}: ${textOrNA(gap.why_its_a_gap)}`;
+            }).join('\n')
           : '- No explicit gaps recorded';
 
         const valuesText = payload.values
@@ -131,7 +141,15 @@ module.exports = async function(context, req) {
         const candidateId = profile.id;
 
         const experiencesResult = await client.query(`SELECT * FROM experiences WHERE candidate_id = $1 ORDER BY display_order ASC, start_date DESC NULLS LAST`, [candidateId]);
-        const skillsResult = await client.query(`SELECT * FROM skills WHERE candidate_id = $1 ORDER BY category ASC, self_rating DESC NULLS LAST, skill_name ASC`, [candidateId]);
+        // Load skills and their equivalents (text-based)
+        const skillsResult = await client.query(`
+          SELECT s.*, array_agg(eq.equivalent_name) AS equivalents
+          FROM skills s
+          LEFT JOIN skill_equivalence eq ON s.skill_name = eq.skill_name
+          WHERE s.candidate_id = $1
+          GROUP BY s.id
+          ORDER BY s.category ASC, s.self_rating DESC NULLS LAST, s.skill_name ASC
+        `, [candidateId]);
         const gapsResult = await client.query(`SELECT * FROM gaps_weaknesses WHERE candidate_id = $1 ORDER BY id ASC`, [candidateId]);
         const valuesResult = await client.query(`SELECT * FROM values_culture WHERE candidate_id = $1 ORDER BY created_at DESC LIMIT 1`, [candidateId]);
         const faqResult = await client.query(`SELECT * FROM faq_responses WHERE candidate_id = $1 ORDER BY is_common_question DESC, id ASC`, [candidateId]);
@@ -221,6 +239,10 @@ module.exports = async function(context, req) {
         } catch (err) {
           parsed = { score: 50, verdict: 'MARGINAL', reasons: ['AI response could not be parsed; fallback used'], mismatches: [], suggestedMessage: "I'd like to learn more about this role to confirm fit." };
         }
+
+          // Print the AI response result to the console for debugging
+          console.log('Claude AI response:', aiResponse);
+          console.log('Parsed result:', parsed);
 
         context.res = { status: 200, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: parsed };
         endRequest(context, obs, 200);

@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS experiences (
   quantified_impact JSONB,
   display_order INTEGER NOT NULL DEFAULT 0,
   CONSTRAINT experiences_date_range_chk
-    CHECK (end_date IS NULL OR start_date IS NULL OR end_date >= start_date)
+    CHECK (end_date IS NULL OR start_date IS NULL OR end_date >= start_date),
+  CONSTRAINT experiences_candidate_company_unique UNIQUE (candidate_id, company_name, start_date)
 );
 
 CREATE INDEX IF NOT EXISTS experiences_candidate_id_idx
@@ -81,7 +82,8 @@ CREATE TABLE IF NOT EXISTS skills (
   last_used DATE,
   CONSTRAINT skills_category_chk CHECK (category IN ('strong', 'moderate', 'gap')),
   CONSTRAINT skills_self_rating_chk CHECK (self_rating IS NULL OR self_rating BETWEEN 1 AND 5),
-  CONSTRAINT skills_years_experience_chk CHECK (years_experience IS NULL OR years_experience >= 0)
+  CONSTRAINT skills_years_experience_chk CHECK (years_experience IS NULL OR years_experience >= 0),
+  CONSTRAINT skills_candidate_skill_name_unique UNIQUE (candidate_id, skill_name)
 );
 
 CREATE INDEX IF NOT EXISTS skills_candidate_id_idx
@@ -89,6 +91,17 @@ CREATE INDEX IF NOT EXISTS skills_candidate_id_idx
 
 CREATE INDEX IF NOT EXISTS skills_candidate_category_idx
   ON skills (candidate_id, category);
+
+-- Skill equivalence mapping table
+DROP TABLE IF EXISTS skill_equivalence;
+CREATE TABLE IF NOT EXISTS skill_equivalence (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  skill_name TEXT NOT NULL,
+  equivalent_name TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  notes TEXT,
+  CONSTRAINT skill_equivalence_unique UNIQUE (skill_name, equivalent_name)
+);
 
 CREATE TABLE IF NOT EXISTS gaps_weaknesses (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -99,7 +112,8 @@ CREATE TABLE IF NOT EXISTS gaps_weaknesses (
   why_its_a_gap TEXT,
   interest_in_learning BOOLEAN NOT NULL DEFAULT FALSE,
   CONSTRAINT gaps_weaknesses_gap_type_chk
-    CHECK (gap_type IN ('skill', 'experience', 'environment', 'role_type'))
+    CHECK (gap_type IN ('skill', 'experience', 'environment', 'role_type')),
+  CONSTRAINT gaps_weaknesses_candidate_description_unique UNIQUE (candidate_id, description)
 );
 
 CREATE INDEX IF NOT EXISTS gaps_weaknesses_candidate_id_idx
@@ -148,7 +162,8 @@ CREATE TABLE IF NOT EXISTS education (
   is_current BOOLEAN NOT NULL DEFAULT FALSE,
   grade TEXT,
   notes TEXT,
-  display_order INTEGER NOT NULL DEFAULT 0
+  display_order INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT education_candidate_institution_unique UNIQUE (candidate_id, institution, degree, start_date)
 );
 
 CREATE INDEX IF NOT EXISTS education_candidate_id_idx
