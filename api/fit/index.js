@@ -47,7 +47,10 @@ module.exports = async function(context, req) {
       function textOrNA(value) { if (value === null || value === undefined || value === '') return 'N/A'; return String(value); }
       function dateOrPresent(value) { if (!value) return 'Present'; return String(value); }
       function listLines(items, emptyLine) { if (!items || items.length === 0) return emptyLine; return items.map((item) => `- ${item}`).join('\n'); }
-      function skillLines(skills) { if (!skills || skills.length === 0) return '- None listed'; return skills.map((skill) => `- ${skill.skill_name}: ${textOrNA(skill.honest_notes)}`).join('\n'); }
+      function skillLines(skills) {
+        if (!skills || skills.length === 0) return '- None listed';
+        return skills.map((skill) => `- ${skill.skill_name}: ${textOrNA(skill.honest_notes)}`).join('\n');
+      }
 
       function buildPrompt(payload) {
         const profile = payload.profile;
@@ -131,7 +134,15 @@ module.exports = async function(context, req) {
         const candidateId = profile.id;
 
         const experiencesResult = await client.query(`SELECT * FROM experiences WHERE candidate_id = $1 ORDER BY display_order ASC, start_date DESC NULLS LAST`, [candidateId]);
-        const skillsResult = await client.query(`SELECT * FROM skills WHERE candidate_id = $1 ORDER BY category ASC, self_rating DESC NULLS LAST, skill_name ASC`, [candidateId]);
+        // Load skills and their equivalents (text-based)
+        const skillsResult = await client.query(`
+          SELECT s.*, array_agg(eq.equivalent_name) AS equivalents
+          FROM skills s
+          LEFT JOIN skill_equivalence eq ON s.skill_name = eq.skill_name
+          WHERE s.candidate_id = $1
+          GROUP BY s.id
+          ORDER BY s.category ASC, s.self_rating DESC NULLS LAST, s.skill_name ASC
+        `, [candidateId]);
         const gapsResult = await client.query(`SELECT * FROM gaps_weaknesses WHERE candidate_id = $1 ORDER BY id ASC`, [candidateId]);
         const valuesResult = await client.query(`SELECT * FROM values_culture WHERE candidate_id = $1 ORDER BY created_at DESC LIMIT 1`, [candidateId]);
         const faqResult = await client.query(`SELECT * FROM faq_responses WHERE candidate_id = $1 ORDER BY is_common_question DESC, id ASC`, [candidateId]);
