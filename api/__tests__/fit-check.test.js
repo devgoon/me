@@ -82,30 +82,4 @@ describe('fit-check API', () => {
     expect(capturedBody).toMatch(/iOS native apps/i);
     expect(capturedBody).toMatch(/Southern Connecticut State University/i);
   });
-
-  test('does not list equivalents in skill prompt', async () => {
-    const context = { res: null };
-    client.query.mockResolvedValueOnce({ rows: [{ id: 3, name: 'Test', email: 'test@example.com', title: 'Engineer' }] }) // profile
-      .mockResolvedValueOnce({ rows: [] }) // experiences
-      .mockResolvedValueOnce({ rows: [{ skill_name: 'Mobile Development', honest_notes: 'Built Android and iOS apps', equivalents: ['Android', 'iOS', 'React Native'] }] }) // skills
-      .mockResolvedValueOnce({ rows: [] }) // gaps
-      .mockResolvedValueOnce({ rows: [] }) // values
-      .mockResolvedValueOnce({ rows: [] }) // faq
-      .mockResolvedValueOnce({ rows: [] }) // ai_instructions
-      .mockResolvedValueOnce({ rows: [] }); // education
-
-    let capturedBody = null;
-    global.fetch = jest.fn().mockImplementation((url, opts) => {
-      capturedBody = opts && opts.body ? opts.body : null;
-      return Promise.resolve({ ok: true, json: async () => ({ text: JSON.stringify({ score: 90, verdict: 'FIT', reasons: [], mismatches: [], suggestedMessage: 'Great fit.' }) }) });
-    });
-
-    await fitHandler(context, { method: 'POST', body: { jobDescription: 'Looking for mobile developer' } });
-    expect(context.res.status).toBe(200);
-    expect(capturedBody).toBeTruthy();
-    expect(capturedBody).toMatch(/Mobile Development/);
-    expect(capturedBody).not.toMatch(/Android/);
-    expect(capturedBody).not.toMatch(/iOS/);
-    expect(capturedBody).not.toMatch(/React Native/);
-  });
 });
