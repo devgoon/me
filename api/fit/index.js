@@ -49,7 +49,11 @@ module.exports = async function(context, req) {
       function listLines(items, emptyLine) { if (!items || items.length === 0) return emptyLine; return items.map((item) => `- ${item}`).join('\n'); }
       function skillLines(skills) {
         if (!skills || skills.length === 0) return '- None listed';
-        return skills.map((skill) => `- ${skill.skill_name}: ${textOrNA(skill.honest_notes)}`).join('\n');
+        return skills.map((skill) => {
+          const lastUsed = skill.last_used ? String(skill.last_used) : 'current';
+          const yearsExp = (skill.years_experience !== undefined && skill.years_experience !== null) ? `${skill.years_experience} yrs` : 'n/a';
+          return `- ${skill.skill_name} (last used: ${lastUsed}, years: ${yearsExp}): ${textOrNA(skill.honest_notes)}`;
+        }).join('\n');
       }
 
       function buildPrompt(payload) {
@@ -81,7 +85,10 @@ module.exports = async function(context, req) {
           : 'No experience records found.';
 
         const gapsText = payload.gaps.length
-          ? payload.gaps.map((gap) => `- ${gap.description}: ${textOrNA(gap.why_its_a_gap)}`).join('\n')
+          ? payload.gaps.map((gap) => {
+              const interested = gap.interest_in_learning ? ' (interested in learning)' : '';
+              return `- ${gap.description}${interested}: ${textOrNA(gap.why_its_a_gap)}`;
+            }).join('\n')
           : '- No explicit gaps recorded';
 
         const valuesText = payload.values
