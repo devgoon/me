@@ -57,6 +57,70 @@
             rules: []
         }
     };
+    let isDirty = false;
+    let initialLoadComplete = false;
+
+    function markDirty() {
+        if (!initialLoadComplete)
+            return;
+        isDirty = true;
+    }
+
+    // mark user edits as dirty (used to prompt before leaving)
+    document.addEventListener("input", (ev) => {
+        try {
+            if (!initialLoadComplete)
+                return;
+            const t = ev.target;
+            if (!t)
+                return;
+            if (t.tagName && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) {
+                markDirty();
+            }
+        }
+        catch (e) { }
+    }, true);
+    document.addEventListener("change", (ev) => {
+        try {
+            if (!initialLoadComplete)
+                return;
+            const t = ev.target;
+            if (!t)
+                return;
+            if (t.tagName && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) {
+                markDirty();
+            }
+        }
+        catch (e) { }
+    }, true);
+
+    // warn the user if they try to navigate away with unsaved changes
+    window.addEventListener("beforeunload", (e) => {
+        if (isDirty) {
+            e.preventDefault();
+            e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+            return e.returnValue;
+        }
+    });
+
+    // mark clicks that mutate state as dirty (but ignore save/signout/cache buttons)
+    document.addEventListener("click", (ev) => {
+        try {
+            if (!initialLoadComplete)
+                return;
+            const t = ev.target;
+            if (!t)
+                return;
+            const btn = t.closest && t.closest("button");
+            if (btn) {
+                const id = btn.id || "";
+                if (id === "save-all" || id === "cache-refresh" || id === "sign-out")
+                    return;
+                markDirty();
+            }
+        }
+        catch (e) { }
+    }, true);
     function setMessage(text, isError) {
         const el = document.getElementById("admin-message");
         if (!el)
@@ -423,7 +487,38 @@
         const list = document.getElementById("skills-list");
         if (!list)
             return;
-        list.innerHTML = state.skills.map((item, index) => {
+        function formatYMDToMDY(s) {
+            if (!s) return "";
+            const m = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(s);
+            if (!m) return s;
+            return m[2] + "/" + m[3] + "/" + m[1];
+        }
+        // sort copy: category descending (strong -> moderate -> gap), then lastUsed desc
+        const categoryRank = { strong: 3, moderate: 2, gap: 1 };
+        function normalizeForSortDate(s) {
+            if (!s) return "";
+            if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s)) return s;
+            const m = /^([0-9]{2})\/([0-9]{2})\/([0-9]{4})$/.exec(s);
+            if (m) return `${m[3]}-${m[1]}-${m[2]}`;
+            return "";
+        }
+        const sorted = (state.skills || []).slice().sort((a, b) => {
+            const ra = categoryRank[String(a.category || "")] || 0;
+            const rb = categoryRank[String(b.category || "")] || 0;
+            if (ra !== rb) return rb - ra; // descending by rank
+            const da = normalizeForSortDate(a.lastUsed || a.last_used || "");
+            const db = normalizeForSortDate(b.lastUsed || b.last_used || "");
+            if (da && db) {
+                if (da > db) return -1;
+                if (da < db) return 1;
+                return 0;
+            }
+            if (da) return -1;
+            if (db) return 1;
+            return 0;
+        });
+
+        list.innerHTML = sorted.map((item, index) => {
             return "<article class=\"item-card\">"
                 + "<header><h3>Skill " + (index + 1) + "</h3><button class=\"mini-btn danger\" data-remove-skill=\"" + index + "\" type=\"button\">Remove</button></header>"
                 + "<div class=\"form-grid two-col\">"
@@ -434,6 +529,7 @@
                 + "<label>Self rating (1-5)<input data-skill=\"" + index + "\" data-field=\"selfRating\" type=\"number\" min=\"1\" max=\"5\" value=\"" + escapeAttr(String(item.selfRating || 3)) + "\"></label>"
                 + "<label>Years experience<input data-skill=\"" + index + "\" data-field=\"yearsExperience\" type=\"number\" min=\"0\" step=\"0.5\" value=\"" + escapeAttr(String(item.yearsExperience || "")) + "\"></label>"
                 + "<label>Last used<input data-skill=\"" + index + "\" data-field=\"lastUsed\" type=\"date\" value=\"" + escapeAttr(item.lastUsed || "") + "\"></label>"
+                + " <small class=\"date-display\">" + escapeHtml(item.lastUsedDisplay || formatYMDToMDY(item.lastUsed || "")) + "</small>"
                 + "</div>"
                 + "<label>Evidence<textarea data-skill=\"" + index + "\" data-field=\"evidence\" rows=\"2\">" + escapeHtml(item.evidence || "") + "</textarea></label>"
                 + "<label>Honest notes<textarea data-skill=\"" + index + "\" data-field=\"honestNotes\" rows=\"2\">" + escapeHtml(item.honestNotes || "") + "</textarea></label>"
@@ -446,6 +542,14 @@
                 if (!state.skills[index] || !field)
                     return;
                 state.skills[index][field] = input.value;
+                if (field === 'lastUsed') {
+                    // keep a display-friendly copy for UI
+                    const md = (input.value && /^\d{4}-\d{2}-\d{2}$/.test(input.value)) ? (input.value.slice(5,7) + '/' + input.value.slice(8,10) + '/' + input.value.slice(0,4)) : input.value;
+                    state.skills[index].lastUsedDisplay = md;
+                    // update the adjacent small.display element
+                    const small = input.parentNode.querySelector('.date-display');
+                    if (small) small.textContent = md;
+                }
             });
             input.addEventListener("change", () => {
                 const index = Number(input.dataset.skill);
@@ -453,6 +557,12 @@
                 if (!state.skills[index] || !field)
                     return;
                 state.skills[index][field] = input.value;
+                if (field === 'lastUsed') {
+                    const md = (input.value && /^\d{4}-\d{2}-\d{2}$/.test(input.value)) ? (input.value.slice(5,7) + '/' + input.value.slice(8,10) + '/' + input.value.slice(0,4)) : input.value;
+                    state.skills[index].lastUsedDisplay = md;
+                    const small = input.parentNode.querySelector('.date-display');
+                    if (small) small.textContent = md;
+                }
             });
         });
         list.querySelectorAll("[data-remove-skill]").forEach((button) => {
@@ -726,6 +836,7 @@
             body: JSON.stringify(payload)
         });
         localStorage.removeItem(DRAFT_KEY);
+        isDirty = false;
         setMessage("All changes saved successfully.", false);
     }
     function saveDraft() {
@@ -762,7 +873,33 @@
             }
             if (Array.isArray(parsed.skills) && parsed.skills.length > 0) {
                 const nonEmptySkills = parsed.skills.filter((it) => it && String(it.skillName || '').trim());
-                if (nonEmptySkills.length > 0) safe.skills = nonEmptySkills;
+                if (nonEmptySkills.length > 0) {
+                    if (Array.isArray(state.skills) && state.skills.length > 0) {
+                        // merge draft skills into server-provided skills without overwriting
+                        // canonical server values when draft fields are empty
+                        const merged = state.skills.slice();
+                        nonEmptySkills.forEach((draft) => {
+                            const name = String(draft.skillName || '').trim();
+                            const idx = merged.findIndex((s) => String(s.skillName || '').trim() === name);
+                            if (idx === -1) {
+                                merged.push(draft);
+                            }
+                            else {
+                                const target = merged[idx];
+                                Object.keys(draft).forEach((k) => {
+                                    const v = draft[k];
+                                    if (v !== undefined && v !== "") {
+                                        target[k] = v;
+                                    }
+                                });
+                            }
+                        });
+                        safe.skills = merged;
+                    }
+                    else {
+                        safe.skills = nonEmptySkills;
+                    }
+                }
             }
             if (Array.isArray(parsed.gaps) && parsed.gaps.length > 0) {
                 const nonEmptyGaps = parsed.gaps.filter((it) => it && (String(it.description || it.whyItsAGap || '').trim()));
@@ -859,7 +996,27 @@
         }
         const signOut = document.getElementById("sign-out");
         if (signOut) {
-            signOut.addEventListener("click", () => {
+            signOut.addEventListener("click", async (ev) => {
+                if (isDirty) {
+                    const shouldSave = confirm("You have unsaved changes. Save now and sign out? Press OK to save and sign out, Cancel to stay on this page.");
+                    if (shouldSave) {
+                        try {
+                            await saveAll();
+                        }
+                        catch (err) {
+                            setMessage(err.message || "Save failed", true);
+                            return;
+                        }
+                        localStorage.removeItem(DRAFT_KEY);
+                        window.location.href = LOGOUT_URL;
+                        return;
+                    }
+                    else {
+                        // User chose to stay; do nothing
+                        ev.preventDefault();
+                        return;
+                    }
+                }
                 localStorage.removeItem(DRAFT_KEY);
                 window.location.href = LOGOUT_URL;
             });
@@ -891,6 +1048,9 @@
         }
         loadDraftIfAny();
         renderAll();
+        // mark initial load complete so subsequent user edits are tracked
+        initialLoadComplete = true;
+        isDirty = false;
         window.setInterval(saveDraft, 15000);
     }
     init();
