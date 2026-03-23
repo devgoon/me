@@ -202,6 +202,18 @@ print-table:
 	fi; \
 	psql "$${DATABASE_URL}" -c "SELECT * FROM $$table LIMIT 50;"
 
-# Usage:
-# make run-sql-file file=path/to/file.sql
-# Loads DATABASE_URL from .env.local
+# Usage examples:
+#  Run a SQL file using the DATABASE_URL from .env.local:
+#    make run-sql-file file=./migrations/skills-update.sql
+#
+#  Run with an explicit `DATABASE_URL` (overrides .env.local):
+#    DATABASE_URL="postgres://user:pass@host:5432/db" make run-sql-file file=./migrations/skills-update.sql
+#
+# Notes:
+#  - The target loads `DATABASE_URL` from .env.local if present; you can override it
+#    by exporting `DATABASE_URL` or prefixing the make command as shown above.
+#  - The `file` variable is required and is passed to `psql -f $(file)`.
+#  - Preview the SQL before running:
+#      head -n 50 ./migrations/skills-update.sql
+#  - To ensure atomic updates, wrap statements in your SQL file with
+#    `BEGIN;` and `COMMIT;` (or run inside a transaction in psql).

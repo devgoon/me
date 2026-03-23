@@ -21,6 +21,14 @@ async function handleMe(req) {
     };
   }
 
+  // Log header keys when no principal found to help local dev debugging
+  try {
+    const headerKeys = req && req.headers ? Object.keys(req.headers) : [];
+    console.log('[auth.me] no client principal; request header keys:', headerKeys);
+  } catch (e) {
+    // ignore logging errors
+  }
+
   return { status: 401, body: { error: "Unauthorized" } };
 }
 

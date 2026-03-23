@@ -27,6 +27,41 @@ function asDate(value) {
   return t || null;
 }
 
+function formatDateToYMD(value) {
+  if (value === null || value === undefined || value === "") return "";
+  // If already a YYYY-MM-DD string, return it
+  const s = String(value);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // If ISO-like, take the first 10 chars
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return s.slice(0, 10);
+  // If a Date object, format via toISOString
+  if (value instanceof Date && !isNaN(value.getTime())) return value.toISOString().slice(0, 10);
+  // Fallback: try to parse and format
+  const parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+  return "";
+}
+
+function formatDateToMDY(value) {
+  if (value === null || value === undefined || value === "") return "";
+  const ymd = formatDateToYMD(value);
+  if (!ymd) return "";
+  const parts = ymd.split('-');
+  if (parts.length !== 3) return "";
+  return parts[1] + '/' + parts[2] + '/' + parts[0];
+}
+
+function formatMDYToYMD(value) {
+  if (!value) return "";
+  const s = String(value).trim();
+  const m = /^([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{4})$/.exec(s);
+  if (!m) return "";
+  const mm = m[1].padStart(2, '0');
+  const dd = m[2].padStart(2, '0');
+  const yyyy = m[3];
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function asNumber(value) {
   if (value === null || value === undefined) {
     return null;
@@ -213,7 +248,7 @@ async function loadAll(client, candidateId) {
       salaryMin: profile.salary_min || "",
       salaryMax: profile.salary_max || "",
       availabilityStatus: profile.availability_status || "",
-      availableStarting: profile.availability_date || "",
+      availableStarting: formatDateToYMD(profile.availability_date),
       location: profile.location || "",
       remotePreference: profile.remote_preference || "",
       linkedInUrl: profile.linkedin_url || "",
@@ -223,8 +258,8 @@ async function loadAll(client, candidateId) {
       companyName: row.company_name || "",
       title: row.title || "",
       titleProgression: row.title_progression || "",
-      startDate: row.start_date || "",
-      endDate: row.end_date || "",
+      startDate: formatDateToYMD(row.start_date),
+      endDate: formatDateToYMD(row.end_date),
       current: Boolean(row.is_current),
       achievementBullets: row.bullet_points || [],
       whyJoined: row.why_joined || "",
@@ -247,7 +282,8 @@ async function loadAll(client, candidateId) {
       evidence: row.evidence || "",
       honestNotes: row.honest_notes || "",
       yearsExperience: row.years_experience || "",
-      lastUsed: row.last_used || ""
+      lastUsed: formatDateToYMD(row.last_used),
+      lastUsedDisplay: formatDateToMDY(row.last_used)
     })),
     gaps: gapsRes.rows.map((row) => ({
       gapType: row.gap_type || "skill",
@@ -259,8 +295,8 @@ async function loadAll(client, candidateId) {
       institution: row.institution || "",
       degree: row.degree || "",
       fieldOfStudy: row.field_of_study || "",
-      startDate: row.start_date || "",
-      endDate: row.end_date || "",
+      startDate: formatDateToYMD(row.start_date),
+      endDate: formatDateToYMD(row.end_date),
       current: Boolean(row.is_current),
       grade: row.grade || "",
       notes: row.notes || "",
@@ -347,7 +383,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
         salaryMinValue,
         salaryMaxValue,
         asText(profile.availabilityStatus),
-        asDate(profile.availableStarting),
+        (formatDateToYMD(profile.availableStarting) || null),
         asText(profile.location),
         asText(profile.remotePreference),
         asText(profile.linkedInUrl),
@@ -357,6 +393,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
 
     await client.query("DELETE FROM experiences WHERE candidate_id = $1", [candidateId]);
     const validExperiences = experiences.filter((item) => asText(item.companyName) && asText(item.title));
+    console.log(`[admin.saveAll] candidateId=${candidateId} - saving ${validExperiences.length} experiences`);
     for (const [index, item] of validExperiences.entries()) {
       let impactJson = null;
       const rawImpact = asText(item.quantifiedImpact);
@@ -367,6 +404,18 @@ async function saveAll(client, candidateId, payload, authEmail) {
           impactJson = { note: rawImpact };
         }
       }
+
+      // Log date values before inserting to help debug save issues
+      const _startDate = formatDateToYMD(item.startDate) || null;
+      const _endDate = item.current ? null : (formatDateToYMD(item.endDate) || null);
+      console.log('[admin.saveAll] insert experience', {
+        idx: index,
+        company: asText(item.companyName),
+        title: asText(item.title),
+        startDate: _startDate,
+        endDate: _endDate,
+        current: Boolean(item.current)
+      });
 
       await client.query(
         `INSERT INTO experiences (
@@ -385,8 +434,8 @@ async function saveAll(client, candidateId, payload, authEmail) {
           asText(item.companyName),
           asText(item.title),
           asText(item.titleProgression),
-          asDate(item.startDate),
-          item.current ? null : asDate(item.endDate),
+          _startDate,
+          _endDate,
           Boolean(item.current),
           asArray(item.achievementBullets),
           asText(item.whyJoined),
@@ -407,6 +456,9 @@ async function saveAll(client, candidateId, payload, authEmail) {
     await client.query("DELETE FROM skills WHERE candidate_id = $1", [candidateId]);
     const validSkills = skills.filter((item) => asText(item.skillName));
     for (const item of validSkills) {
+      // Normalize lastUsed: prefer canonical YMD, fall back to MDY display if provided
+      const normalizedLastUsed = formatDateToYMD(item.lastUsed) || formatMDYToYMD(item.lastUsedDisplay || "") || null;
+      console.log('[admin.saveAll] insert skill', { skill: asText(item.skillName), raw: item.lastUsed, lastUsedDisplay: item.lastUsedDisplay, normalizedLastUsed });
       await client.query(
         `INSERT INTO skills (
           candidate_id, skill_name, category, self_rating, evidence, honest_notes, years_experience, last_used
@@ -419,7 +471,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
           asText(item.evidence),
           asText(item.honestNotes),
           asNumber(item.yearsExperience),
-          asDate(item.lastUsed)
+          normalizedLastUsed
         ]
       );
     }
@@ -452,8 +504,8 @@ async function saveAll(client, candidateId, payload, authEmail) {
           asText(item.institution),
           asText(item.degree),
           asText(item.fieldOfStudy),
-          asDate(item.startDate),
-          item.current ? null : asDate(item.endDate),
+          (formatDateToYMD(item.startDate) || null),
+          item.current ? null : (formatDateToYMD(item.endDate) || null),
           Boolean(item.current),
           asText(item.grade),
           asText(item.notes),
@@ -530,7 +582,9 @@ async function saveAll(client, candidateId, payload, authEmail) {
 
 module.exports = async function(context, req) {
   const obs = beginRequest(context, req, "admin.panel");
+  console.log('[admin.panel] incoming request', { method: req && req.method, url: req && req.url });
   const auth = requireAuth(req);
+  console.log('[admin.panel] auth', auth ? { email: auth.email, userId: auth.userId } : null);
   if (!auth) {
     context.res = {
       status: 401,
