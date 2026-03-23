@@ -82,19 +82,27 @@
       // Normalize arrays
       const strong = skills.strong || [];
       const moderate = skills.moderate || [];
-      const gaps = skills.gap || [];
+    const gaps = skills.gaps || skills.gap || [];
 
       // gaps may be strings or objects. Partition into "interested" and "not interested"
       const interested = [];
       const notInterested = [];
-      gaps.forEach((g) => {
-        if (!g) return;
-        // object: prefer description/whyItsAGap
-        const text = g.description || g.whyItsAGap || g.text || g.label || '';
-        const interestedFlag = Boolean(g.interestedInLearning || g.interested);
-        if (interestedFlag) interested.push(text);
-        else notInterested.push(text);
-      });
+            gaps.forEach((g) => {
+                if (!g) return;
+                // object: prefer description/whyItsAGap
+                const text = (typeof g === 'string') ? g : (g.description || g.whyItsAGap || g.text || g.label || '');
+                // Determine explicit interest flags (support camelCase and snake_case)
+                const isTrue = (g && (g.interested === true || g.interestedInLearning === true || g.interest_in_learning === true));
+                const isFalse = (g && (g.interested === false || g.interestedInLearning === false || g.interest_in_learning === false));
+                if (isTrue) {
+                    interested.push(text);
+                } else if (isFalse) {
+                    notInterested.push(text);
+                } else {
+                    // default: treat string gaps or unspecified as not interested
+                    if (typeof g === 'string') notInterested.push(text);
+                }
+            });
 
       skillsList.innerHTML = [
         renderSkillColumn("STRONG ✓", "skills-card--strong", strong),
