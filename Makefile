@@ -123,20 +123,6 @@ stop:
 	pg_dump --no-owner --no-acl --format=plain --file=db/backup-$$TIMESTAMP.sql "$$DB_URL" ; \
 	mv db/backup-$$TIMESTAMP.sql db/export.sql
 
-profile-data-backup:
-	@echo "Creating profile data backup..."
-	@DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) ; \
-	pg_dump --no-owner --no-acl --format=plain --file=db/export.sql $$DB_URL
-
-profile-data-upload:
-	@echo "Uploading profile data from db/export.sql..."
-	@if [ ! -f db/export.sql ]; then \
-		echo "ERROR: db/export.sql not found. Skipping upload."; \
-		exit 0; \
-	fi; \
-	DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) ; \
-	psql $$DB_URL < db/export.sql 2>/dev/null
-
 deploy-db:
 	@echo "Starting full database deployment workflow..."
 	@set -e; \
@@ -147,51 +133,6 @@ deploy-db:
 	# Verify migration and upload profile data
 	$(MAKE) verify-migration profile-data-upload || { $(MAKE) rollback-db; exit 1; }; \
 	echo "Database deployment complete."
-
- 
-pre-migration-schema:
-	@echo "Dumping pre-migration database schema to db/pre-migration-schema.sql..."
-	@DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) ; \
-	pg_dump --schema-only --no-owner --no-acl --file=db/pre-migration-schema.sql $$DB_URL
-
-migrate-db:
-	@echo "Running migrations (verbose)..."
-	@DATABASE_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) npx node-pg-migrate up --envPath=.env.local -m migrations --verbose
-
-post-migration-schema:
-	@echo "Dumping post-migration database schema to db/post-migration-schema.sql..."
-	@DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) ; \
-	pg_dump --schema-only --no-owner --no-acl --file=db/post-migration-schema.sql $$DB_URL
-
-verify-migration:
-	@echo "Comparing pre- and post-migration schemas (ignoring pg_dump metadata)..."
-	@grep -vE '^--|^\\restrict|^\\unrestrict|^SET |^SELECT |^COMMENT |^ALTER |^\\connect' db/pre-migration-schema.sql > db/pre-migration-schema.struct.sql
-	@grep -vE '^--|^\\restrict|^\\unrestrict|^SET |^SELECT |^COMMENT |^ALTER |^\\connect' db/post-migration-schema.sql > db/post-migration-schema.struct.sql
-	@diff -u db/pre-migration-schema.struct.sql db/post-migration-schema.struct.sql || (echo "\nSCHEMA MISMATCH: Rolling back from latest backup..." && $(MAKE) rollback-db && exit 1)
-	@echo "\nSCHEMA MATCH: Migration successful."
-
-rollback-db:
-	@echo "Ensuring recent backup before rollback..."
-	$(MAKE) backup-db
-	@echo "Dropping all tables before restore..."
-	@DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) ; \
-	TABLES=$$(psql $$DB_URL -Atc "SELECT tablename FROM pg_tables WHERE schemaname='public';") ; \
-	for T in $$TABLES; do psql $$DB_URL -c "DROP TABLE IF EXISTS \"$$T\" CASCADE;"; done
-	@echo "Restoring database from latest backup..."
-	@LATEST_BACKUP=$$(ls -t db/backup-*.sql | head -n 1) ; \
-	DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) ; \
-	psql $$DB_URL < $$LATEST_BACKUP
-	@echo "Validating restored data..."
-	@TABLES=$$(psql $$DB_URL -Atc "SELECT tablename FROM pg_tables WHERE schemaname='public';") ; \
-	for T in $$TABLES; do echo "Table $$T: $$(psql $$DB_URL -Atc 'SELECT COUNT(*) FROM "'$$T'";') rows"; done
-
-verify-schema:
-	@echo "Dumping current database schema to db/live-schema.sql..."
-	@DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) ; \
-	pg_dump --schema-only --no-owner --no-acl --file=db/live-schema.sql $$DB_URL
-	@echo "Diffing db/live-schema.sql against db/schema.sql..."
-	@diff -u db/schema.sql db/live-schema.sql || (echo "\nSCHEMA MISMATCH: Migration did not produce expected schema." && exit 1)
-	@echo "\nSCHEMA MATCH: Migration successful."
 
 run-sql-file:
 	@echo "Running SQL file: $(file)"
