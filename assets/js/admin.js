@@ -518,21 +518,24 @@
             return 0;
         });
 
-        list.innerHTML = sorted.map((item, index) => {
+        list.innerHTML = sorted.map((item, visualIndex) => {
+            // find the original index in state.skills so input bindings update the correct object
+            const origIndex = (state.skills || []).indexOf(item);
+            const displayIndex = visualIndex + 1;
             return "<article class=\"item-card\">"
-                + "<header><h3>Skill " + (index + 1) + "</h3><button class=\"mini-btn danger\" data-remove-skill=\"" + index + "\" type=\"button\">Remove</button></header>"
+                + "<header><h3>Skill " + displayIndex + "</h3><button class=\"mini-btn danger\" data-remove-skill=\"" + origIndex + "\" type=\"button\">Remove</button></header>"
                 + "<div class=\"form-grid two-col\">"
-                + "<label>Skill name<input data-skill=\"" + index + "\" data-field=\"skillName\" type=\"text\" value=\"" + escapeAttr(item.skillName || "") + "\"></label>"
-                + "<label>Category<select data-skill=\"" + index + "\" data-field=\"category\">"
+                + "<label>Skill name<input data-skill=\"" + origIndex + "\" data-field=\"skillName\" type=\"text\" value=\"" + escapeAttr(item.skillName || "") + "\"></label>"
+                + "<label>Category<select data-skill=\"" + origIndex + "\" data-field=\"category\">"
                 + buildSelectOptions(item.category, ["strong", "moderate", "gap"])
                 + "</select></label>"
-                + "<label>Self rating (1-5)<input data-skill=\"" + index + "\" data-field=\"selfRating\" type=\"number\" min=\"1\" max=\"5\" value=\"" + escapeAttr(String(item.selfRating || 3)) + "\"></label>"
-                + "<label>Years experience<input data-skill=\"" + index + "\" data-field=\"yearsExperience\" type=\"number\" min=\"0\" step=\"0.5\" value=\"" + escapeAttr(String(item.yearsExperience || "")) + "\"></label>"
-                + "<label>Last used<input data-skill=\"" + index + "\" data-field=\"lastUsed\" type=\"date\" value=\"" + escapeAttr(item.lastUsed || "") + "\"></label>"
+                + "<label>Self rating (1-5)<input data-skill=\"" + origIndex + "\" data-field=\"selfRating\" type=\"number\" min=\"1\" max=\"5\" value=\"" + escapeAttr(String(item.selfRating || 3)) + "\"></label>"
+                + "<label>Years experience<input data-skill=\"" + origIndex + "\" data-field=\"yearsExperience\" type=\"number\" min=\"0\" step=\"0.5\" value=\"" + escapeAttr(String(item.yearsExperience || "")) + "\"></label>"
+                + "<label>Last used<input data-skill=\"" + origIndex + "\" data-field=\"lastUsed\" type=\"date\" value=\"" + escapeAttr(item.lastUsed || "") + "\"></label>"
                 + " <small class=\"date-display\">" + escapeHtml(item.lastUsedDisplay || formatYMDToMDY(item.lastUsed || "")) + "</small>"
                 + "</div>"
-                + "<label>Evidence<textarea data-skill=\"" + index + "\" data-field=\"evidence\" rows=\"2\">" + escapeHtml(item.evidence || "") + "</textarea></label>"
-                + "<label>Honest notes<textarea data-skill=\"" + index + "\" data-field=\"honestNotes\" rows=\"2\">" + escapeHtml(item.honestNotes || "") + "</textarea></label>"
+                + "<label>Evidence<textarea data-skill=\"" + origIndex + "\" data-field=\"evidence\" rows=\"2\">" + escapeHtml(item.evidence || "") + "</textarea></label>"
+                + "<label>Honest notes<textarea data-skill=\"" + origIndex + "\" data-field=\"honestNotes\" rows=\"2\">" + escapeHtml(item.honestNotes || "") + "</textarea></label>"
                 + "</article>";
         }).join("");
         list.querySelectorAll("[data-skill]").forEach((input) => {
