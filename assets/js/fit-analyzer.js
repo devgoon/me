@@ -18,7 +18,7 @@ function skillLinesFromEntries(skills, text) {
   function hasQualifierInSameSentence(text, key) {
     const qualifiers = ['must haves', 'must have','experience', 'proven', 'proven experience', 'required', 'preferred', 'familiarity', 'familiarity with', 'experience with', 'proven in', 'proven with'];
     // split into sentences (rough)
-    const sentences = String(text || '').split(/[\.\n\?\!]+/).map(s => s.trim()).filter(Boolean);
+      const sentences = String(text || '').split(/[.\n?!]+/).map(s => s.trim()).filter(Boolean);
     const k = String(key || '').toLowerCase();
     for (const s of sentences) {
       const sl = s.toLowerCase();
@@ -71,7 +71,6 @@ function educationLinesFromEntries(education, text) {
 
 function gapLinesFromEntries(gaps, text) {
   if (!Array.isArray(gaps)) return [];
-  const lower = String(text || "").toLowerCase();
   // Return objects: { text: string, interested: boolean }
   return gaps
     .filter((entry) => {

@@ -22,10 +22,7 @@ function asArray(value) {
     .filter(Boolean);
 }
 
-function asDate(value) {
-  const t = asText(value);
-  return t || null;
-}
+// asDate helper removed (unused)
 
 function formatDateToYMD(value) {
   if (value === null || value === undefined || value === "") return "";

@@ -78,7 +78,7 @@
                 markDirty();
             }
         }
-        catch (e) { }
+        catch (e) { void 0; }
     }, true);
     document.addEventListener("change", (ev) => {
         try {
@@ -91,7 +91,7 @@
                 markDirty();
             }
         }
-        catch (e) { }
+        catch (e) { void 0; }
     }, true);
 
     // warn the user if they try to navigate away with unsaved changes
@@ -119,7 +119,7 @@
                 markDirty();
             }
         }
-        catch (e) { }
+        catch (e) { void 0; }
     }, true);
     function setMessage(text, isError) {
         const el = document.getElementById("admin-message");
@@ -223,11 +223,9 @@
                 });
                 if (panelName === "cache") {
                     try {
-                        await loadCacheReport();
-                    }
-                    catch (e) {
-                        // ignore - loadCacheReport handles messaging
-                    }
+                            await loadCacheReport();
+                        }
+                        catch (e) { void 0; }
                 }
             });
         });

@@ -1,0 +1,38 @@
+{
+  "root": true,
+  "env": {
+    "node": true,
+    "browser": true,
+    "es2021": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-console": "off",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+  }
+  ,
+  "overrides": [
+    {
+      "files": ["**/__tests__/**", "**/*.test.js", "**/*.spec.js"],
+      "env": { "jest": true }
+    }
+    ,
+    {
+      "files": ["assets/js/**"],
+      "env": { "browser": true },
+      "globals": {
+        "Typed": "readonly",
+        "Waypoint": "readonly",
+        "Isotope": "readonly",
+        "AOS": "readonly",
+        "GLightbox": "readonly",
+        "Swiper": "readonly",
+        "PureCounter": "readonly"
+      }
+    }
+  ]
+}

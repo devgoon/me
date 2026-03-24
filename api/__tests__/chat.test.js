@@ -70,4 +70,32 @@ describe("chat API", () => {
     expect(context.res.status).toBe(200);
     expect(context.res.body.response).toBe("Cached answer");
   });
+
+  test('includes equivalents in system prompt sent to AI', async () => {
+    client.connect.mockResolvedValue(undefined);
+    // profile, experiences, skills, gaps, values, faq, ai_instructions, education
+    client.query
+      .mockResolvedValueOnce({ rows: [] }) // cache miss
+      .mockResolvedValueOnce({ rows: [{ id: 3, name: 'Lodovico', email: 'vminnocci@gmail.com', title: 'Engineer' }] }) // profile
+      .mockResolvedValueOnce({ rows: [] }) // experiences
+      .mockResolvedValueOnce({ rows: [{ skill_name: 'Node.js', honest_notes: 'APIs', equivalents: ['JavaScript','JS'], category: 'strong' }] }) // skills
+      .mockResolvedValueOnce({ rows: [] }) // gaps
+      .mockResolvedValueOnce({ rows: [] }) // values
+      .mockResolvedValueOnce({ rows: [] }) // faq
+      .mockResolvedValueOnce({ rows: [] }) // ai_instructions
+      .mockResolvedValueOnce({ rows: [] }) // education
+      .mockResolvedValueOnce({}); // insert cache (setCache)
+
+    let capturedBody = null;
+    global.fetch = jest.fn().mockImplementation((url, opts) => {
+      capturedBody = opts && opts.body ? opts.body : null;
+      return Promise.resolve({ ok: true, json: async () => ({ text: 'OK' }) });
+    });
+
+    const context = { res: null };
+    await chatHandler(context, { method: 'POST', body: { message: 'Hello' } });
+    expect(context.res.status).toBe(200);
+    expect(capturedBody).toBeTruthy();
+    expect(capturedBody).toMatch(/JavaScript|JS/);
+  });
 });

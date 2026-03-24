@@ -61,7 +61,7 @@ describe('fit-check API', () => {
     // Prepare DB rows with identifiable content
     client.query.mockResolvedValueOnce({ rows: [{ id: 2, name: 'Lodovico', email: 'vminnocci@gmail.com', title: 'Engineer' }] }) // profile
       .mockResolvedValueOnce({ rows: [] }) // experiences
-      .mockResolvedValueOnce({ rows: [{ skill_name: 'Node.js', honest_notes: 'Experienced building APIs' }] }) // skills
+      .mockResolvedValueOnce({ rows: [{ skill_name: 'Node.js', honest_notes: 'Experienced building APIs', equivalents: ['JavaScript','JS'] }] }) // skills
       .mockResolvedValueOnce({ rows: [{ description: 'iOS native apps', why_its_a_gap: 'Not focused on Swift recently' }] }) // gaps
       .mockResolvedValueOnce({ rows: [] }) // values
       .mockResolvedValueOnce({ rows: [] }) // faq
