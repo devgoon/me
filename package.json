@@ -19,6 +19,7 @@
     "http-server": "latest",
     "linkinator": "latest",
     "node-pg-migrate": "^8.0.4",
+    "jest-environment-jsdom": "^29.6.0",
     "pa11y": "latest",
     "jest": "^29.6.0"
   },

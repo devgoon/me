@@ -14,6 +14,9 @@ link-check:
 	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html
 
 unit-test:
+	@echo "Running top-level tests"
+	npm test
+	@echo "Running API tests"
 	cd api && npm test -- --runInBand
 
 check:
