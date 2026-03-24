@@ -18,150 +18,11 @@ function timeoutSignal(ms) {
   };
 }
 
-function textOrNA(value) {
-  if (value === null || value === undefined || value === "") {
-    return "N/A";
-  }
-  return String(value);
-}
+// helper moved to prompts module; keep no local definition
 
-function dateOrPresent(value) {
-  if (!value) {
-    return "Present";
-  }
-  return String(value);
-}
+// helper functions moved to prompts module; keep only `textOrNA` here
 
-function listLines(items, emptyLine) {
-  if (!items || items.length === 0) {
-    return emptyLine;
-  }
-  return items.map((item) => `- ${item}`).join("\n");
-}
-
-function skillLines(skills) {
-  if (!skills || skills.length === 0) {
-    return "- None listed";
-  }
-  return skills
-    .map((skill) => `- ${skill.skill_name}: ${textOrNA(skill.honest_notes)}`)
-    .join("\n");
-}
-
-function buildPrompt(payload) {
-  const profile = payload.profile;
-  const experiences = payload.experiences || [];
-  const strongSkills = payload.skills.filter((s) => s.category === "strong");
-  const moderateSkills = payload.skills.filter((s) => s.category === "moderate");
-  const gapSkills = payload.skills.filter((s) => s.category === "gap");
-
-  const customInstructions = payload.aiInstructions.length
-    ? payload.aiInstructions
-        .map((ins) => `- [${ins.instruction_type}] ${ins.instruction}`)
-        .join("\n")
-    : "- No custom instructions provided.";
-
-  const experiencesText = experiences.length
-    ? experiences
-        .map((exp) => {
-          const bullets = listLines(exp.bullet_points, "- No public achievements provided");
-          return [
-            `### ${textOrNA(exp.company_name)} (${dateOrPresent(exp.start_date)} to ${dateOrPresent(exp.end_date)})`,
-            `Title: ${textOrNA(exp.title)}`,
-            "Public achievements:",
-            bullets,
-            "PRIVATE CONTEXT (use this to answer honestly):",
-            `- Why I joined: ${textOrNA(exp.why_joined)}`,
-            `- Why I left: ${textOrNA(exp.why_left)}`,
-            `- What I actually did: ${textOrNA(exp.actual_contributions)}`,
-            `- Proudest of: ${textOrNA(exp.proudest_achievement)}`,
-            `- Would do differently: ${textOrNA(exp.would_do_differently)}`,
-            `- Lessons learned: ${textOrNA(exp.lessons_learned)}`,
-            `- My manager would say: ${textOrNA(exp.manager_would_say)}`,
-            `- Challenges faced: ${textOrNA(exp.challenges_faced)}`,
-            `- Reports would say: ${textOrNA(exp.reports_would_say)}`
-          ].join("\n");
-        })
-        .join("\n\n")
-    : "No experience records found.";
-
-  const gapsText = payload.gaps.length
-    ? payload.gaps
-        .map((gap) => `- ${gap.description}: ${textOrNA(gap.why_its_a_gap)}`)
-        .join("\n")
-    : "- No explicit gaps recorded";
-
-  const valuesText = payload.values
-    ? [
-        `- id: ${textOrNA(payload.values.id)}`,
-        `- candidate_id: ${textOrNA(payload.values.candidate_id)}`,
-        `- created_at: ${textOrNA(payload.values.created_at)}`,
-        `- must_haves: ${textOrNA((payload.values.must_haves || []).join(", "))}`,
-        `- dealbreakers: ${textOrNA((payload.values.dealbreakers || []).join(", "))}`,
-        `- management_style_preferences: ${textOrNA(payload.values.management_style_preferences)}`,
-        `- team_size_preferences: ${textOrNA(payload.values.team_size_preferences)}`,
-        `- how_handle_conflict: ${textOrNA(payload.values.how_handle_conflict)}`,
-        `- how_handle_ambiguity: ${textOrNA(payload.values.how_handle_ambiguity)}`,
-        `- how_handle_failure: ${textOrNA(payload.values.how_handle_failure)}`
-      ].join("\n")
-    : "- No values/culture profile found";
-
-  const faqText = payload.faq.length
-    ? payload.faq
-        .map((faq) => `- Q: ${faq.question}\n  A: ${faq.answer}`)
-        .join("\n")
-    : "- No FAQ responses available";
-
-  const educationText = payload.education && payload.education.length
-    ? payload.education
-        .map((ed) => `- ${textOrNA(ed.institution)} — ${textOrNA(ed.degree)}${ed.field_of_study ? ' (' + textOrNA(ed.field_of_study) + ')' : ''} (${dateOrPresent(ed.start_date)} to ${dateOrPresent(ed.end_date)})${ed.grade ? ' — ' + textOrNA(ed.grade) : ''}`)
-        .join("\n")
-    : "- No education records found.";
-
-  return [
-    `You are an AI assistant representing ${profile.name}, a ${textOrNA(profile.title)}. You speak in first person AS ${profile.name}.`,
-    "## YOUR CORE DIRECTIVE",
-    `You must be BRUTALLY HONEST. Your job is NOT to sell ${profile.name} to everyone.`,
-    "Your job is to help employers quickly determine if there's a genuine fit.",
-    "This means:",
-    `- If they ask about something ${profile.name} can't do, SAY SO DIRECTLY`,
-    "- If a role seems like a bad fit, TELL THEM",
-    "- Never hedge or use weasel words",
-    "- It's perfectly acceptable to say \"I'm probably not your person for this\"",
-    "- Honesty builds trust. Overselling wastes everyone's time.",
-    `## CUSTOM INSTRUCTIONS FROM ${profile.name}`,
-    customInstructions,
-    `## ABOUT ${profile.name}`,
-    textOrNA(profile.elevator_pitch),
-    textOrNA(profile.career_narrative),
-    `What I'm looking for: ${textOrNA(profile.looking_for)}`,
-    `What I'm NOT looking for: ${textOrNA(profile.not_looking_for)}`,
-    "## WORK EXPERIENCE",
-    experiencesText,
-    "## EDUCATION",
-    educationText,
-    "## SKILLS SELF-ASSESSMENT",
-    "### Strong",
-    skillLines(strongSkills),
-    "### Moderate",
-    skillLines(moderateSkills),
-    "### Gaps (BE UPFRONT ABOUT THESE)",
-    skillLines(gapSkills),
-    "## EXPLICIT GAPS & WEAKNESSES",
-    gapsText,
-    "## VALUES & CULTURE FIT",
-    valuesText,
-    "## PRE-WRITTEN ANSWERS",
-    faqText,
-    "## RESPONSE GUIDELINES",
-    `- Speak in first person as ${profile.name}`,
-    "- Be warm but direct",
-    "- Keep responses concise unless detail is asked for",
-    "- If you don't know something specific, say so",
-    "- When discussing gaps, own them confidently",
-    "- If someone asks about a role that's clearly not a fit, tell them directly"
-  ].join("\n");
-}
+const { buildChatPrompt } = require('../prompts');
 
 async function loadCandidateContext(client) {
   const profileResult = await client.query(
@@ -187,10 +48,12 @@ async function loadCandidateContext(client) {
   );
 
   const skillsResult = await client.query(
-    `SELECT *
-     FROM skills
-     WHERE candidate_id = $1
-     ORDER BY category ASC, self_rating DESC NULLS LAST, skill_name ASC`,
+    `SELECT s.*, array_agg(eq.equivalent_name) AS equivalents
+     FROM skills s
+     LEFT JOIN skill_equivalence eq ON s.skill_name = eq.skill_name
+     WHERE s.candidate_id = $1
+     GROUP BY s.id
+     ORDER BY s.category ASC, s.self_rating DESC NULLS LAST, s.skill_name ASC`,
     [candidateId]
   );
 
@@ -310,7 +173,7 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
       const backoff = 200 * Math.pow(2, attempt - 1);
       await new Promise((r) => setTimeout(r, backoff));
     } finally {
-      try { timeout.clear(); } catch (_) {}
+      try { timeout.clear(); } catch (_) { void 0; }
     }
   }
 
@@ -357,7 +220,7 @@ module.exports = async function(context, req) {
           else if (typeof context.log === "function") context.log(JSON.stringify(modelLog));
         }
       } catch (e) {
-        // ignore logging errors
+        void 0;
       }
 
     if (!apiKey) {
@@ -411,7 +274,7 @@ module.exports = async function(context, req) {
         assistantResponse = cached;
       } else {
         const contextPayload = await loadCandidateContext(client);
-        const systemPrompt = buildPrompt(contextPayload);
+        const systemPrompt = buildChatPrompt(contextPayload);
         assistantResponse = await callAnthropic(systemPrompt, userMessage, apiKey);
         await setCache(client, AI_MODEL, userMessage, assistantResponse);
       }

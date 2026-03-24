@@ -109,25 +109,9 @@ async function callAnthropicForContexts(profile, experiences, apiKey) {
     challenges_faced: exp.challenges_faced
   }));
 
-  const systemPrompt = [
-    `You generate concise role context for ${profile.name}.`,
-    "Use first-person voice as the candidate.",
-    "Ground everything in the provided data only.",
-    "Return strict JSON only."
-  ].join("\n");
-
-  const userPrompt = [
-    "Generate role context for each experience with fields:",
-    "- id (number)",
-    "- situation (1 sentence)",
-    "- approach (1 sentence)",
-    "- technicalWork (1 sentence)",
-    "- lessonsLearned (1 sentence)",
-    "Response format:",
-    "{\"experiences\":[{...}]}",
-    "Data:",
-    JSON.stringify(compactExperiences)
-  ].join("\n");
+  const { buildExperienceSystemPrompt, buildExperienceUserPrompt } = require('../prompts');
+  const systemPrompt = buildExperienceSystemPrompt(profile);
+  const userPrompt = buildExperienceUserPrompt(compactExperiences);
 
   const timeout = timeoutSignal(AI_TIMEOUT_MS);
   let response;
@@ -193,10 +177,12 @@ async function loadCandidateData(client) {
   );
 
   const skillsResult = await client.query(
-    `SELECT skill_name, category
-     FROM skills
-     WHERE candidate_id = $1
-     ORDER BY category ASC, self_rating DESC NULLS LAST, skill_name ASC`,
+    `SELECT s.*, array_agg(eq.equivalent_name) AS equivalents
+     FROM skills s
+     LEFT JOIN skill_equivalence eq ON s.skill_name = eq.skill_name
+     WHERE s.candidate_id = $1
+     GROUP BY s.id
+     ORDER BY s.category ASC, s.self_rating DESC NULLS LAST, s.skill_name ASC`,
     [candidateId]
   );
 

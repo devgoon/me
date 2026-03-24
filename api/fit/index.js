@@ -38,103 +38,17 @@ module.exports = async function(context, req) {
       const MAX_TOKENS = 1024;
       const AI_TIMEOUT_MS = 20000;
 
-      function timeoutSignal(ms) {
+      const timeoutSignal = (ms) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), ms);
         return { signal: controller.signal, clear: () => clearTimeout(timeout) };
-      }
+      };
 
-      function textOrNA(value) { if (value === null || value === undefined || value === '') return 'N/A'; return String(value); }
-      function dateOrPresent(value) { if (!value) return 'Present'; return String(value); }
-      function listLines(items, emptyLine) { if (!items || items.length === 0) return emptyLine; return items.map((item) => `- ${item}`).join('\n'); }
-      function skillLines(skills) {
-        if (!skills || skills.length === 0) return '- None listed';
-        return skills.map((skill) => {
-          const lastUsed = skill.last_used ? String(skill.last_used) : 'current';
-          const yearsExp = (skill.years_experience !== undefined && skill.years_experience !== null) ? `${skill.years_experience} yrs` : 'n/a';
-          return `- ${skill.skill_name} (last used: ${lastUsed}, years: ${yearsExp}): ${textOrNA(skill.honest_notes)}`;
-        }).join('\n');
-      }
+      // prompt helpers moved to `api/prompts.js`; no local copies needed here
 
-      function buildPrompt(payload) {
-        const profile = payload.profile;
-        const experiences = payload.experiences || [];
-        const strongSkills = payload.skills.filter((s) => s.category === 'strong');
-        const moderateSkills = payload.skills.filter((s) => s.category === 'moderate');
-        const gapSkills = payload.skills.filter((s) => s.category === 'gap');
+      const { buildFitPrompt } = require('../prompts');
 
-        const customInstructions = payload.aiInstructions.length
-          ? payload.aiInstructions.map((ins) => `- [${ins.instruction_type}] ${ins.instruction}`).join('\n')
-          : '- No custom instructions provided.';
-
-        const experiencesText = experiences.length
-          ? experiences.map((exp) => {
-              const bullets = listLines(exp.bullet_points, '- No public achievements provided');
-              return [
-                `### ${textOrNA(exp.company_name)} (${dateOrPresent(exp.start_date)} to ${dateOrPresent(exp.end_date)})`,
-                `Title: ${textOrNA(exp.title)}`,
-                'Public achievements:',
-                bullets,
-                'PRIVATE CONTEXT (use this to answer honestly):',
-                `- Why I joined: ${textOrNA(exp.why_joined)}`,
-                `- Why I left: ${textOrNA(exp.why_left)}`,
-                `- What I actually did: ${textOrNA(exp.actual_contributions)}`,
-                `- Proudest of: ${textOrNA(exp.proudest_achievement)}`
-              ].join('\n');
-            }).join('\n\n')
-          : 'No experience records found.';
-
-        const gapsText = payload.gaps.length
-          ? payload.gaps.map((gap) => {
-              const interested = gap.interest_in_learning ? ' (interested in learning)' : '';
-              return `- ${gap.description}${interested}: ${textOrNA(gap.why_its_a_gap)}`;
-            }).join('\n')
-          : '- No explicit gaps recorded';
-
-        const valuesText = payload.values
-          ? [
-              `- must_haves: ${textOrNA((payload.values.must_haves || []).join(', '))}`,
-              `- dealbreakers: ${textOrNA((payload.values.dealbreakers || []).join(', '))}`,
-              `- management_style_preferences: ${textOrNA(payload.values.management_style_preferences)}`
-            ].join('\n')
-          : '- No values/culture profile found';
-
-        const faqText = payload.faq.length
-          ? payload.faq.map((faq) => `- Q: ${faq.question}\n  A: ${faq.answer}`).join('\n')
-          : '- No FAQ responses available';
-
-        const educationText = payload.education && payload.education.length
-          ? payload.education.map((ed) => `- ${textOrNA(ed.institution)} — ${textOrNA(ed.degree)}${ed.field_of_study ? ' (' + textOrNA(ed.field_of_study) + ')' : ''} (${dateOrPresent(ed.start_date)} to ${dateOrPresent(ed.end_date)})${ed.grade ? ' — ' + textOrNA(ed.grade) : ''}`).join('\n')
-          : '- No education records found.';
-
-        return [
-          `Candidate: ${profile.name} (${textOrNA(profile.email)})`,
-          `Title: ${textOrNA(profile.title)}`,
-          '## SUMMARY',
-          textOrNA(profile.elevator_pitch),
-          '## EXPERIENCE',
-          experiencesText,
-          '## EDUCATION',
-          educationText,
-          '## SKILLS',
-          '### Strong',
-          skillLines(strongSkills),
-          '### Moderate',
-          skillLines(moderateSkills),
-          '### Gaps',
-          skillLines(gapSkills),
-          '## EXPLICIT GAPS',
-          gapsText,
-          '## VALUES',
-          valuesText,
-          '## FAQ',
-          faqText,
-          '## CUSTOM_INSTRUCTIONS',
-          customInstructions
-        ].join('\n');
-      }
-
-      async function loadCandidateContext(client) {
+      const loadCandidateContext = async (client) => {
         const profileResult = await client.query(`SELECT * FROM candidate_profile ORDER BY updated_at DESC, created_at DESC LIMIT 1`);
         if (profileResult.rows.length === 0) throw new Error('No candidate profile found');
         const profile = profileResult.rows[0];
@@ -168,7 +82,7 @@ module.exports = async function(context, req) {
         };
       }
 
-      async function callAnthropic(systemPrompt, userMessage, apiKey) {
+      const callAnthropic = async (systemPrompt, userMessage, apiKey) => {
         const maxAttempts = 3;
         let attempt = 0;
         let lastErr = null;
@@ -206,7 +120,7 @@ module.exports = async function(context, req) {
             const backoff = 200 * Math.pow(2, attempt - 1);
             await new Promise((r) => setTimeout(r, backoff));
           } finally {
-            try { timeout.clear(); } catch (_) {}
+            try { timeout.clear(); } catch (_) { void 0; }
           }
         }
 
@@ -226,7 +140,7 @@ module.exports = async function(context, req) {
       await client.connect();
       try {
         const ctx = await loadCandidateContext(client);
-        const systemPrompt = buildPrompt(ctx) + `\n\nJOB DESCRIPTION:\n${jobDescription}`;
+        const systemPrompt = buildFitPrompt(ctx) + `\n\nJOB DESCRIPTION:\n${jobDescription}`;
 
         const instruction = `You are an assistant that MUST return a JSON object ONLY. The JSON MUST have these keys: score (integer 0-100), verdict (one of "FIT", "MARGINAL", "NO_FIT"), reasons (array of short strings), mismatches (array of short strings), suggestedMessage (a concise one-paragraph message the candidate could send to a recruiter). Analyze the candidate context and the job description above. Return only valid JSON with those keys.`;
 

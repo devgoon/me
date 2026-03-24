@@ -25,18 +25,7 @@
     return el;
   }
 
-  function buildFollowUpAnswer(question, verdict) {
-    const q = String(question || "").toLowerCase();
-    if (q.includes("salary") || q.includes("compensation"))
-      return "Discuss compensation after scope and impact are clear.";
-    if (q.includes("remote") || q.includes("onsite"))
-      return "Work model matters less than clear collaboration expectations.";
-    if (q.includes("risk") || q.includes("gap"))
-      return verdict === "Strong Fit"
-        ? "Main risk is ramp time; mitigate with a scoped 30-60 day plan."
-        : "Mismatch in core stack is highest risk; validate transferable experience.";
-    return "Use this assessment as a filter; ask what success looks like in 90 days.";
-  }
+  // follow-up helper removed (unused in UI)
 
 
   function renderResult(container, res) {
@@ -111,7 +100,7 @@
     root.appendChild(panel);
     root.appendChild(output);
 
-    let lastAnalysis = null;
+    // last analysis intentionally not retained in UI
     const status = qs("#fit-status");
     status.textContent = '';
 
@@ -143,7 +132,7 @@
           gaps: ai.mismatches || [],
           transfers: ai.reasons || []
         };
-        lastAnalysis = analysis;
+        // store suppressed: _lastAnalysis = analysis; (intentionally unused)
       } catch (err) {
         console.error(err);
         analysis = {

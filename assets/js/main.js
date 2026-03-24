@@ -163,7 +163,7 @@
     /**
      * Mobile nav toggle
      */
-    on('click', '.mobile-nav-toggle', function (e) {
+    on('click', '.mobile-nav-toggle', function (_e) {
         select('body').classList.toggle('mobile-nav-active');
         this.classList.toggle('bi-list');
         this.classList.toggle('bi-x');
@@ -226,7 +226,7 @@
         new Waypoint({
             element: skillsContent,
             offset: '80%',
-            handler: function (direction) {
+            handler: function (_direction) {
                 let progress = select('.progress .progress-bar', true);
                 progress.forEach((el) => {
                     el.style.width = el.getAttribute('aria-valuenow') + '%';
@@ -262,17 +262,11 @@
     /**
      * Initiate portfolio lightbox
      */
-    const portfolioLightbox = GLightbox({
-        selector: '.portfolio-lightbox'
-    });
+    GLightbox({ selector: '.portfolio-lightbox' });
     /**
      * Initiate portfolio details lightbox
      */
-    const portfolioDetailsLightbox = GLightbox({
-        selector: '.portfolio-details-lightbox',
-        width: '90%',
-        height: '90vh'
-    });
+    GLightbox({ selector: '.portfolio-details-lightbox', width: '90%', height: '90vh' });
     /**
      * Portfolio details slider
      */

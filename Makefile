@@ -4,6 +4,9 @@ install:
 	npm install
 	cd api && npm install
 
+lint:
+	@npx eslint@8 "api/**/*.js" "assets/js/**/*.js" --ext .js --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
+
 spellcheck:spellcheck-pdf
 	npx cspell "**/*.{html,css,js,ts}" "assets/*.txt" "api/**/*.js" --verbose
 
@@ -20,11 +23,13 @@ unit-test:
 	cd api && npm test -- --runInBand
 
 check:
-	@echo "==> [1/3] Running spellcheck"
+	@echo "==> [1/4] Running spellcheck"
 	@$(MAKE) spellcheck
-	@echo "==> [2/3] Running API unit tests"
+	@echo "==> [2/4] Running lint"
+	@$(MAKE) lint
+	@echo "==> [3/4] Running unit tests"
 	@$(MAKE) unit-test
-	@echo "==> [3/3] Running link check"
+	@echo "==> [4/4] Running link check"
 	@$(MAKE) link-check
 	@echo "==> Quality checks complete"
 

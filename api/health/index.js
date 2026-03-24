@@ -77,7 +77,7 @@ module.exports = async function(context, req) {
           try {
             data = await res.json();
           } catch (e) {
-            // non-json response
+            void 0;
           }
 
           // If an AI model is specified, confirm it exists in the Anthropic models list
@@ -101,12 +101,12 @@ module.exports = async function(context, req) {
           } else {
             baseBody.checks.anthropic = "ok";
           }
-        } else {
+          } else {
           baseBody.checks.anthropic = `error:${res.status}`;
           baseBody.ok = false;
           try {
             baseBody.anthropicBody = await res.text();
-          } catch (_) {}
+          } catch (_) { void 0; }
         }
     } catch (error) {
       baseBody.checks.anthropic = "error";
