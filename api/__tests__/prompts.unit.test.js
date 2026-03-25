@@ -78,4 +78,44 @@ describe('prompt builders - unit tests', () => {
     // But the profile name should still be present
     expect(out).toMatch(/Candidate: Long/);
   });
+
+  test('buildFitPrompt includes certifications when provided', () => {
+    const payload = {
+      profile: { name: 'CertUser', email: 'c@x', title: 'Engineer', elevator_pitch: '' },
+      experiences: [],
+      skills: [],
+      aiInstructions: [],
+      gaps: [],
+      values: null,
+      faq: [],
+      education: [],
+      certifications: [
+        { name: 'Certified Kubernetes Administrator', issuer: 'CNCF', issue_date: '2020-05-01' }
+      ]
+    };
+    const out = buildFitPrompt(payload);
+    expect(out).toMatch(/## CERTIFICATIONS/);
+    expect(out).toMatch(/Certified Kubernetes Administrator/);
+    expect(out).toMatch(/CNCF/);
+  });
+
+  test('buildChatPrompt includes certifications when provided', () => {
+    const payload = {
+      profile: { name: 'ChatCert', email: 'cc@x', title: 'Dev', elevator_pitch: '' },
+      experiences: [],
+      skills: [],
+      aiInstructions: [],
+      gaps: [],
+      values: null,
+      faq: [],
+      education: [],
+      certifications: [
+        { name: 'AWS Certified Solutions Architect', issuer: 'AWS', issue_date: '2021-01-15' }
+      ]
+    };
+    const out = buildChatPrompt(payload);
+    expect(out).toMatch(/## CERTIFICATIONS/);
+    expect(out).toMatch(/AWS Certified Solutions Architect/);
+    expect(out).toMatch(/AWS/);
+  });
 });

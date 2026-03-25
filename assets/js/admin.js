@@ -42,6 +42,7 @@
         skills: [],
         gaps: [],
         education: [],
+            certifications: [],
         valuesCulture: {
             mustHaves: "",
             dealbreakers: "",
@@ -160,6 +161,8 @@
             state.experiences = payload.experiences;
             if (Array.isArray(payload.education))
                 state.education = payload.education;
+            if (Array.isArray(payload.certifications))
+                state.certifications = payload.certifications;
         if (Array.isArray(payload.skills))
             state.skills = payload.skills;
         if (Array.isArray(payload.gaps))
@@ -481,6 +484,57 @@
             });
         });
     }
+    function defaultCertification() {
+        return {
+            name: "",
+            issuer: "",
+            issueDate: "",
+            expirationDate: "",
+            credentialId: "",
+            verificationUrl: "",
+            notes: "",
+            displayOrder: state.certifications.length
+        };
+    }
+    function renderCertifications() {
+        const list = document.getElementById("certifications-list");
+        if (!list) return;
+        list.innerHTML = state.certifications.map((item, index) => {
+            const currentChecked = "";
+            return "<article class=\"item-card\">"
+                + "<header><h3>Certification " + (index + 1) + "</h3><button class=\"mini-btn danger\" data-remove-cert=\"" + index + "\" type=\"button\">Remove</button></header>"
+                + "<div class=\"form-grid two-col\">"
+                + "<label>Name<input data-cert=\"" + index + "\" data-field=\"name\" type=\"text\" value=\"" + escapeAttr(item.name || "") + "\"></label>"
+                + "<label>Issuer<input data-cert=\"" + index + "\" data-field=\"issuer\" type=\"text\" value=\"" + escapeAttr(item.issuer || "") + "\"></label>"
+                + "<label>Display order<input data-cert=\"" + index + "\" data-field=\"displayOrder\" type=\"number\" value=\"" + escapeAttr(String(item.displayOrder || index)) + "\"></label>"
+                + "</div>"
+                + "<div class=\"form-grid two-col\">"
+                + "<label>Issue date<input data-cert=\"" + index + "\" data-field=\"issueDate\" type=\"date\" value=\"" + escapeAttr(item.issueDate || "") + "\"></label>"
+                + "<label>Expiration date<input data-cert=\"" + index + "\" data-field=\"expirationDate\" type=\"date\" value=\"" + escapeAttr(item.expirationDate || "") + "\"></label>"
+                + "</div>"
+                + "<label>Credential ID<input data-cert=\"" + index + "\" data-field=\"credentialId\" type=\"text\" value=\"" + escapeAttr(item.credentialId || "") + "\"></label>"
+                + "<label>Verification URL<input data-cert=\"" + index + "\" data-field=\"verificationUrl\" type=\"text\" value=\"" + escapeAttr(item.verificationUrl || "") + "\"></label>"
+                + "<label>Notes<textarea data-cert=\"" + index + "\" data-field=\"notes\" rows=\"2\">" + escapeHtml(item.notes || "") + "</textarea></label>"
+                + "</article>";
+        }).join("");
+        list.querySelectorAll("[data-cert]").forEach((input) => {
+            const handler = () => {
+                const i = Number(input.dataset.cert);
+                const field = input.dataset.field;
+                if (!state.certifications[i] || !field) return;
+                state.certifications[i][field] = input.type === "checkbox" ? Boolean(input.checked) : input.value;
+            };
+            input.addEventListener("input", handler);
+            input.addEventListener("change", handler);
+        });
+        list.querySelectorAll("[data-remove-cert]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const i = Number(button.dataset.removeCert);
+                state.certifications.splice(i, 1);
+                renderCertifications();
+            });
+        });
+    }
     function renderSkills() {
         const list = document.getElementById("skills-list");
         if (!list)
@@ -768,6 +822,13 @@
                 renderEducation();
             });
         }
+        const addCert = document.getElementById("add-certification");
+        if (addCert) {
+            addCert.addEventListener("click", () => {
+                state.certifications.push(defaultCertification());
+                renderCertifications();
+            });
+        }
         const addGap = document.getElementById("add-gap");
         if (addGap) {
             addGap.addEventListener("click", () => {
@@ -805,6 +866,7 @@
         payload.faq = (payload.faq || []).filter((item) => {
             return String(item.question || "").trim() || String(item.answer || "").trim();
         });
+        payload.certifications = (payload.certifications || []).filter((c) => String(c.name || "").trim());
         payload.aiInstructions.rules = (payload.aiInstructions.rules || []).filter((item) => {
             return String(item.instruction || "").trim();
         });
@@ -864,6 +926,7 @@
         renderCompanyStages();
         renderExperiences();
         renderEducation();
+        renderCertifications();
         renderSkills();
         renderGaps();
         renderFaq();
