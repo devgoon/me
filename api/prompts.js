@@ -87,7 +87,7 @@ function buildFitPrompt(payload) {
     ? payload.education.map((ed) => `- ${textOrNA(ed.institution)} — ${textOrNA(ed.degree)}${ed.field_of_study ? ' (' + textOrNA(ed.field_of_study) + ')' : ''} (${dateOrPresent(ed.start_date)} to ${dateOrPresent(ed.end_date)})${ed.grade ? ' — ' + textOrNA(ed.grade) : ''}`).join('\n')
     : '- No education records found.';
 
-    const certificationsText = payload.certifications && payload.certifications.length
+  const certificationsText = payload.certifications && payload.certifications.length
       ? payload.certifications.map((c) => `- ${textOrNA(c.name)} — ${textOrNA(c.issuer)}${c.credential_id ? ' (id: ' + textOrNA(c.credential_id) + ')' : ''}${c.issue_date ? ' — ' + dateOrPresent(c.issue_date) : ''}${c.expiration_date ? ' to ' + dateOrPresent(c.expiration_date) : ''}${c.verification_url ? ' — ' + textOrNA(c.verification_url) : ''}`).join('\n')
       : '- No certifications listed.';
 
@@ -101,6 +101,8 @@ function buildFitPrompt(payload) {
     experiencesText,
     '## EDUCATION',
     educationText,
+    '## CERTIFICATIONS',
+    certificationsText,
     '## SKILLS',
     '### Strong',
     fitSkillLines(strongSkills),
@@ -118,8 +120,6 @@ function buildFitPrompt(payload) {
     customInstructions
   ];
 
-  // Insert certifications section if present
-  parts.splice(parts.indexOf('## EDUCATION') + 2, 0, '## CERTIFICATIONS', certificationsText);
 
   const MAX_PROMPT_CHARS = 8000;
   let promptStr = parts.join('\n');
@@ -137,6 +137,8 @@ function buildFitPrompt(payload) {
       experiencesText,
       '## EDUCATION',
       educationText,
+      '## CERTIFICATIONS',
+      certificationsText,
       '## SKILLS',
       '### Strong',
       fitSkillLines(noEqStrong),
@@ -298,6 +300,8 @@ function buildChatPrompt(payload) {
       experiencesText,
       '## EDUCATION',
       educationText,
+      '## CERTIFICATIONS',
+      certificationsText,
       '## SKILLS SELF-ASSESSMENT',
       '### Strong',
       chatSkillLines(noEqStrong),
