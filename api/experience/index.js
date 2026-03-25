@@ -277,11 +277,13 @@ module.exports = async function(context) {
           // cache miss: call Anthropic and insert result
           aiContexts = await callAnthropicForContexts(payload.profile, payload.experiences, apiKey);
           try {
+            // Use the cache key data as the stored "question" so the cache rows
+            // have meaningful identifying text instead of an empty string.
             await client.query(
               `INSERT INTO ai_response_cache (question, model, hash, response, cache_hit_count, last_accessed, updated_at, is_cached)
                VALUES ($1, $2, $3, $4, 1, NOW(), NOW(), TRUE)
                ON CONFLICT (hash) DO UPDATE SET response = EXCLUDED.response, updated_at = NOW(), is_cached = TRUE`,
-              ['', AI_MODEL, cacheHash, JSON.stringify(aiContexts || {})]
+              [cacheKeyData, AI_MODEL, cacheHash, JSON.stringify(aiContexts || {})]
             );
           } catch (err) {
             // ignore cache write errors

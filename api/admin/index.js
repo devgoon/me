@@ -155,7 +155,7 @@ async function loadAll(client, candidateId) {
     `SELECT *
      FROM experiences
      WHERE candidate_id = $1
-     ORDER BY display_order ASC, start_date DESC NULLS LAST`,
+     ORDER BY start_date DESC NULLS LAST`,
     [candidateId]
   );
 
@@ -389,7 +389,8 @@ async function saveAll(client, candidateId, payload, authEmail) {
     );
 
     await client.query("DELETE FROM experiences WHERE candidate_id = $1", [candidateId]);
-    const validExperiences = experiences.filter((item) => asText(item.companyName) && asText(item.title));
+    // Only require companyName (company_name is NOT NULL in the DB). Titles may be empty.
+    const validExperiences = experiences.filter((item) => asText(item.companyName));
     console.log(`[admin.saveAll] candidateId=${candidateId} - saving ${validExperiences.length} experiences`);
     for (const [index, item] of validExperiences.entries()) {
       let impactJson = null;
