@@ -17,6 +17,7 @@ function setElementValue(el, value) {
 
 function getPathForElement(el) {
   if (el.dataset.exp !== undefined) return ['experiences', Number(el.dataset.exp), el.dataset.field];
+  if (el.dataset.cert !== undefined) return ['certifications', Number(el.dataset.cert), el.dataset.field];
   if (el.dataset.skill !== undefined) return ['skills', Number(el.dataset.skill), el.dataset.field];
   if (el.dataset.edu !== undefined) return ['education', Number(el.dataset.edu), el.dataset.field];
   if (el.dataset.gap !== undefined) return ['gaps', Number(el.dataset.gap), el.dataset.field];
@@ -53,6 +54,7 @@ test('admin panel round-trips every input field into POST payload', async () => 
   const sample = {
     profile: { fullName: 'L', email: 'dev@lodovi.co', currentTitle: 'SWE' },
     experiences: [{ companyName: 'Acme', title: 'Eng', startDate: '2020-01-01', current: false }],
+    certifications: [{ name: 'Cert', issuer: 'Issuer', issueDate: '2021-01-01' }],
     skills: [{ skillName: 'Node', category: 'moderate', selfRating: 3, yearsExperience: '2', lastUsed: '2023-01-01' }],
     education: [{ institution: 'Uni', degree: 'BS' }],
     gaps: [{ description: 'Rust', interestedInLearning: false }],
@@ -68,7 +70,7 @@ test('admin panel round-trips every input field into POST payload', async () => 
 
   // collect all editable elements
   const edits = [];
-  const selector = '[data-exp],[data-skill],[data-edu],[data-gap],[data-faq],[data-rule],#ai-honestyLevel,[id^="profile-"],[id^="values-"]';
+  const selector = '[data-exp],[data-cert],[data-skill],[data-edu],[data-gap],[data-faq],[data-rule],#ai-honestyLevel,[id^="profile-"],[id^="values-"]';
   const nodes = Array.from(document.querySelectorAll(selector));
 
   // assign deterministic updated values and record expected payload entries

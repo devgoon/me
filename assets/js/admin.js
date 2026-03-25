@@ -500,7 +500,6 @@
         const list = document.getElementById("certifications-list");
         if (!list) return;
         list.innerHTML = state.certifications.map((item, index) => {
-            const currentChecked = "";
             return "<article class=\"item-card\">"
                 + "<header><h3>Certification " + (index + 1) + "</h3><button class=\"mini-btn danger\" data-remove-cert=\"" + index + "\" type=\"button\">Remove</button></header>"
                 + "<div class=\"form-grid two-col\">"
