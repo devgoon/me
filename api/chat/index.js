@@ -98,12 +98,27 @@ async function loadCandidateContext(client) {
     [candidateId]
   );
 
+  // Attempt to load certifications if the table exists
+  let certificationsResult = { rows: [] };
+  try {
+    certificationsResult = await client.query(
+      `SELECT id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
+       FROM certifications
+       WHERE candidate_id = $1
+       ORDER BY display_order ASC, issue_date DESC NULLS LAST`,
+      [candidateId]
+    );
+  } catch (err) {
+    certificationsResult = { rows: [] };
+  }
+
   return {
     profile,
     experiences: experiencesResult.rows,
     skills: skillsResult.rows,
     gaps: gapsResult.rows,
     education: educationResult.rows,
+    certifications: certificationsResult.rows,
     values: valuesResult.rows[0] || null,
     faq: faqResult.rows,
     aiInstructions: aiInstructionsResult.rows

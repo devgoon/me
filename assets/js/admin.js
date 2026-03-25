@@ -1,6 +1,6 @@
 // @ts-nocheck
 (function () {
-    const DRAFT_KEY = "admin_panel_draft_v1";
+    // Draft autosave removed to avoid state overwrite issues
     const LOGOUT_URL = "/.auth/logout?post_logout_redirect_uri=/auth";
     const COMPANY_STAGES = [
         "Seed",
@@ -42,6 +42,7 @@
         skills: [],
         gaps: [],
         education: [],
+            certifications: [],
         valuesCulture: {
             mustHaves: "",
             dealbreakers: "",
@@ -160,6 +161,8 @@
             state.experiences = payload.experiences;
             if (Array.isArray(payload.education))
                 state.education = payload.education;
+            if (Array.isArray(payload.certifications))
+                state.certifications = payload.certifications;
         if (Array.isArray(payload.skills))
             state.skills = payload.skills;
         if (Array.isArray(payload.gaps))
@@ -481,6 +484,56 @@
             });
         });
     }
+    function defaultCertification() {
+        return {
+            name: "",
+            issuer: "",
+            issueDate: "",
+            expirationDate: "",
+            credentialId: "",
+            verificationUrl: "",
+            notes: "",
+            displayOrder: state.certifications.length
+        };
+    }
+    function renderCertifications() {
+        const list = document.getElementById("certifications-list");
+        if (!list) return;
+        list.innerHTML = state.certifications.map((item, index) => {
+            return "<article class=\"item-card\">"
+                + "<header><h3>Certification " + (index + 1) + "</h3><button class=\"mini-btn danger\" data-remove-cert=\"" + index + "\" type=\"button\">Remove</button></header>"
+                + "<div class=\"form-grid two-col\">"
+                + "<label>Name<input data-cert=\"" + index + "\" data-field=\"name\" type=\"text\" value=\"" + escapeAttr(item.name || "") + "\"></label>"
+                + "<label>Issuer<input data-cert=\"" + index + "\" data-field=\"issuer\" type=\"text\" value=\"" + escapeAttr(item.issuer || "") + "\"></label>"
+                + "<label>Display order<input data-cert=\"" + index + "\" data-field=\"displayOrder\" type=\"number\" value=\"" + escapeAttr(String(item.displayOrder || index)) + "\"></label>"
+                + "</div>"
+                + "<div class=\"form-grid two-col\">"
+                + "<label>Issue date<input data-cert=\"" + index + "\" data-field=\"issueDate\" type=\"date\" value=\"" + escapeAttr(item.issueDate || "") + "\"></label>"
+                + "<label>Expiration date<input data-cert=\"" + index + "\" data-field=\"expirationDate\" type=\"date\" value=\"" + escapeAttr(item.expirationDate || "") + "\"></label>"
+                + "</div>"
+                + "<label>Credential ID<input data-cert=\"" + index + "\" data-field=\"credentialId\" type=\"text\" value=\"" + escapeAttr(item.credentialId || "") + "\"></label>"
+                + "<label>Verification URL<input data-cert=\"" + index + "\" data-field=\"verificationUrl\" type=\"text\" value=\"" + escapeAttr(item.verificationUrl || "") + "\"></label>"
+                + "<label>Notes<textarea data-cert=\"" + index + "\" data-field=\"notes\" rows=\"2\">" + escapeHtml(item.notes || "") + "</textarea></label>"
+                + "</article>";
+        }).join("");
+        list.querySelectorAll("[data-cert]").forEach((input) => {
+            const handler = () => {
+                const i = Number(input.dataset.cert);
+                const field = input.dataset.field;
+                if (!state.certifications[i] || !field) return;
+                state.certifications[i][field] = input.type === "checkbox" ? Boolean(input.checked) : input.value;
+            };
+            input.addEventListener("input", handler);
+            input.addEventListener("change", handler);
+        });
+        list.querySelectorAll("[data-remove-cert]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const i = Number(button.dataset.removeCert);
+                state.certifications.splice(i, 1);
+                renderCertifications();
+            });
+        });
+    }
     function renderSkills() {
         const list = document.getElementById("skills-list");
         if (!list)
@@ -768,6 +821,13 @@
                 renderEducation();
             });
         }
+        const addCert = document.getElementById("add-certification");
+        if (addCert) {
+            addCert.addEventListener("click", () => {
+                state.certifications.push(defaultCertification());
+                renderCertifications();
+            });
+        }
         const addGap = document.getElementById("add-gap");
         if (addGap) {
             addGap.addEventListener("click", () => {
@@ -793,7 +853,8 @@
     function sanitizeForSave() {
         const payload = JSON.parse(JSON.stringify(state));
         payload.experiences = (payload.experiences || []).filter((item) => {
-            return String(item.companyName || "").trim() && String(item.title || "").trim();
+            // Company name is required by the DB; title may be empty
+            return String(item.companyName || "").trim();
         });
         payload.skills = (payload.skills || []).filter((item) => {
             return String(item.skillName || "").trim();
@@ -804,6 +865,7 @@
         payload.faq = (payload.faq || []).filter((item) => {
             return String(item.question || "").trim() || String(item.answer || "").trim();
         });
+        payload.certifications = (payload.certifications || []).filter((c) => String(c.name || "").trim());
         payload.aiInstructions.rules = (payload.aiInstructions.rules || []).filter((item) => {
             return String(item.instruction || "").trim();
         });
@@ -836,99 +898,10 @@
             method: "POST",
             body: JSON.stringify(payload)
         });
-        localStorage.removeItem(DRAFT_KEY);
         isDirty = false;
         setMessage("All changes saved successfully.", false);
     }
-    function saveDraft() {
-        try {
-            localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
-            setMessage("Draft autosaved locally.", false);
-            window.setTimeout(() => {
-                const el = document.getElementById("admin-message");
-                if (el && el.textContent === "Draft autosaved locally.") {
-                    el.hidden = true;
-                }
-            }, 1500);
-        }
-        catch (error) {
-            // Ignore localStorage quota errors and continue.
-        }
-    }
-    function loadDraftIfAny() {
-        try {
-            const raw = localStorage.getItem(DRAFT_KEY);
-            if (!raw)
-                return;
-            const parsed = JSON.parse(raw);
-            if (!parsed || typeof parsed !== "object")
-                return;
-            // Apply draft conservatively: only merge fields that are meaningfully present
-            const safe = {};
-            if (parsed.profile && Object.keys(parsed.profile).some((k) => parsed.profile[k] !== undefined && parsed.profile[k] !== "")) {
-                safe.profile = parsed.profile;
-            }
-            if (Array.isArray(parsed.experiences) && parsed.experiences.length > 0) {
-                const nonEmptyExp = parsed.experiences.filter((it) => it && (String(it.companyName || it.company || '').trim() || String(it.title || '').trim()));
-                if (nonEmptyExp.length > 0) safe.experiences = nonEmptyExp;
-            }
-            if (Array.isArray(parsed.skills) && parsed.skills.length > 0) {
-                const nonEmptySkills = parsed.skills.filter((it) => it && String(it.skillName || '').trim());
-                if (nonEmptySkills.length > 0) {
-                    if (Array.isArray(state.skills) && state.skills.length > 0) {
-                        // merge draft skills into server-provided skills without overwriting
-                        // canonical server values when draft fields are empty
-                        const merged = state.skills.slice();
-                        nonEmptySkills.forEach((draft) => {
-                            const name = String(draft.skillName || '').trim();
-                            const idx = merged.findIndex((s) => String(s.skillName || '').trim() === name);
-                            if (idx === -1) {
-                                merged.push(draft);
-                            }
-                            else {
-                                const target = merged[idx];
-                                Object.keys(draft).forEach((k) => {
-                                    const v = draft[k];
-                                    if (v !== undefined && v !== "") {
-                                        target[k] = v;
-                                    }
-                                });
-                            }
-                        });
-                        safe.skills = merged;
-                    }
-                    else {
-                        safe.skills = nonEmptySkills;
-                    }
-                }
-            }
-            if (Array.isArray(parsed.gaps) && parsed.gaps.length > 0) {
-                const nonEmptyGaps = parsed.gaps.filter((it) => it && (String(it.description || it.whyItsAGap || '').trim()));
-                if (nonEmptyGaps.length > 0) safe.gaps = nonEmptyGaps;
-            }
-            if (Array.isArray(parsed.education) && parsed.education.length > 0) {
-                const nonEmptyEdu = parsed.education.filter((it) => it && (String(it.institution || it.degree || it.fieldOfStudy || it.field_of_study || '').trim()));
-                if (nonEmptyEdu.length > 0) safe.education = nonEmptyEdu;
-            }
-            if (parsed.valuesCulture && Object.keys(parsed.valuesCulture).some((k) => parsed.valuesCulture[k] !== undefined && parsed.valuesCulture[k] !== "")) {
-                safe.valuesCulture = parsed.valuesCulture;
-            }
-            if (Array.isArray(parsed.faq) && parsed.faq.length > 0) {
-                safe.faq = parsed.faq;
-            }
-            if (parsed.aiInstructions) {
-                safe.aiInstructions = parsed.aiInstructions;
-            }
-            if (Object.keys(safe).length === 0) {
-                return;
-            }
-            mergeState(safe);
-            setMessage("Recovered unsaved draft from this browser.", false);
-        }
-        catch (error) {
-            localStorage.removeItem(DRAFT_KEY);
-        }
-    }
+    // Draft autosave and recovery disabled to avoid overwriting server state
     function escapeHtml(value) {
         return String(value || "")
             .replace(/&/g, "&amp;")
@@ -952,6 +925,7 @@
         renderCompanyStages();
         renderExperiences();
         renderEducation();
+        renderCertifications();
         renderSkills();
         renderGaps();
         renderFaq();
@@ -1008,7 +982,6 @@
                             setMessage(err.message || "Save failed", true);
                             return;
                         }
-                        localStorage.removeItem(DRAFT_KEY);
                         window.location.href = LOGOUT_URL;
                         return;
                     }
@@ -1018,7 +991,6 @@
                         return;
                     }
                 }
-                localStorage.removeItem(DRAFT_KEY);
                 window.location.href = LOGOUT_URL;
             });
         }
@@ -1047,12 +1019,10 @@
         catch (error) {
             setMessage(error.message || "Failed to load server data", true);
         }
-        loadDraftIfAny();
         renderAll();
         // mark initial load complete so subsequent user edits are tracked
         initialLoadComplete = true;
         isDirty = false;
-        window.setInterval(saveDraft, 15000);
     }
     init();
 })();

@@ -90,7 +90,7 @@ function extractJsonObject(text) {
   }
 }
 
-async function callAnthropicForContexts(profile, experiences, apiKey) {
+async function callAnthropicForContexts(profile, experiences, apiKey, certifications) {
   if (!apiKey || experiences.length === 0) {
     return {};
   }
@@ -111,7 +111,8 @@ async function callAnthropicForContexts(profile, experiences, apiKey) {
 
   const { buildExperienceSystemPrompt, buildExperienceUserPrompt } = require('../prompts');
   const systemPrompt = buildExperienceSystemPrompt(profile);
-  const userPrompt = buildExperienceUserPrompt(compactExperiences);
+  // Pass certifications through to the experience user prompt if provided
+  const userPrompt = buildExperienceUserPrompt({ experiences: compactExperiences, certifications: certifications || [] });
 
   const timeout = timeoutSignal(AI_TIMEOUT_MS);
   let response;
@@ -247,7 +248,31 @@ module.exports = async function(context) {
         challenges_faced: exp.challenges_faced
       }));
 
-      const cacheKeyData = JSON.stringify({ model: AI_MODEL, profileId: payload.profile.id, experiences: compactExperiences });
+      // Optionally load certifications if the table exists and include them in prompts/cache
+      let compactCertifications = [];
+      try {
+        const certRes = await client.query(
+          `SELECT id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
+           FROM certifications
+           WHERE candidate_id = $1
+           ORDER BY display_order ASC, issue_date DESC NULLS LAST`,
+          [payload.profile.id]
+        );
+        compactCertifications = certRes.rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          issuer: r.issuer,
+          issue_date: r.issue_date,
+          expiration_date: r.expiration_date,
+          credential_id: r.credential_id,
+          verification_url: r.verification_url,
+          notes: r.notes
+        }));
+      } catch (err) {
+        compactCertifications = [];
+      }
+
+      const cacheKeyData = JSON.stringify({ model: AI_MODEL, profileId: payload.profile.id, experiences: compactExperiences, certifications: compactCertifications });
       const cacheHash = crypto.createHash("sha256").update(cacheKeyData).digest("hex");
 
       // Try to read from cache table if it exists. Failures here should not block the response.
@@ -274,24 +299,26 @@ module.exports = async function(context) {
             [row.hash]
           );
         } else {
-          // cache miss: call Anthropic and insert result
-          aiContexts = await callAnthropicForContexts(payload.profile, payload.experiences, apiKey);
+          // cache miss: call Anthropic and insert result (include certifications if available)
+          aiContexts = await callAnthropicForContexts(payload.profile, payload.experiences, apiKey, compactCertifications);
           try {
+            // Use the cache key data as the stored "question" so the cache rows
+            // have meaningful identifying text instead of an empty string.
             await client.query(
               `INSERT INTO ai_response_cache (question, model, hash, response, cache_hit_count, last_accessed, updated_at, is_cached)
                VALUES ($1, $2, $3, $4, 1, NOW(), NOW(), TRUE)
                ON CONFLICT (hash) DO UPDATE SET response = EXCLUDED.response, updated_at = NOW(), is_cached = TRUE`,
-              ['', AI_MODEL, cacheHash, JSON.stringify(aiContexts || {})]
+              [cacheKeyData, AI_MODEL, cacheHash, JSON.stringify(aiContexts || {})]
             );
           } catch (err) {
             // ignore cache write errors
             context.log && context.log.warn && context.log.warn("Failed to write AI cache", err.message || err);
           }
         }
-      } catch (err) {
+        } catch (err) {
         // If cache table doesn't exist or query fails, fall back to calling Anthropic
         context.log && context.log.debug && context.log.debug("AI cache lookup failed, calling Anthropic", err.message || err);
-        aiContexts = await callAnthropicForContexts(payload.profile, payload.experiences, apiKey);
+        aiContexts = await callAnthropicForContexts(payload.profile, payload.experiences, apiKey, compactCertifications);
       }
     } catch (error) {
       context.log.warn("experience AI context generation failed, using fallback", error.message || error);

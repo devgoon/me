@@ -155,7 +155,7 @@ async function loadAll(client, candidateId) {
     `SELECT *
      FROM experiences
      WHERE candidate_id = $1
-     ORDER BY display_order ASC, start_date DESC NULLS LAST`,
+     ORDER BY start_date DESC NULLS LAST`,
     [candidateId]
   );
 
@@ -182,6 +182,19 @@ async function loadAll(client, candidateId) {
      ORDER BY display_order ASC, start_date DESC NULLS LAST`,
     [candidateId]
   );
+
+  let certRes = { rows: [] };
+  try {
+    certRes = (await client.query(
+      `SELECT *
+       FROM certifications
+       WHERE candidate_id = $1
+       ORDER BY display_order ASC, issue_date DESC NULLS LAST`,
+      [candidateId]
+    )) || { rows: [] };
+  } catch (err) {
+    certRes = { rows: [] };
+  }
 
   const valuesRes = await client.query(
     `SELECT *
@@ -299,6 +312,16 @@ async function loadAll(client, candidateId) {
       notes: row.notes || "",
       displayOrder: row.display_order || 0
     })),
+    certifications: certRes.rows.map((row) => ({
+      name: row.name || "",
+      issuer: row.issuer || "",
+      issueDate: formatDateToYMD(row.issue_date),
+      expirationDate: formatDateToYMD(row.expiration_date),
+      credentialId: row.credential_id || "",
+      verificationUrl: row.verification_url || "",
+      notes: row.notes || "",
+      displayOrder: row.display_order || 0
+    })),
     valuesCulture: {
       mustHaves: (values.must_haves || []).join("\n"),
       dealbreakers: (values.dealbreakers || []).join("\n"),
@@ -389,7 +412,8 @@ async function saveAll(client, candidateId, payload, authEmail) {
     );
 
     await client.query("DELETE FROM experiences WHERE candidate_id = $1", [candidateId]);
-    const validExperiences = experiences.filter((item) => asText(item.companyName) && asText(item.title));
+    // Only require companyName (company_name is NOT NULL in the DB). Titles may be empty.
+    const validExperiences = experiences.filter((item) => asText(item.companyName));
     console.log(`[admin.saveAll] candidateId=${candidateId} - saving ${validExperiences.length} experiences`);
     for (const [index, item] of validExperiences.entries()) {
       let impactJson = null;
@@ -505,6 +529,28 @@ async function saveAll(client, candidateId, payload, authEmail) {
           item.current ? null : (formatDateToYMD(item.endDate) || null),
           Boolean(item.current),
           asText(item.grade),
+          asText(item.notes),
+          Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : index
+        ]
+      );
+    }
+
+    // Certifications
+    await client.query("DELETE FROM certifications WHERE candidate_id = $1", [candidateId]);
+    const validCerts = Array.isArray(payload.certifications) ? payload.certifications.filter((c) => asText(c.name)) : [];
+    for (const [index, item] of validCerts.entries()) {
+      await client.query(
+        `INSERT INTO certifications (
+          candidate_id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [
+          candidateId,
+          asText(item.name),
+          asText(item.issuer),
+          (formatDateToYMD(item.issueDate) || null),
+          (formatDateToYMD(item.expirationDate) || null),
+          asText(item.credentialId),
+          asText(item.verificationUrl),
           asText(item.notes),
           Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : index
         ]

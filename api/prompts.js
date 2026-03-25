@@ -87,6 +87,10 @@ function buildFitPrompt(payload) {
     ? payload.education.map((ed) => `- ${textOrNA(ed.institution)} — ${textOrNA(ed.degree)}${ed.field_of_study ? ' (' + textOrNA(ed.field_of_study) + ')' : ''} (${dateOrPresent(ed.start_date)} to ${dateOrPresent(ed.end_date)})${ed.grade ? ' — ' + textOrNA(ed.grade) : ''}`).join('\n')
     : '- No education records found.';
 
+    const certificationsText = payload.certifications && payload.certifications.length
+      ? payload.certifications.map((c) => `- ${textOrNA(c.name)} — ${textOrNA(c.issuer)}${c.credential_id ? ' (id: ' + textOrNA(c.credential_id) + ')' : ''}${c.issue_date ? ' — ' + dateOrPresent(c.issue_date) : ''}${c.expiration_date ? ' to ' + dateOrPresent(c.expiration_date) : ''}${c.verification_url ? ' — ' + textOrNA(c.verification_url) : ''}`).join('\n')
+      : '- No certifications listed.';
+
   const parts = [
     `Candidate: ${profile.name} (${textOrNA(profile.email)})`,
     `Title: ${textOrNA(profile.title)}`,
@@ -113,6 +117,9 @@ function buildFitPrompt(payload) {
     '## CUSTOM_INSTRUCTIONS',
     customInstructions
   ];
+
+  // Insert certifications section if present
+  parts.splice(parts.indexOf('## EDUCATION') + 2, 0, '## CERTIFICATIONS', certificationsText);
 
   const MAX_PROMPT_CHARS = 8000;
   let promptStr = parts.join('\n');
@@ -212,6 +219,10 @@ function buildChatPrompt(payload) {
     ? payload.education.map((ed) => `- ${textOrNA(ed.institution)} — ${textOrNA(ed.degree)}${ed.field_of_study ? ' (' + textOrNA(ed.field_of_study) + ')' : ''} (${dateOrPresent(ed.start_date)} to ${dateOrPresent(ed.end_date)})${ed.grade ? ' — ' + textOrNA(ed.grade) : ''}`).join('\n')
     : '- No education records found.';
 
+  const certificationsText = payload.certifications && payload.certifications.length
+    ? payload.certifications.map((c) => `- ${textOrNA(c.name)} — ${textOrNA(c.issuer)}${c.credential_id ? ' (id: ' + textOrNA(c.credential_id) + ')' : ''}${c.issue_date ? ' — ' + dateOrPresent(c.issue_date) : ''}${c.expiration_date ? ' to ' + dateOrPresent(c.expiration_date) : ''}${c.verification_url ? ' — ' + textOrNA(c.verification_url) : ''}`).join('\n')
+    : '- No certifications listed.';
+
   const parts = [
     `You are an AI assistant representing ${profile.name}, a ${textOrNA(profile.title)}. You speak in first person AS ${profile.name}.`,
     '## YOUR CORE DIRECTIVE',
@@ -235,6 +246,8 @@ function buildChatPrompt(payload) {
     experiencesText,
     '## EDUCATION',
     educationText,
+    '## CERTIFICATIONS',
+    certificationsText,
     '## SKILLS SELF-ASSESSMENT',
     '### Strong',
     chatSkillLines(strongSkills),
@@ -332,7 +345,10 @@ function buildExperienceUserPrompt(compactExperiences) {
     'Response format:',
     '{"experiences":[{...}]}',
     'Data:',
-    JSON.stringify(compactExperiences)
+    // compactExperiences may be an array; allow callers to pass an object { experiences, certifications }
+    (compactExperiences && compactExperiences.experiences)
+      ? JSON.stringify(compactExperiences)
+      : JSON.stringify({ experiences: compactExperiences, certifications: [] })
   ].join('\n');
 }
 

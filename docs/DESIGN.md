@@ -17,10 +17,6 @@ flowchart LR
   API -->|reads/writes| Cache[(ai_response_cache)]
   API -->|prompts| Prompts[api/prompts.js]
   API -->|LLM calls| Anthropic[(Anthropic LLM)]
-  Tests[Unit & Integration Tests] --- CI[CI / Makefile]
-  CI -->|runs| Lint[ESLint]
-  CI -->|runs| Tests
-  CI -->|runs| Spellcheck
 ```
 
 **Key components**
@@ -28,7 +24,6 @@ flowchart LR
 - API: Azure Functions endpoints in `api/` (chat, fit, experience). Centralized prompt builders live in `api/prompts.js`.
 - DB: Postgres holds candidate_profile, skills, skill_equivalence, ai_response_cache, etc.
 - LLM: Anthropic-style API used via `callAnthropic()` wrapper with retry/backoff and timeout handling.
-- Cache: `ai_response_cache` table keyed by SHA-256 of model+question to reduce LLM calls.
 
 ---
 
@@ -50,6 +45,7 @@ sequenceDiagram
   B->>F: frontend posts to /api/chat (message)
   F->>A: HTTP POST /api/chat
   A->>DB: loadCandidateContext() (profile, skills, equivalents, faq, ai_instructions)
+  A->>DB: loadCandidateContext() (profile, skills, equivalents, certifications, faq, ai_instructions)
   DB-->>A: returns rows
   A->>C: getCache(model, question)
   C-->>A: cached response? (yes/no)
@@ -82,6 +78,7 @@ sequenceDiagram
   B->>F: frontend posts to /api/experience (options)
   F->>A: HTTP POST /api/experience
   A->>DB: loadCandidateContext(profile, experiences, skills, equivalents, education, ai_instructions)
+  A->>DB: loadCandidateContext(profile, experiences, skills, equivalents, certifications, education, ai_instructions)
   DB-->>A: returns rows
   A->>C: getCache(model, question)
   C-->>A: cached response? (yes/no)
@@ -113,6 +110,7 @@ sequenceDiagram
   B->>F: frontend posts to /api/fit (job_description, options)
   F->>A: HTTP POST /api/fit
   A->>DB: loadCandidateContext(profile, skills, equivalents, experiences, ai_instructions)
+  A->>DB: loadCandidateContext(profile, skills, equivalents, certifications, experiences, ai_instructions)
   DB-->>A: returns rows
   A->>C: getCache(model, question)
   C-->>A: cached response? (yes/no)
@@ -127,6 +125,7 @@ sequenceDiagram
   F-->>B: render assistant response
   B-->>U: UI shows result
 ```
+
 ## Prompting & Privacy
 - Centralized prompt builders: `api/prompts.js` — all prompt text and helper logic lives here to make tuning and audits straightforward.
 - Prompt length guard: code trims equivalents or other optional context when prompt size exceeds configured chars (to avoid token limits).
@@ -137,40 +136,6 @@ sequenceDiagram
 - On cache hit: update `cache_hit_count` and `last_accessed`.
 - Cache invalidation: manual invalidation endpoint exists (`/api/cache-report` usage); consider TTL-based expiry for long-term scaling.
 
-## Reliability & Backoff
-- `callAnthropic` uses retries with exponential backoff for transient 429/503/529 responses and an AbortController for timeouts.
-- Timeouts and retries are configurable via constants in each handler.
-
-## Quality & CI
-- `Makefile` defines `make lint` (ESLint), `make unit-test` (Jest), `make spellcheck` (cspell), and `make check` that runs all gates.
-- `package.json` includes `lint` and `lint:fix` scripts. The linter run has been tuned to ignore test directories during linting as required.
-
-```mermaid
-flowchart TD
-  Makefile[Makefile / CI] --> Lint[ESLint]
-  Makefile --> Tests[Jest]
-  Makefile --> Spellcheck[cspell]
-  Tests -->|if pass| Deploy[Optional deploy step]
-```
-
-## Security & Logging
-- Avoid logging full profile objects; redact or omit `salary_*` and contact fields in logs.
-- Cache entries should not leak PII; do not include full profile in cache keys — cache is keyed by model+question only.
-
-## Operational Notes
-- Monitor LLM latencies and cache hit ratio; surface metrics in app logs.
-- Keep `ANTHROPIC_API_KEY` and `DATABASE_URL` in environment (not source).
-- Consider rate-limiting/quotas on endpoints that trigger LLM calls.
-
-## Testing & Local Development
-- Unit tests exist under `api/__tests__` (Jest). Run via `npm test` at repo root and `cd api && npm test` for API tests.
-- Linting: `npm run lint` and auto-fix `npm run lint:fix`. `make check` includes linting as a gate.
-
----
-
-If you want, I can: (a) add a diagram for the database schema, (b) generate a simple runbook for LLM incidents, or (c) open a PR with this `docs/DESIGN.md` file.
-
----
 
 ## Database Schema (ER diagram)
 
@@ -255,6 +220,19 @@ erDiagram
     text notes
   }
 
+  CERTIFICATIONS {
+    uuid id PK
+    uuid candidate_id FK
+    string name
+    string issuer
+    date issue_date
+    date expiration_date
+    string credential_id
+    string verification_url
+    text notes
+    integer display_order
+  }
+
   AI_INSTRUCTIONS {
     uuid id PK
     uuid candidate_id FK
@@ -281,11 +259,7 @@ erDiagram
   CANDIDATE_PROFILE ||--o{ FAQ_RESPONSES : has
   CANDIDATE_PROFILE ||--o{ EDUCATION : has
   CANDIDATE_PROFILE ||--o{ AI_INSTRUCTIONS : has
+  CANDIDATE_PROFILE ||--o{ CERTIFICATIONS : has
 
   %% AI_RESPONSE_CACHE is keyed by hash (model+question) and is not directly tied to a candidate
 ```
-
-Notes:
-- `AI_RESPONSE_CACHE` is global (hash of model + question) to maximize reuse across requests. Be careful not to include PII in cached responses.
-- `skill_equivalence` stores textual equivalents for a canonical skill name to aid prompt generation and matching.
-- Replace any remaining `SELECT *` usage in handlers with explicit column lists when exposing public endpoints.

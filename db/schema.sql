@@ -169,6 +169,27 @@ CREATE TABLE IF NOT EXISTS education (
 CREATE INDEX IF NOT EXISTS education_candidate_id_idx
   ON education (candidate_id);
 
+CREATE TABLE IF NOT EXISTS certifications (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  candidate_id BIGINT NOT NULL REFERENCES candidate_profile(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  issuer TEXT,
+  issue_date DATE,
+  expiration_date DATE,
+  credential_id TEXT,
+  verification_url TEXT,
+  notes TEXT,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS certifications_candidate_id_idx ON certifications (candidate_id);
+CREATE INDEX IF NOT EXISTS certifications_display_order_idx ON certifications (candidate_id, display_order);
+
+-- Add comment explaining intended use
+COMMENT ON TABLE certifications IS 'Certifications and professional credentials for candidate profiles';
+
 CREATE TABLE IF NOT EXISTS ai_instructions (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   candidate_id BIGINT NOT NULL REFERENCES candidate_profile(id) ON DELETE CASCADE,
