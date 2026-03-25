@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict bZeBtwLMaDnTyYiaIMx5aL2rm9aCwlAIpSppbWj9hxzFOBhZ23JjCN326te9Umx
+\restrict gapcabE2tO26BwF2q7VfkLg0m6nwq7eeHi9K7R0H0xCVtLUQw78ngluvaBADr9G
 
 -- Dumped from database version 16.12
 -- Dumped by pg_dump version 18.3 (Homebrew)
@@ -484,6 +484,10 @@ COPY public.admin_users (id, created_at, email, full_name, password_hash) FROM s
 --
 
 COPY public.ai_instructions (id, candidate_id, created_at, instruction_type, instruction, priority) FROM stdin;
+375	1	2026-03-24 17:13:29.145248+00	honesty	HONESTY_LEVEL:7	0
+376	1	2026-03-24 17:13:29.145248+00	boundaries	Do not fabricate accomplishments, dates, or metrics not present in data.	5
+377	1	2026-03-24 17:13:29.145248+00	honesty	Be direct about fit, including explicit gaps and non-fit scenarios.	10
+378	1	2026-03-24 17:13:29.145248+00	tone	Use concise, professional language and avoid over-selling claims.	20
 423	1	2026-03-25 14:01:21.997243+00	honesty	HONESTY_LEVEL:7	0
 \.
 
@@ -570,6 +574,8 @@ COPY public.certifications (id, candidate_id, name, issuer, issue_date, expirati
 --
 
 COPY public.education (id, candidate_id, institution, degree, field_of_study, start_date, end_date, is_current, grade, notes, display_order, created_at) FROM stdin;
+117	1	Southern Connecticut State University	MS, Computer Science	Computer Science	2002-09-01	2006-06-01	f	3.7	Graduated with a 3.7	0	2026-03-24 17:13:29.145248+00
+118	1	Southern Connecticut State University	BS, Psychology	Psychology	1992-09-01	1996-06-01	f	3.2	Graduated with a 3.2	1	2026-03-24 17:13:29.145248+00
 \.
 
 
@@ -578,6 +584,15 @@ COPY public.education (id, candidate_id, institution, degree, field_of_study, st
 --
 
 COPY public.experiences (id, candidate_id, created_at, company_name, title, title_progression, start_date, end_date, is_current, bullet_points, why_joined, why_left, actual_contributions, proudest_achievement, would_do_differently, challenges_faced, lessons_learned, manager_would_say, reports_would_say, quantified_impact, display_order) FROM stdin;
+323	1	2026-03-24 17:13:29.145248+00	Torc Robotics	Senior Software Engineer	\N	2024-09-01	\N	t	{"Built React applications for monitoring fault events and live truck telemetry.","Designed OpenAPI-driven REST endpoints backed by DynamoDB for internal tooling.","Implemented Datadog dashboards and SLOs to improve production reliability."}	Wanted to work on high-impact autonomous systems and modern cloud-native architecture.	\N	Owned frontend + API design for operational tooling used by engineering and operations teams.	Delivered a reliable fleet observability workflow that shortened incident triage cycles.	Would establish stronger data contracts even earlier between producer and consumer systems.	Balancing fast feature delivery with strict reliability expectations in safety-adjacent software.	Clear contracts and observability-first architecture reduce long-term operational risk.	Raises quality standards and delivers under ambiguity with strong ownership.	Provides clarity, technical mentorship, and practical execution support.	{"scope": "fleet operations tooling", "impact": "faster fault triage and stronger reliability posture"}	10
+324	1	2026-03-24 17:13:29.145248+00	Ancera	Systems Architect	\N	2020-12-01	2024-09-01	f	{"Led Azure administration, security hardening, and DevOps modernization.","Designed edge AI workflows that improved image recognition performance by 700%.","Implemented DevSecOps processes contributing to SOC 2 readiness."}	Opportunity to shape architecture and platform direction in a growing product company.	Role concluded after major platform goals and compliance milestones were achieved.	Built secure CI/CD and deployment standards while enabling faster engineering throughput.	Created a platform maturity roadmap that balanced speed, security, and cost.	Would formalize engineering KPIs sooner to quantify process improvements over time.	Evolving infrastructure maturity while maintaining delivery commitments.	Security and compliance should be built into delivery workflows, not bolted on later.	Strong systems thinker with execution discipline and clear communication.	Supportive and direct; sets standards while helping teams level up.	{"compliance": "SOC 2 path accelerated", "image_recognition_improvement_pct": 700}	20
+325	1	2026-03-24 17:13:29.145248+00	Subway	Lead Integration Engineer	\N	2019-07-01	2020-12-01	f	{"Built APIs supporting mobile, web, and B2B channels at large scale.","Led distributed engineering efforts for integration delivery.","Implemented AWS serverless and CI/CD patterns for faster releases."}	Chance to lead high-scale integration architecture for a major global brand.	Moved to a broader architecture scope aligned with long-term goals.	Drove API and integration reliability across multiple dependent teams.	Established a delivery cadence that improved cross-team predictability.	Would invest earlier in consumer onboarding docs for faster partner adoption.	Managing cross-team dependencies while sustaining release velocity.	At scale, consistency in contracts and delivery process matters as much as raw coding speed.	Dependable technical lead with strong systems and delivery focus.	Creates structure and removes blockers effectively.	{"focus": "api reliability and release velocity", "scale": "millions of users daily"}	30
+326	1	2026-03-24 21:36:46.069669+00	Southern Connecticut State University	Technical Advisor	\N	2009-01-01	\N	t	{"Serving on the Technical Advisory Committee for the Computer Science Department, providing industry perspective on curriculum, technology trends, and graduate outcomes."}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1
+327	1	2026-03-24 21:36:46.069669+00	Southern Connecticut State University	Adjunct Faculty Instructor	\N	2015-09-01	2015-12-31	f	{"Taught CSC 443: Internet Programming in Node.js to undergraduate computer science students."}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2
+328	1	2026-03-24 21:36:46.069669+00	Fiserv	Team Lead / Senior Software Engineer	\N	2009-05-01	2014-03-31	f	{"Led onshore and offshore development teams building a commercial real-time bill payment web service used by major retail establishments.","Owned client relationships, project estimation, code reviews, and performance tuning for a system processing over $1M in daily transactions.","Progressed from Senior Software Engineer to Team Lead over ~5 years, growing scope from individual contribution to team and delivery ownership."}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	3
+329	1	2026-03-24 21:36:46.069669+00	The Hartford	Senior Software Engineer	\N	2008-06-01	2009-05-31	f	{"Developed .NET enterprise applications for one of the largest insurance carriers in the US."}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	4
+330	1	2026-03-24 21:36:46.069669+00	Neopost Technologies	Software Engineer	\N	2002-01-01	2008-05-31	f	{"Designed and developed Java and .NET applications for enterprise document management and postage automation systems."}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	5
+331	1	2026-03-24 21:36:46.069669+00	Ingenix (UnitedHealth Group)	Software Engineer	\N	1996-03-01	2002-03-31	f	{"Built healthcare data and analytics applications on ASP.NET and the MicroStrategy platform for a UnitedHealth Group subsidiary."}	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	6
 \.
 
 
@@ -586,6 +601,10 @@ COPY public.experiences (id, candidate_id, created_at, company_name, title, titl
 --
 
 COPY public.faq_responses (id, candidate_id, created_at, question, answer, is_common_question) FROM stdin;
+357	1	2026-03-24 17:13:29.145248+00	What is your biggest weakness?	I can over-index on architecture rigor too early; I mitigate this by right-sizing process to the project phase.	t
+358	1	2026-03-24 17:13:29.145248+00	Tell me about a project that failed.	During the height of the microservices and Kubernetes hype cycle, I watched many organizations rush to break apart their monolithic applications simply because it was the trend — not because it solved a real problem. Teams were eager to “modernize,” but often without understanding where the actual separation of concerns should be, or whether microservices were even the right architectural fit.\nFrom my perspective, leadership seemed more focused on projecting modernity — adopting microservices, containers, service meshes, CI/CD tools — instead of stepping back and asking the critical question:\n“What is the root cause of our problems, and will this architecture actually address it?”\nToo often, the answer was no.\nWhat I saw repeatedly were situations where:\n\nThe monolith’s issues were caused by poor domain boundaries, not its size.\nTeams lacked the operational maturity for distributed systems — observability, SLOs, dependency mapping, on-call readiness.\nThe organization underestimated the complexity tax of microservices: networking, data consistency, orchestration, deployment pipelines, incident surface area.\nArchitectures became fragmented, harder to test, harder to reason about, and more failure‑prone.\nThe “modernization effort” consumed enormous engineering time while failing to address the original bottlenecks.\n\nWhat was missing was problem-first thinking.\nInstead of asking, “How do we adopt Kubernetes?” the real questions should have been:\n\n“What pain are we trying to relieve?”\n“Is the issue architectural… or organizational?”\n“Do we understand our domains well enough to split them correctly?”\n“Do we have the observability and engineering rigor to support distributed systems?”\n\nIn many cases, companies didn’t need microservices — what they needed was:\n\nClearer ownership boundaries\nBetter CI/CD\nStronger testing strategies\nImproved observability\nA more modular monolith\nCultural changes, not technological ones\n\nThis period taught me an important professional lesson:\n\nModern technology doesn’t fix fundamental problems if you don’t understand the system well enough to diagnose them.\n\nIt reinforced my belief that architecture should always follow context, constraints, and clarity — not trends.	t
+359	1	2026-03-24 17:13:29.145248+00	Why did you leave your last role?	I left Ancera because I had reached a natural inflection point in my growth there. After nearly four years, I had accomplished the major technical transformations I was brought in to deliver — including leading Azure administration, implementing DevOps and security best practices, driving the company through SOC 2 compliance, building edge AI pipelines, and modernizing infrastructure and automation. [linkedin.com]\nOnce those foundational systems were in place, the work shifted from architecting and building toward maintenance and incremental improvements, and the role no longer aligned with the level of technical challenge I’m motivated by.\nI’m driven by environments where I can:\n\nSolve large‑scale engineering problems\nInfluence architecture and technical strategy\nWork with modern cloud, AI, and distributed systems\nHelp teams grow through automation and observability\nBuild systems that have real impact at scale\n\nAncera is a smaller organization in a very specific niche, and after successfully stabilizing and maturing its engineering foundations, I was ready to return to solving bigger, more complex, enterprise‑level challenges — the kind found at top technology companies.\nIn short:\nI left Ancera because I had completed the transformation I was	t
+360	1	2026-03-24 17:13:29.145248+00	What would your manager say about you?	High ownership, strong execution under ambiguity, and focus on measurable reliability.	t
 405	1	2026-03-25 14:01:21.997243+00	What are your strongest skills?		t
 406	1	2026-03-25 14:01:21.997243+00	What are your biggest gaps right now?		t
 407	1	2026-03-25 14:01:21.997243+00	What kind of team are you looking for?		t
@@ -597,6 +616,11 @@ COPY public.faq_responses (id, candidate_id, created_at, question, answer, is_co
 --
 
 COPY public.gaps_weaknesses (id, candidate_id, created_at, gap_type, description, why_its_a_gap, interest_in_learning) FROM stdin;
+497	1	2026-03-24 17:13:29.145248+00	skill	Machine Learning Training	Never hand an opportunity, but very interested.	t
+498	1	2026-03-24 17:13:29.145248+00	skill	Rust	Emerging language, never had a use, but interested.	t
+499	1	2026-03-24 17:13:29.145248+00	skill	C++	Classic performant, safe language never had a use, but interested.	t
+500	1	2026-03-24 17:13:29.145248+00	skill	Large Language Models (LLM)	\N	t
+501	1	2026-03-24 17:13:29.145248+00	skill	PHP	\N	f
 \.
 
 
@@ -753,6 +777,49 @@ COPY public.skill_equivalence (id, skill_name, equivalent_name, created_at, note
 --
 
 COPY public.skills (id, candidate_id, created_at, skill_name, category, self_rating, evidence, honest_notes, years_experience, last_used) FROM stdin;
+2739	1	2026-03-24 17:13:29.145248+00	Azure Administration	strong	5	Administered Azure for edge AI and agri-tech solutions.	Moderate, want to improve in security and cost optimization.	5.0	2026-03-23
+2740	1	2026-03-24 17:13:29.145248+00	Java	moderate	5	Developed platform apps and document management systems.	Moderate, want to deepen modern Java and JVM performance.	10.0	2019-07-23
+2741	1	2026-03-24 17:13:29.145248+00	Pen Testing Tools	moderate	4	Used Beagle Security and other tools for DevSecOps.	Moderate, want to learn more about manual and automated pen testing.	4.0	2026-03-23
+2742	1	2026-03-24 17:13:29.145248+00	Azure Cloud	strong	4	Managed Azure infrastructure and administration.	Moderate, want to explore more advanced Azure services.	7.0	2026-03-23
+2743	1	2026-03-24 17:13:29.145248+00	DevSecOps	strong	4	Implemented DevSecOps practices with Snyk and Beagle Security.	Moderate, want to learn more about automated security testing.	4.0	2026-03-24
+2744	1	2026-03-24 17:13:29.145248+00	Docker / Containerization	moderate	4	Designed edge AI solutions and platform apps using Docker.	Comfortable, but want to deepen orchestration and security.	7.0	2026-03-23
+2745	1	2026-03-24 17:13:29.145248+00	Jenkins	moderate	4	Used Jenkins for CI/CD in multiple projects.	Moderate, want to deepen pipeline scripting and automation.	4.0	2019-03-23
+2746	1	2026-03-24 17:13:29.145248+00	Amazon CloudWatch	moderate	3	\N	\N	4.0	2026-03-24
+2747	1	2026-03-24 17:13:29.145248+00	Application Security	strong	3	\N	\N	15.0	2026-03-24
+2748	1	2026-03-24 17:13:29.145248+00	Azure DevOps	strong	3	Led DevOps strategy and CI/CD pipelines at Ancera.	Moderate, want to deepen automation and pipeline customization.	4.0	2026-03-23
+2749	1	2026-03-24 17:13:29.145248+00	C#	moderate	3	Developed enterprise apps at The Hartford and Neopost.	Moderate, want to refresh skills for modern .NET.	8.0	2024-09-23
+2750	1	2026-03-24 17:13:29.145248+00	Enterprise Architecture	strong	3	\N	\N	20.0	2026-03-24
+2751	1	2026-03-24 17:13:29.145248+00	Interpersonal Skills	strong	3	\N	\N	20.0	2026-03-24
+2752	1	2026-03-24 17:13:29.145248+00	JSON	moderate	3	\N	\N	15.0	2026-03-24
+2753	1	2026-03-24 17:13:29.145248+00	Knowledge Sharing	moderate	3	\N	\N	20.0	2026-03-24
+2754	1	2026-03-24 17:13:29.145248+00	Load Balancing	moderate	3	\N	\N	2.0	\N
+2755	1	2026-03-24 17:13:29.145248+00	Node.js	moderate	3	Taught Node.js and built APIs for web and mobile.	Moderate, want to deepen async and performance patterns.	4.0	2026-03-23
+2756	1	2026-03-24 17:13:29.145248+00	Object-Oriented Design	moderate	3	Designed OO systems for multiple enterprise projects.	Solid, but always refining design patterns.	15.0	2024-09-23
+2757	1	2026-03-24 17:13:29.145248+00	Problem Solving	strong	4	\N	\N	20.0	2026-03-24
+2758	1	2026-03-24 17:13:29.145248+00	Relational Databases	moderate	3	Designed and managed databases for multiple projects.	Moderate, want to improve in advanced SQL and optimization.	10.0	2026-03-23
+2759	1	2026-03-24 17:13:29.145248+00	Datadog	strong	3	\N	\N	2.0	2026-03-24
+2760	1	2026-03-24 17:13:29.145248+00	Shell Scripting	moderate	3	\N	\N	5.0	2026-03-24
+2761	1	2026-03-24 17:13:29.145248+00	SNYK	moderate	3	Used for vulnerability scanning in CI/CD pipelines.	Moderate, want to improve in remediation and reporting.	2.0	2020-12-23
+2762	1	2026-03-24 17:13:29.145248+00	Troubleshooting	strong	5	\N	\N	20.0	2026-03-24
+2763	1	2026-03-24 17:13:29.145248+00	Written Communication	strong	4	\N	\N	20.0	2026-03-24
+2764	1	2026-03-24 17:13:29.145248+00	YAML	moderate	4	\N	\N	4.0	2026-03-24
+2765	1	2026-03-24 17:13:29.145248+00	Agile / Scrum	strong	3	Led and participated in Agile teams across roles.	Moderate, want to improve in facilitation and delivery.	15.0	2026-03-23
+2766	1	2026-03-24 17:13:29.145248+00	API Design and Development	strong	3	Designed and developed APIs for mobile, web, and B2B integrations serving millions.	Always striving for clarity and maintainability in API design.	15.0	2026-03-23
+2767	1	2026-03-24 17:13:29.145248+00	AWS API Gateway	strong	3	Designed REST APIs with API Gateway for client SDK generation.	Comfortable, but want to master complex routing and security features.	4.0	2026-03-23
+2768	1	2026-03-24 17:13:29.145248+00	AWS DynamoDB	strong	3	Integrated with REST APIs and configuration management systems.	Confident, but want to deepen understanding of advanced indexing and scaling.	4.0	2026-03-23
+2769	1	2026-03-24 17:13:29.145248+00	AWS Lambda	strong	3	Implemented serverless APIs and integrations at Subway and Thermo Fisher.	Solid with Lambda, but want to explore more advanced event-driven patterns.	4.0	2026-03-23
+2770	1	2026-03-24 17:13:29.145248+00	AWS S3	strong	3	Used for storage in serverless and data pipelines.	Experienced, but want to optimize for cost and performance.	4.0	2026-03-23
+2771	1	2026-03-24 17:13:29.145248+00	Code Design	strong	3	\N	\N	15.0	2026-03-24
+2772	1	2026-03-24 17:13:29.145248+00	Communication	strong	3	\N	\N	20.0	2026-03-24
+2773	1	2026-03-24 17:13:29.145248+00	Continuous Delivery (CD)	strong	3	\N	\N	15.0	2026-03-24
+2774	1	2026-03-24 17:13:29.145248+00	Cryptography and Security Concepts	strong	3	Worked on SOC 2 compliance and secure pipelines.	Moderate, want to deepen practical cryptography.	15.0	2026-03-23
+2775	1	2026-03-24 17:13:29.145248+00	Digital Authentication	strong	3	\N	\N	15.0	2026-03-24
+2776	1	2026-03-24 17:13:29.145248+00	Observability	strong	3	Authored dashboards, SLOs, and monitoring tests for multiple services.	Strong in observability, but want to learn more about distributed tracing.	2.0	2026-03-23
+2777	1	2026-03-24 17:13:29.145248+00	Python	strong	3	Used for ML-Ops, scripting, and backend development.	Confident, but want to improve in advanced Python and ML frameworks.	4.0	2026-03-23
+2778	1	2026-03-24 17:13:29.145248+00	React	strong	3	Built monitoring and visualization apps for vehicle data at Torc Robotics.	Strong with React, but want to deepen advanced hooks and performance optimization.	2.0	2026-03-23
+2779	1	2026-03-24 17:13:29.145248+00	Software Architecture	strong	3	Designed cloud-native, microservices, and enterprise systems for Fortune 500 and startups.	Enjoy architecting scalable systems, but always refining design for maintainability.	15.0	2026-03-23
+2780	1	2026-03-24 17:13:29.145248+00	Terraform	strong	3	Infrastructure as code for Azure and AWS, including SOC 2 compliance.	Experienced, but want to master complex module composition.	2.0	2026-03-23
+2781	1	2026-03-24 17:13:29.145248+00	TypeScript	strong	3	Used for React apps, REST APIs, and platform development at Torc Robotics and Thermo Fisher.	Confident in modern TypeScript, but always learning new patterns.	2.0	2026-03-23
 \.
 
 
@@ -762,6 +829,7 @@ COPY public.skills (id, candidate_id, created_at, skill_name, category, self_rat
 
 COPY public.values_culture (id, candidate_id, created_at, must_haves, dealbreakers, management_style_preferences, team_size_preferences, how_handle_conflict, how_handle_ambiguity, how_handle_failure) FROM stdin;
 102	1	2026-03-25 14:01:21.997243+00	{}	{}	\N	\N	\N	\N	\N
+90	1	2026-03-24 17:13:29.145248+00	{"Clear ownership","Engineering quality culture","Honest communication","Measurable outcomes","Clear career development tracks","Fair reviews"}	{"Blame-driven culture","Persistent unclear ownership","No quality standards","No career development tracks","Unstructured reviews"}	Direct, transparent, and context-rich leadership with technical credibility.	Works well in focused teams (5-15) and cross-functional orgs with clear interfaces.	Addresses conflict early with data, explicit goals, and direct conversation.	Breaks ambiguity into testable assumptions and short feedback loops.	Treats failures as systems feedback: document, adjust, and prevent recurrence.
 \.
 
 
@@ -776,7 +844,7 @@ SELECT pg_catalog.setval('public.admin_users_id_seq', 1, false);
 -- Name: ai_instructions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.ai_instructions_id_seq', 423, true);
+SELECT pg_catalog.setval('public.ai_instructions_id_seq', 378, true);
 
 
 --
@@ -797,28 +865,28 @@ SELECT pg_catalog.setval('public.certifications_id_seq', 10, true);
 -- Name: education_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.education_id_seq', 140, true);
+SELECT pg_catalog.setval('public.education_id_seq', 118, true);
 
 
 --
 -- Name: experiences_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.experiences_id_seq', 430, true);
+SELECT pg_catalog.setval('public.experiences_id_seq', 331, true);
 
 
 --
 -- Name: faq_responses_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.faq_responses_id_seq', 407, true);
+SELECT pg_catalog.setval('public.faq_responses_id_seq', 360, true);
 
 
 --
 -- Name: gaps_weaknesses_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.gaps_weaknesses_id_seq', 556, true);
+SELECT pg_catalog.setval('public.gaps_weaknesses_id_seq', 501, true);
 
 
 --
@@ -839,14 +907,14 @@ SELECT pg_catalog.setval('public.skill_equivalence_id_seq', 124, true);
 -- Name: skills_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.skills_id_seq', 3254, true);
+SELECT pg_catalog.setval('public.skills_id_seq', 2781, true);
 
 
 --
 -- Name: values_culture_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.values_culture_id_seq', 102, true);
+SELECT pg_catalog.setval('public.values_culture_id_seq', 90, true);
 
 
 --
@@ -1155,5 +1223,5 @@ ALTER TABLE ONLY public.values_culture
 -- PostgreSQL database dump complete
 --
 
-\unrestrict bZeBtwLMaDnTyYiaIMx5aL2rm9aCwlAIpSppbWj9hxzFOBhZ23JjCN326te9Umx
+\unrestrict gapcabE2tO26BwF2q7VfkLg0m6nwq7eeHi9K7R0H0xCVtLUQw78ngluvaBADr9G
 
