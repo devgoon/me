@@ -1974,8 +1974,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Current role badge on first resume item and any explicitly marked current */
-.resume-item:first-child h4::after,
-.resume-item--current h4::after {
+.resume .resume-item--current h4::after,
+#experience .resume-item:first-child h4::after,
+#experience .resume-item--current h4::after {
   content: "Current";
   font-size: 10px;
   font-weight: 600;
