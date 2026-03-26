@@ -6,6 +6,7 @@
   "author": "Lodovico Minnocci",
   "license": "MIT",
   "scripts": {
+    "test": "jest --runInBand",
     "lint": "npx eslint@8 \"api/**/*.js\" \"assets/js/**/*.js\" --ext .js --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.js\"",
     "lint:fix": "npx eslint@8 \"api/**/*.js\" \"assets/js/**/*.js\" --ext .js --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.js\" --fix"
   },
