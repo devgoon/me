@@ -1047,6 +1047,17 @@ section {
   border: 1px solid rgba(88, 166, 255, 0.3);
 }
 
+/* Visible warning when skills fallback is used */
+.skills-load-warning {
+  margin: 12px 0 18px 0;
+  padding: 8px 12px;
+  background: rgba(255, 165, 0, 0.06);
+  border: 1px solid rgba(255, 165, 0, 0.14);
+  color: #ffb84d;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
 .skills-group-title {
   font-size: 11px;
   font-weight: 700;
