@@ -3,13 +3,18 @@
 Purpose
 - Personal portfolio site with AI-assisted admin and analysis features.
 - Static frontend served by Azure Static Web Apps and serverless APIs implemented as Azure Functions (Node.js).
+- Prompt engineering composes a detailed, context-rich prompt from a candidate's profile, experience, education, certifications, skills, FAQ, and custom instructions.
+- Support for per-candidate instruction overrides (tone, honesty, boundaries) to tune assistant behavior.
+- Deterministic client-side analyzers extract transferable skills, education matches, and gaps from job descriptions without invoking an LLM.
+- Server-side orchestration prepares prompts and invokes models, with a response cache to avoid redundant calls.
+- Design focuses on concise, honest assistant responses and preserves user-controlled overrides and privacy-conscious caching.
 
-Quick links
-- Admin UI client: assets/js/admin.js
-- Experience UI client: assets/js/experience-ai.js
-- Fit/Analyzer client: assets/js/fit-ai.js and assets/js/fit-analyzer.js
-- Server handlers: api/
-- DB schema: db/
+Features
+- Admin interface for editing and publishing candidate profile data.
+- Experience viewer with AI-generated role context for resume items.
+- Fit/Analyzer tools for comparing job descriptions to a profile and identifying transferable skills and gaps.
+- Serverless HTTP APIs that assemble profile context, run deterministic analyzers, and proxy prompts to an AI model with caching.
+- PostgreSQL-backed schema for profile, experiences, skills, education, certifications, and AI instruction overrides.
 
 ## Architecture Diagram
 
@@ -32,18 +37,17 @@ flowchart LR
 
 Architecture Diagram
 
-Prerequisites
-- Node.js 20+ and npm
+- Prerequisites
+- Node.js (tested on 20+) and npm
 - GNU Make
 - PostgreSQL client tools (psql, pg_dump)
-- (Optional) Azure CLI for deployment
 
 Environment (local)
 - Copy and fill `.env.local` from `.env.local.example` (DO NOT commit secrets).
 - Key env vars:
   - `DATABASE_URL` — Postgres connection (SSL recommended)
-  - `ANTHROPIC_API_KEY` — AI provider key
-  - `AI_MODEL` — model id (default used in code)
+  - `ANTHROPIC_API_KEY` — AI provider key (required for AI-backed endpoints; missing this will cause AI endpoints to return 500 errors)
+  - `AI_MODEL` — model id (optional override)
   - `FUNCTIONS_WORKER_RUNTIME=node`
 
 Start local dev stack
@@ -85,95 +89,16 @@ Development notes
 - The admin UI performs draft autosaves to `localStorage`; use the Admin page to persist changes to the DB.
 
 Testing & quality checks
-- Run the project quality pipeline (spellcheck, API unit tests, link checks):
+- Run the project quality pipeline (spellcheck, unit tests, link checks, linter, etc.):
 
 ```bash
 make check
 ```
 
-- Run only API unit tests:
+- Run only unit tests:
 
 ```bash
-cd api && npm test -- --runInBand
+make unit-test
 ```
 
-API surface (high level)
-- `GET /api/experience` — returns profile, experiences, `skills` (strong/moderate/gap). `gaps` returned to the client include `interestedInLearning` boolean.
-- `GET/POST /api/admin` — admin panel data and save endpoint (requires authentication in production).
-- `POST /api/fit` — JD analysis endpoint (server-side AI-backed analysis). This endpoint consolidates the previous `/api/fit-check` behaviour; `/api/fit-check` has been removed. Request body must include `jobDescription`.
-- `POST /api/chat` — chat endpoint that proxies prompts to AI with caching.
-
-**API Diagram**
-
-```mermaid
-flowchart LR
-  Client[Client / Browser]
-  Experience(Experience API)
-  Admin(Admin API)
-  Fit(Fit API)
-  Chat(Chat API)
-  AI(Anthropic API)
-  DB[(Postgres DB)]
-
-  Client -->|GET /experience| Experience
-  Client -->|GET/POST /admin| Admin
-  Client -->|POST /fit| Fit
-  Client -->|POST /chat| Chat
-
-  Fit -->|calls| AI
-  Fit -->|reads/writes| DB
-  Admin -->|reads/writes| DB
-  Experience -->|reads| DB
-  Chat -->|calls| AI
-  Chat -->|may read/write| DB
-```
-
-
-**DB ER Diagram**
-
-```mermaid
-erDiagram
-  CANDIDATE_PROFILE {
-    int id PK
-    string name
-    string email
-    string title
-    text elevator_pitch
-  }
-  EXPERIENCES {
-    int id PK
-    int candidate_id FK
-    string company_name
-    string title
-    date start_date
-    date end_date
-    text bullet_points
-  }
-  SKILLS {
-    int id PK
-    int candidate_id FK
-    string skill_name
-    string category
-    int self_rating
-    text honest_notes
-  }
-  GAPS_WEAKNESSES {
-    int id PK
-    int candidate_id FK
-    text description
-    text why_its_a_gap
-    boolean interest_in_learning
-  }
-  EDUCATION {
-    int id PK
-    int candidate_id FK
-    string institution
-    string degree
-    string field_of_study
-  }
-
-  CANDIDATE_PROFILE ||--o{ EXPERIENCES: has
-  CANDIDATE_PROFILE ||--o{ SKILLS: has
-  CANDIDATE_PROFILE ||--o{ GAPS_WEAKNESSES: has
-  CANDIDATE_PROFILE ||--o{ EDUCATION: has
-```
+Implementation details are in `docs/DESIGN.md`.
