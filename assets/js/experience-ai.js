@@ -105,14 +105,19 @@
 
       skillsList.innerHTML = [
         renderSkillColumn("STRONG ✓", "skills-card--strong", strong),
-        renderSkillColumn("MODERATE ○", "skills-card--moderate", moderate),
+        renderSkillColumn("BROADER EXPERTISE ○", "skills-card--moderate", moderate),
         renderSkillColumn("INTERESTED IN", "skills-card---interested", interested),
         renderSkillColumn("NOT INTERESTED IN", "skills-card---not-interested", notInterested)
       ].join("");
     }
-    async function loadData() {
-        experienceList.innerHTML = "<article class=\"role-card\"><p>AI analyzing experience data...</p></article>";
-        skillsList.innerHTML = "<article class=\"role-card\"><p>AI analyzing skills profile...</p></article>";
+        async function loadData() {
+                const spinnerHtml = `
+                    <div class="loading" aria-busy="true" aria-live="polite">
+                        Loading…
+                    </div>
+                `;
+                experienceList.innerHTML = `<article class="role-card" style="text-align:center;padding:24px">${spinnerHtml}</article>`;
+                skillsList.innerHTML = `<article class="role-card" style="text-align:center;padding:24px">${spinnerHtml}</article>`;
         try {
             const response = await fetch("/api/experience", { method: "GET" });
             if (!response.ok) {
