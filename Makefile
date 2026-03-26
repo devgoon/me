@@ -7,11 +7,8 @@ install:
 lint:
 	@npx eslint@8 "api/**/*.js" "assets/js/**/*.js" --ext .js --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
 
-spellcheck:spellcheck-pdf
+spellcheck:
 	npx cspell "**/*.{html,css,js,ts}" "assets/*.txt" "api/**/*.js" --verbose
-
-spellcheck-pdf:
-	bash ./pdf2txt.sh
 
 link-check:
 	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html
@@ -140,29 +137,3 @@ run-sql-file:
 	db_url=$$DATABASE_URL; \
 	if [ -z "$$db_url" ]; then echo "DATABASE_URL not set"; exit 1; fi; \
 	psql "$$db_url" -f $(file)
-
-print-table:
-	@table=$(TABLE); \
-	if [ -z "$$table" ]; then \
-		echo "Usage: make print-table TABLE=<table_name>"; exit 1; \
-	fi; \
-	if [ -f .env.local ]; then \
-		set -a; . .env.local; set +a; \
-	fi; \
-	psql "$${DATABASE_URL}" -c "SELECT * FROM $$table LIMIT 50;"
-
-# Usage examples:
-#  Run a SQL file using the DATABASE_URL from .env.local:
-#    make run-sql-file file=./migrations/skills-update.sql
-#
-#  Run with an explicit `DATABASE_URL` (overrides .env.local):
-#    DATABASE_URL="postgres://user:pass@host:5432/db" make run-sql-file file=./migrations/skills-update.sql
-#
-# Notes:
-#  - The target loads `DATABASE_URL` from .env.local if present; you can override it
-#    by exporting `DATABASE_URL` or prefixing the make command as shown above.
-#  - The `file` variable is required and is passed to `psql -f $(file)`.
-#  - Preview the SQL before running:
-#      head -n 50 ./migrations/skills-update.sql
-#  - To ensure atomic updates, wrap statements in your SQL file with
-#    `BEGIN;` and `COMMIT;` (or run inside a transaction in psql).
