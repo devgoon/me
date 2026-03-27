@@ -9,7 +9,7 @@
     { "route": "/api/cache-report", "allowedRoles": ["authenticated"] },
     { "route": "/favicon.ico", "headers": { "Cache-Control": "public, max-age=604800, immutable" } },
     { "route": "/*", "headers": {
-      "Content-Security-Policy": "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self' data:",
+      "Content-Security-Policy": "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self'; connect-src 'self'; font-src 'self' data: https://fonts.gstatic.com;",
       "Referrer-Policy": "strict-origin-when-cross-origin",
       "X-Content-Type-Options": "nosniff",
       "X-Frame-Options": "DENY",

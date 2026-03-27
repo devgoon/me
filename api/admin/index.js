@@ -1,4 +1,4 @@
-const { Client } = require("pg");
+const { Client } = require("../db");
 const { getClientPrincipal } = require("../_shared/auth");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 
@@ -20,6 +20,48 @@ function asArray(value) {
   return value
     .map((item) => (item === null || item === undefined ? "" : String(item).trim()))
     .filter(Boolean);
+}
+
+const { parsePgArray, safeParseJson } = require('../_shared/parse');
+
+function coerceToNewlineString(v) {
+  if (!v) return '';
+  if (Array.isArray(v)) return v.join('\n');
+  if (typeof v === 'string') {
+    try {
+      const p = JSON.parse(v);
+      return Array.isArray(p) ? p.join('\n') : Object.values(p).join('\n');
+    } catch (e) {
+      // Try Postgres array literal
+      const pg = parsePgArray(v);
+      if (pg !== null) return pg.join('\n');
+      return v.split(/\r?\n/).map(s => s.trim()).filter(Boolean).join('\n');
+    }
+  }
+  if (typeof v === 'object') return Object.values(v).map(String).join('\n');
+  return String(v);
+}
+
+function coerceToArray(v) {
+  if (Array.isArray(v)) return v;
+  if (v === null || v === undefined) return [];
+  if (typeof v === 'string') {
+    const s = v.trim();
+    if (s === '') return [];
+    // Try JSON first
+    const pj = safeParseJson(s);
+    if (pj) {
+      if (Array.isArray(pj)) return pj.map((x) => (x === null || x === undefined ? '' : String(x)));
+      if (typeof pj === 'object' && pj !== null) return Object.values(pj).map(String).filter(Boolean);
+    }
+    // Try Postgres array literal
+    const pg = parsePgArray(s);
+    if (pg !== null) return pg;
+    // split by newline or comma heuristics
+    return s.split(/\r?\n|,\s*/).map((x) => x.trim()).filter(Boolean);
+  }
+  if (typeof v === 'object') return Object.values(v).map((x) => (x === null || x === undefined ? '' : String(x))).filter(Boolean);
+  return [String(v)];
 }
 
 // asDate helper removed (unused)
@@ -121,10 +163,9 @@ function mapSkillCategory(input) {
 
 async function resolveCandidate(client, email, profile) {
   const existing = await client.query(
-    `SELECT id
+    `SELECT TOP 1 id
      FROM candidate_profile
-     WHERE LOWER(email) = LOWER($1)
-     LIMIT 1`,
+     WHERE LOWER(email) = LOWER(@p1)`,
     [email]
   );
 
@@ -134,8 +175,8 @@ async function resolveCandidate(client, email, profile) {
 
   const inserted = await client.query(
     `INSERT INTO candidate_profile (name, email)
-     VALUES ($1, $2)
-     RETURNING id`,
+     OUTPUT INSERTED.id
+     VALUES (@p1, @p2)`,
     [asText(profile.fullName) || email.split("@")[0], email]
   );
 
@@ -144,33 +185,32 @@ async function resolveCandidate(client, email, profile) {
 
 async function loadAll(client, candidateId) {
   const profileRes = await client.query(
-    `SELECT *
+    `SELECT TOP 1 *
      FROM candidate_profile
-     WHERE id = $1
-     LIMIT 1`,
+     WHERE id = @p1`,
     [candidateId]
   );
 
   const expRes = await client.query(
     `SELECT *
      FROM experiences
-     WHERE candidate_id = $1
-     ORDER BY start_date DESC NULLS LAST`,
+     WHERE candidate_id = @p1
+     ORDER BY CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
     [candidateId]
   );
 
   const skillsRes = await client.query(
     `SELECT *
      FROM skills
-     WHERE candidate_id = $1
-     ORDER BY category ASC, self_rating DESC NULLS LAST, skill_name ASC`,
+     WHERE candidate_id = @p1
+     ORDER BY category ASC, CASE WHEN self_rating IS NULL THEN 1 ELSE 0 END ASC, self_rating DESC, skill_name ASC`,
     [candidateId]
   );
 
   const gapsRes = await client.query(
     `SELECT *
      FROM gaps_weaknesses
-     WHERE candidate_id = $1
+     WHERE candidate_id = @p1
      ORDER BY id ASC`,
     [candidateId]
   );
@@ -178,8 +218,8 @@ async function loadAll(client, candidateId) {
   const educationRes = await client.query(
     `SELECT *
      FROM education
-     WHERE candidate_id = $1
-     ORDER BY display_order ASC, start_date DESC NULLS LAST`,
+     WHERE candidate_id = @p1
+     ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
     [candidateId]
   );
 
@@ -188,8 +228,8 @@ async function loadAll(client, candidateId) {
     certRes = (await client.query(
       `SELECT *
        FROM certifications
-       WHERE candidate_id = $1
-       ORDER BY display_order ASC, issue_date DESC NULLS LAST`,
+       WHERE candidate_id = @p1
+       ORDER BY display_order ASC, CASE WHEN issue_date IS NULL THEN 1 ELSE 0 END ASC, issue_date DESC`,
       [candidateId]
     )) || { rows: [] };
   } catch (err) {
@@ -197,18 +237,17 @@ async function loadAll(client, candidateId) {
   }
 
   const valuesRes = await client.query(
-    `SELECT *
+    `SELECT TOP 1 *
      FROM values_culture
-     WHERE candidate_id = $1
-     ORDER BY created_at DESC
-     LIMIT 1`,
+     WHERE candidate_id = @p1
+     ORDER BY created_at DESC`,
     [candidateId]
   );
 
   const faqRes = await client.query(
     `SELECT *
      FROM faq_responses
-     WHERE candidate_id = $1
+     WHERE candidate_id = @p1
      ORDER BY is_common_question DESC, id ASC`,
     [candidateId]
   );
@@ -216,7 +255,7 @@ async function loadAll(client, candidateId) {
   const insRes = await client.query(
     `SELECT *
      FROM ai_instructions
-     WHERE candidate_id = $1
+     WHERE candidate_id = @p1
      ORDER BY priority ASC, id ASC`,
     [candidateId]
   );
@@ -247,8 +286,8 @@ async function loadAll(client, candidateId) {
       fullName: profile.name || "",
       email: profile.email || "",
       currentTitle: profile.title || "",
-      targetTitles: profile.target_titles || [],
-      targetCompanyStages: profile.target_company_stages || [],
+      targetTitles: coerceToArray(profile.target_titles),
+      targetCompanyStages: coerceToArray(profile.target_company_stages),
       elevatorPitch: profile.elevator_pitch || "",
       careerNarrative: profile.career_narrative || "",
       lookingFor: profile.looking_for || "",
@@ -271,7 +310,7 @@ async function loadAll(client, candidateId) {
       startDate: formatDateToYMD(row.start_date),
       endDate: formatDateToYMD(row.end_date),
       current: Boolean(row.is_current),
-      achievementBullets: row.bullet_points || [],
+      achievementBullets: coerceToArray(row.bullet_points),
       whyJoined: row.why_joined || "",
       whyLeft: row.why_left || "",
       actualContributions: row.actual_contributions || "",
@@ -282,7 +321,14 @@ async function loadAll(client, candidateId) {
       managerDescribe: row.manager_would_say || "",
       reportsDescribe: row.reports_would_say || "",
       conflictsChallenges: row.challenges_faced || "",
-      quantifiedImpact: row.quantified_impact ? JSON.stringify(row.quantified_impact, null, 2) : "",
+      quantifiedImpact: (() => {
+        if (!row.quantified_impact && row.quantified_impact !== 0) return "";
+        if (typeof row.quantified_impact === 'object') return JSON.stringify(row.quantified_impact, null, 2);
+        // try parsing stored string as JSON
+        const parsed = safeParseJson(String(row.quantified_impact));
+        if (parsed) return JSON.stringify(parsed, null, 2);
+        return String(row.quantified_impact);
+      })(),
       displayOrder: row.display_order || 0
     })),
     skills: skillsRes.rows.map((row) => ({
@@ -323,8 +369,8 @@ async function loadAll(client, candidateId) {
       displayOrder: row.display_order || 0
     })),
     valuesCulture: {
-      mustHaves: (values.must_haves || []).join("\n"),
-      dealbreakers: (values.dealbreakers || []).join("\n"),
+      mustHaves: coerceToNewlineString(values.must_haves),
+      dealbreakers: coerceToNewlineString(values.dealbreakers),
       managementStylePreferences: values.management_style_preferences || "",
       teamSizePreferences: values.team_size_preferences || "",
       howHandleConflict: values.how_handle_conflict || "",
@@ -361,32 +407,33 @@ async function saveAll(client, candidateId, payload, authEmail) {
     throw new Error("Salary min cannot be greater than salary max");
   }
 
-  await client.query("BEGIN");
+  console.log(`[admin.saveAll] BEGIN TRANSACTION candidateId=${candidateId}`);
+  await client.beginTransaction();
   try {
     await client.query(
       `UPDATE candidate_profile
        SET
-         updated_at = NOW(),
-         name = $2,
-         email = $3,
-         title = $4,
-         target_titles = $5,
-         target_company_stages = $6,
-         elevator_pitch = $7,
-         career_narrative = $8,
-         looking_for = $9,
-         not_looking_for = $10,
-         management_style = $11,
-         work_style = $12,
-         salary_min = $13,
-         salary_max = $14,
-         availability_status = $15,
-         availability_date = $16,
-         location = $17,
-         remote_preference = $18,
-         linkedin_url = $19,
-         github_url = $20
-       WHERE id = $1`,
+         updated_at = GETUTCDATE(),
+         name = @p2,
+         email = @p3,
+         title = @p4,
+         target_titles = @p5,
+         target_company_stages = @p6,
+         elevator_pitch = @p7,
+         career_narrative = @p8,
+         looking_for = @p9,
+         not_looking_for = @p10,
+         management_style = @p11,
+         work_style = @p12,
+         salary_min = @p13,
+         salary_max = @p14,
+         availability_status = @p15,
+         availability_date = @p16,
+         location = @p17,
+         remote_preference = @p18,
+         linkedin_url = @p19,
+         github_url = @p20
+       WHERE id = @p1`,
       [
         candidateId,
         safeName,
@@ -411,10 +458,11 @@ async function saveAll(client, candidateId, payload, authEmail) {
       ]
     );
 
-    await client.query("DELETE FROM experiences WHERE candidate_id = $1", [candidateId]);
     // Only require companyName (company_name is NOT NULL in the DB). Titles may be empty.
+    // Remove existing experiences for this candidate to avoid unique-key conflicts,
+    // then re-insert the provided list.
+    await client.query("DELETE FROM experiences WHERE candidate_id = @p1", [candidateId]);
     const validExperiences = experiences.filter((item) => asText(item.companyName));
-    console.log(`[admin.saveAll] candidateId=${candidateId} - saving ${validExperiences.length} experiences`);
     for (const [index, item] of validExperiences.entries()) {
       let impactJson = null;
       const rawImpact = asText(item.quantifiedImpact);
@@ -426,17 +474,8 @@ async function saveAll(client, candidateId, payload, authEmail) {
         }
       }
 
-      // Log date values before inserting to help debug save issues
       const _startDate = formatDateToYMD(item.startDate) || null;
       const _endDate = item.current ? null : (formatDateToYMD(item.endDate) || null);
-      console.log('[admin.saveAll] insert experience', {
-        idx: index,
-        company: asText(item.companyName),
-        title: asText(item.title),
-        startDate: _startDate,
-        endDate: _endDate,
-        current: Boolean(item.current)
-      });
 
       await client.query(
         `INSERT INTO experiences (
@@ -445,10 +484,10 @@ async function saveAll(client, candidateId, payload, authEmail) {
           would_do_differently, challenges_faced, lessons_learned, manager_would_say,
           reports_would_say, quantified_impact, display_order
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,
-          $8,$9,$10,$11,$12,
-          $13,$14,$15,$16,
-          $17,$18,$19
+          @p1,@p2,@p3,@p4,@p5,@p6,@p7,
+          @p8,@p9,@p10,@p11,@p12,
+          @p13,@p14,@p15,@p16,
+          @p17,@p18,@p19
         )`,
         [
           candidateId,
@@ -474,16 +513,15 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await client.query("DELETE FROM skills WHERE candidate_id = $1", [candidateId]);
+    await client.query("DELETE FROM skills WHERE candidate_id = @p1", [candidateId]);
     const validSkills = skills.filter((item) => asText(item.skillName));
     for (const item of validSkills) {
       // Normalize lastUsed: prefer canonical YMD, fall back to MDY display if provided
       const normalizedLastUsed = formatDateToYMD(item.lastUsed) || formatMDYToYMD(item.lastUsedDisplay || "") || null;
-      console.log('[admin.saveAll] insert skill', { skill: asText(item.skillName), raw: item.lastUsed, lastUsedDisplay: item.lastUsedDisplay, normalizedLastUsed });
       await client.query(
         `INSERT INTO skills (
           candidate_id, skill_name, category, self_rating, evidence, honest_notes, years_experience, last_used
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        ) VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8)`,
         [
           candidateId,
           asText(item.skillName),
@@ -497,12 +535,12 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await client.query("DELETE FROM gaps_weaknesses WHERE candidate_id = $1", [candidateId]);
+    await client.query("DELETE FROM gaps_weaknesses WHERE candidate_id = @p1", [candidateId]);
     const validGaps = gaps.filter((item) => asText(item.description));
     for (const item of validGaps) {
       await client.query(
         `INSERT INTO gaps_weaknesses (candidate_id, gap_type, description, why_its_a_gap, interest_in_learning)
-         VALUES ($1, $2, $3, $4, $5)`,
+         VALUES (@p1, @p2, @p3, @p4, @p5)`,
         [
           candidateId,
           mapGapType(item.gapType),
@@ -513,13 +551,13 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await client.query("DELETE FROM education WHERE candidate_id = $1", [candidateId]);
+    await client.query("DELETE FROM education WHERE candidate_id = @p1", [candidateId]);
     const validEducation = education.filter((item) => asText(item.institution) || asText(item.degree));
     for (const [index, item] of validEducation.entries()) {
       await client.query(
         `INSERT INTO education (
           candidate_id, institution, degree, field_of_study, start_date, end_date, is_current, grade, notes, display_order
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        ) VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10)`,
         [
           candidateId,
           asText(item.institution),
@@ -536,13 +574,13 @@ async function saveAll(client, candidateId, payload, authEmail) {
     }
 
     // Certifications
-    await client.query("DELETE FROM certifications WHERE candidate_id = $1", [candidateId]);
+    await client.query("DELETE FROM certifications WHERE candidate_id = @p1", [candidateId]);
     const validCerts = Array.isArray(payload.certifications) ? payload.certifications.filter((c) => asText(c.name)) : [];
     for (const [index, item] of validCerts.entries()) {
       await client.query(
         `INSERT INTO certifications (
           candidate_id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        ) VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9)`,
         [
           candidateId,
           asText(item.name),
@@ -557,12 +595,12 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await client.query("DELETE FROM values_culture WHERE candidate_id = $1", [candidateId]);
+    await client.query("DELETE FROM values_culture WHERE candidate_id = @p1", [candidateId]);
     await client.query(
       `INSERT INTO values_culture (
         candidate_id, must_haves, dealbreakers, management_style_preferences,
         team_size_preferences, how_handle_conflict, how_handle_ambiguity, how_handle_failure
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      ) VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8)`,
       [
         candidateId,
         asArray(String(valuesCulture.mustHaves || "").split(/\r?\n/)),
@@ -575,12 +613,12 @@ async function saveAll(client, candidateId, payload, authEmail) {
       ]
     );
 
-    await client.query("DELETE FROM faq_responses WHERE candidate_id = $1", [candidateId]);
+    await client.query("DELETE FROM faq_responses WHERE candidate_id = @p1", [candidateId]);
     const validFaq = faq.filter((item) => asText(item.question) || asText(item.answer));
     for (const item of validFaq) {
       await client.query(
         `INSERT INTO faq_responses (candidate_id, question, answer, is_common_question)
-         VALUES ($1, $2, $3, $4)`,
+         VALUES (@p1, @p2, @p3, @p4)`,
         [
           candidateId,
           String(item.question || "").trim(),
@@ -590,12 +628,12 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await client.query("DELETE FROM ai_instructions WHERE candidate_id = $1", [candidateId]);
+    await client.query("DELETE FROM ai_instructions WHERE candidate_id = @p1", [candidateId]);
 
     const honestyLevel = Number(aiInstructions.honestyLevel || 7);
     await client.query(
       `INSERT INTO ai_instructions (candidate_id, instruction_type, instruction, priority)
-       VALUES ($1, 'honesty', $2, 0)`,
+       VALUES (@p1, 'honesty', @p2, 0)`,
       [candidateId, `HONESTY_LEVEL:${Math.min(10, Math.max(1, Math.round(honestyLevel)))}`]
     );
 
@@ -606,7 +644,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
       }
       await client.query(
         `INSERT INTO ai_instructions (candidate_id, instruction_type, instruction, priority)
-         VALUES ($1, $2, $3, $4)`,
+         VALUES (@p1, @p2, @p3, @p4)`,
         [
           candidateId,
           mapInstructionType(item.instructionType),
@@ -616,18 +654,21 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await client.query("COMMIT");
+    await client.commitTransaction();
   } catch (error) {
-    await client.query("ROLLBACK");
+    console.error('[admin.saveAll] error', error && error.stack ? error.stack : error);
+    try {
+      await client.rollbackTransaction();
+    } catch (rbErr) {
+      console.error('[admin.saveAll] rollback error', rbErr && rbErr.stack ? rbErr.stack : rbErr);
+    }
     throw error;
   }
 }
 
 module.exports = async function(context, req) {
   const obs = beginRequest(context, req, "admin.panel");
-  console.log('[admin.panel] incoming request', { method: req && req.method, url: req && req.url });
   const auth = requireAuth(req);
-  console.log('[admin.panel] auth', auth ? { email: auth.email, userId: auth.userId } : null);
   if (!auth) {
     context.res = {
       status: 401,
@@ -661,7 +702,6 @@ module.exports = async function(context, req) {
         // Invalidate AI cache after profile updates that affect generated responses
         try {
           if (module.exports && typeof module.exports.hideCacheRecords === "function") {
-            await module.exports.hideCacheRecords(client);
           }
         } catch (err) {
           // don't fail the save because cache invalidation failed; log and continue
@@ -744,5 +784,5 @@ module.exports.cacheReport = async function(context, req) {
 };
 
 module.exports.hideCacheRecords = async function(client) {
-  await client.query(`UPDATE ai_response_cache SET is_cached = FALSE, invalidated_at = NOW() WHERE is_cached = TRUE`);
+  await client.query(`UPDATE ai_response_cache SET is_cached = FALSE, invalidated_at = GETUTCDATE() WHERE is_cached = TRUE`);
 };

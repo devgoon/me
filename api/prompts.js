@@ -1,6 +1,65 @@
 const textOrNA = (value) => { if (value === null || value === undefined || value === '') return 'N/A'; return String(value); };
 const dateOrPresent = (value) => { if (!value) return 'Present'; return String(value); };
-const listLines = (items, emptyLine) => { if (!items || items.length === 0) return emptyLine; return items.map((item) => `- ${item}`).join('\n'); };
+const { parsePgArray, safeParseJson } = require('./_shared/parse');
+
+const ensureArray = (items) => {
+  if (!items) return [];
+  if (Array.isArray(items)) return items;
+  if (typeof items === 'string') {
+    const t = items.trim();
+    if (t === '') return [];
+    // Try JSON first
+    const parsedJson = safeParseJson(t);
+    if (parsedJson) {
+      if (Array.isArray(parsedJson)) return parsedJson;
+      if (typeof parsedJson === 'object' && parsedJson !== null) return Object.values(parsedJson).map(String).filter(Boolean);
+    }
+    // Try Postgres array literal: {"a","b"}
+    const pg = parsePgArray(t);
+    if (pg !== null) return pg;
+    // comma or newline separated
+    const byComma = t.split(/,\s*/).map(s => s.trim()).filter(Boolean);
+    if (byComma.length > 1) return byComma;
+    const byLine = t.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    return byLine;
+  }
+  if (typeof items === 'object') {
+    try { return Object.values(items).map(v => String(v)); } catch (e) { return []; }
+  }
+  return [];
+};
+
+const listLines = (items, emptyLine) => {
+  if (!items) return emptyLine;
+  if (Array.isArray(items)) {
+    if (items.length === 0) return emptyLine;
+    return items.map((item) => `- ${item}`).join('\n');
+  }
+  if (typeof items === 'string') {
+    const trimmed = items.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+          const parsed = JSON.parse(trimmed);
+          return listLines(parsed, emptyLine);
+      } catch (e) {
+        // fallthrough to line-splitting below
+      }
+    }
+    const arr = items.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    if (arr.length === 0) return emptyLine;
+    return arr.map((item) => `- ${item}`).join('\n');
+  }
+  if (typeof items === 'object') {
+    try {
+      const vals = Object.values(items).map(v => String(v)).filter(Boolean);
+      if (vals.length === 0) return emptyLine;
+      return vals.map((item) => `- ${item}`).join('\n');
+    } catch (e) {
+      return emptyLine;
+    }
+  }
+  return emptyLine;
+};
 
 function fitSkillLines(skills) {
   if (!skills || skills.length === 0) return '- None listed';
@@ -73,8 +132,8 @@ function buildFitPrompt(payload) {
 
   const valuesText = payload.values
     ? [
-        `- must_haves: ${textOrNA((payload.values.must_haves || []).join(', '))}`,
-        `- dealbreakers: ${textOrNA((payload.values.dealbreakers || []).join(', '))}`,
+        `- must_haves: ${textOrNA(ensureArray(payload.values.must_haves).join(', '))}`,
+        `- dealbreakers: ${textOrNA(ensureArray(payload.values.dealbreakers).join(', '))}`,
         `- management_style_preferences: ${textOrNA(payload.values.management_style_preferences)}`
       ].join('\n')
     : '- No values/culture profile found';
@@ -94,7 +153,7 @@ function buildFitPrompt(payload) {
   const parts = [
     `Candidate: ${profile.name} (${textOrNA(profile.email)})`,
     `Title: ${textOrNA(profile.title)}`,
-    `Target roles: ${textOrNA((profile.target_titles || []).join(', '))}`,
+    `Target roles: ${textOrNA(ensureArray(profile.target_titles).join(', '))}`,
     '## SUMMARY',
     textOrNA(profile.elevator_pitch),
     '## EXPERIENCE',
@@ -203,8 +262,8 @@ function buildChatPrompt(payload) {
         `- id: ${textOrNA(payload.values.id)}`,
         `- candidate_id: ${textOrNA(payload.values.candidate_id)}`,
         `- created_at: ${textOrNA(payload.values.created_at)}`,
-        `- must_haves: ${textOrNA((payload.values.must_haves || []).join(', '))}`,
-        `- dealbreakers: ${textOrNA((payload.values.dealbreakers || []).join(', '))}`,
+        `- must_haves: ${textOrNA(ensureArray(payload.values.must_haves).join(', '))}`,
+        `- dealbreakers: ${textOrNA(ensureArray(payload.values.dealbreakers).join(', '))}`,
         `- management_style_preferences: ${textOrNA(payload.values.management_style_preferences)}`,
         `- team_size_preferences: ${textOrNA(payload.values.team_size_preferences)}`,
         `- how_handle_conflict: ${textOrNA(payload.values.how_handle_conflict)}`,
@@ -241,7 +300,7 @@ function buildChatPrompt(payload) {
     `## ABOUT ${profile.name}`,
     textOrNA(profile.elevator_pitch),
     textOrNA(profile.career_narrative),
-    `Target roles: ${textOrNA((profile.target_titles || []).join(', '))}`,
+    `Target roles: ${textOrNA(ensureArray(profile.target_titles).join(', '))}`,
     `What I'm looking for: ${textOrNA(profile.looking_for)}`,
     `What I'm NOT looking for: ${textOrNA(profile.not_looking_for)}`,
     '## WORK EXPERIENCE',

@@ -1,7 +1,7 @@
-const { Client } = require('pg');
+const { Client } = require('../db');
 const experienceHandler = require('../experience/index');
 
-jest.mock('pg', () => ({ Client: jest.fn() }));
+jest.mock('../db', () => ({ Client: jest.fn() }));
 
 describe('experience API', () => {
   let client;

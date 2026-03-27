@@ -1,4 +1,4 @@
-const { Client } = require("pg");
+const { Client } = require("../db");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 
 const DB_CONNECT_TIMEOUT_MS = 3000;

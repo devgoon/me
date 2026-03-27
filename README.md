@@ -40,12 +40,13 @@ Architecture Diagram
 - Prerequisites
 - Node.js (tested on 20+) and npm
 - GNU Make
-- PostgreSQL client tools (psql, pg_dump)
+- Azure SQL tools: `sqlcmd` and `sqlpackage` (for backups/restore). Alternatively, you can run DB commands with a Node script using the `mssql`/`tedious` packages.
 
 Environment (local)
 - Copy and fill `.env.local` from `.env.local.example` (DO NOT commit secrets).
-- Key env vars:
-  - `DATABASE_URL` — Postgres connection (SSL recommended)
+-- Key env vars:
+  - `AZURE_SQL_CONN` — Azure SQL connection string suitable for `sqlpackage` and `sqlcmd`, for example:
+    `Server=tcp:myhost.database.windows.net,1433;Initial Catalog=mydb;User ID=myuser;Password=secret;Encrypt=true;TrustServerCertificate=false;`
   - `ANTHROPIC_API_KEY` — AI provider key (required for AI-backed endpoints; missing this will cause AI endpoints to return 500 errors)
   - `AI_MODEL` — model id (optional override)
   - `FUNCTIONS_WORKER_RUNTIME=node`
@@ -58,7 +59,7 @@ make start
 ```
 
 Database management
-- `make backup-db` — create a SQL dump of the current database into `db/backup-<timestamp>.sql`. Uses `DATABASE_URL` from `.env.local`.
+- `make backup-db` — export the current database. For Azure SQL this will export a `.bacpac` using `sqlpackage` and reads the connection string from `AZURE_SQL_CONN` in `.env.local`. For other workflows, use a Node-based export script or the Azure portal. Ensure `AZURE_SQL_CONN` is set in `.env.local`.
 - `make deploy-db` — runs the full deployment workflow (pre/post schema dumps, migrations, verification). Review `Makefile` and ensure `.env.local` is configured before running.
 
 Quick commands:

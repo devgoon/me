@@ -1,7 +1,7 @@
-const { Client } = require("pg");
+const { Client } = require("../db");
 const { getClientPrincipal } = require("../_shared/auth");
 
-jest.mock("pg", () => ({
+jest.mock("../db", () => ({
   Client: jest.fn()
 }));
 

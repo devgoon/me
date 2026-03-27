@@ -1,7 +1,7 @@
-const { Client } = require("pg");
+const { Client } = require("../db");
 const chatHandler = require("../chat/index");
 
-jest.mock("pg", () => ({
+jest.mock("../db", () => ({
   Client: jest.fn()
 }));
 

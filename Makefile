@@ -112,28 +112,37 @@ stop:
 		exit 1; \
 	fi; \
 	echo "Local app stack stopped."
-	
- backup-db:
-	@echo "Backing up database..."
-	@DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) ; \
-	TIMESTAMP=$$(date +%Y%m%d%H%M%S) ; \
-	pg_dump --no-owner --no-acl --format=plain --file=db/backup-$$TIMESTAMP.sql "$$DB_URL" ; \
-	mv db/backup-$$TIMESTAMP.sql db/export.sql
+
+backup-db:
+	@echo "Backing up Azure SQL database to db/export.bacpac (requires sqlpackage)"
+	@set -e; \
+	if [ ! -f .env.local ]; then echo ".env.local not found; create .env.local with AZURE_SQL_CONN set"; exit 1; fi; \
+	AZURE_SQL_CONN_LINE=$$(grep -E '^AZURE_SQL_CONN=' .env.local || true); \
+	if [ -z "$$AZURE_SQL_CONN_LINE" ]; then echo "AZURE_SQL_CONN not found in .env.local; please add it (wrap in quotes if it contains semicolons)"; exit 1; fi; \
+	AZURE_SQL_CONN=$$(echo "$$AZURE_SQL_CONN_LINE" | sed -E 's/^AZURE_SQL_CONN=//; s/^"(.*)"$$/\1/'); \
+	if [ -z "$$AZURE_SQL_CONN" ]; then echo "AZURE_SQL_CONN in .env.local is empty; please set it"; exit 1; fi; \
+	if ! command -v sqlpackage >/dev/null 2>&1; then echo "sqlpackage not found. Install Microsoft SQLPackage to export bacpac."; exit 1; fi; \
+	TIMESTAMP=$$(date +%Y%m%d%H%M%S); \
+	echo "Exporting to db/backup-$$TIMESTAMP.bacpac"; \
+	sqlpackage /Action:Export /SourceConnectionString:"$$AZURE_SQL_CONN" /TargetFile:db/backup-$$TIMESTAMP.bacpac || (echo "sqlpackage export failed"; exit 1); \
+	mv db/backup-$$TIMESTAMP.bacpac db/export.bacpac; \
+	echo "Backup complete: db/export.bacpac"
 
 deploy-db:
-	@echo "Starting full database deployment workflow..."
+	@echo "Starting base schema deploy: will run db/schema_azure.sql"
+	@printf "Are you sure you want to deploy the base schema? Type 'yes' to continue: "; \
+	read CONFIRM; \
+	if [ "$${CONFIRM}" != "yes" ]; then echo "Aborting deploy-db."; exit 1; fi; \
 	@set -e; \
-	# Dump pre-migration schema, backup, and profile data in parallel
-	$(MAKE) pre-migration-schema backup-db profile-data-backup || { $(MAKE) rollback-db; exit 1; }; \
-	# Run migration and dump post-migration schema
-	$(MAKE) migrate-db post-migration-schema || { $(MAKE) rollback-db; exit 1; }; \
-	# Verify migration and upload profile data
-	$(MAKE) verify-migration profile-data-upload || { $(MAKE) rollback-db; exit 1; }; \
+	$(MAKE) run-sql-file file=db/schema_azure.sql || { echo "schema apply failed"; exit 1; }; \
 	echo "Database deployment complete."
 
 run-sql-file:
 	@echo "Running SQL file: $(file)"
-	@set -a; . .env.local; set +a; \
-	db_url=$$DATABASE_URL; \
-	if [ -z "$$db_url" ]; then echo "DATABASE_URL not set"; exit 1; fi; \
-	psql "$$db_url" -f $(file)
+	@bash scripts/run-sql-file.sh $(file)
+
+install-sqlcmd:
+	@echo "Running sqlcmd installer script scripts/install-sqlcmd.sh"
+	@bash scripts/install-sqlcmd.sh
+	@echo "Ensuring sqlpackage is installed (for bacpac export/import)"
+	@bash scripts/install-sqlpackage.sh || echo "sqlpackage installer failed; please install sqlpackage manually if you need backup/restore"

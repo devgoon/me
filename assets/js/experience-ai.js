@@ -32,6 +32,31 @@
     const end = isCurrent ? "Present" : fmt(endDate);
     return `${start} - ${end}`;
   }
+  function normalizeList(items) {
+    if (!items) return [];
+    if (Array.isArray(items)) return items.filter(Boolean).map(String);
+    if (typeof items === 'string') {
+      const t = items.trim();
+      if (!t) return [];
+      try {
+        if ((t.startsWith('[') || t.startsWith('{'))) {
+          const parsed = JSON.parse(t);
+          if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+          return Object.values(parsed).map(String).filter(Boolean);
+        }
+      } catch (e) {
+        // fallthrough to splitting
+      }
+      // split by newlines or commas
+      const byComma = t.split(/,\s*/).map(s => s.trim()).filter(Boolean);
+      if (byComma.length > 1) return byComma;
+      return t.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    }
+    if (typeof items === 'object') {
+      try { return Object.values(items).map(String).filter(Boolean); } catch (e) { return []; }
+    }
+    return [];
+  }
   function renderExperience(experiences) {
     // Sort experiences by start date descending (most recent first)
     const sorted = (experiences || []).slice().sort((a, b) => {
@@ -42,7 +67,7 @@
     experienceList.innerHTML = sorted
       .map((exp) => {
         const contextId = `context-${exp.id}`;
-        const bullets = (exp.bulletPoints || [])
+        const bullets = normalizeList(exp.bulletPoints)
           .map((item) => `<li>${escapeHtml(item)}</li>`)
           .join("");
         return `
@@ -52,7 +77,7 @@
                             <span>${escapeHtml(formatDateRange(exp.startDate, exp.endDate, exp.isCurrent))}</span>
                         </div>
             <p class="role-title">${escapeHtml(exp.title || "")}</p>
-            <ul class="achievement-list">${bullets || "<li>No public achievements provided.</li>"}</ul>
+            ${bullets ? `<ul class="achievement-list">${bullets}</ul>` : `<p class="no-achievements">No public achievements provided.</p>`}
             <button class="ai-context-toggle" type="button" aria-expanded="false" aria-controls="${contextId}" data-target="${contextId}">✨ Show AI Context</button>
             <div class="ai-context-panel" id="${contextId}" hidden>
               <h3>SITUATION</h3>

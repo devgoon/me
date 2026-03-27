@@ -1,7 +1,7 @@
-const { Client } = require('pg');
+const { Client } = require('../db');
 const fitHandler = require('../fit/index');
 
-jest.mock('pg', () => ({ Client: jest.fn() }));
+jest.mock('../db', () => ({ Client: jest.fn() }));
 
 describe('fit-check API', () => {
   let client;

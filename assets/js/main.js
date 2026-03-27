@@ -19,6 +19,33 @@
   if(chatClose) chatClose.addEventListener('click', closeChat);
   if(chatOverlay) chatOverlay.addEventListener('click', closeChat);
 })();
+
+// Handle images in the Certifications section without using inline event handlers
+document.addEventListener('DOMContentLoaded', function () {
+    try {
+        var certImgs = document.querySelectorAll('#certifications img');
+        certImgs.forEach(function (img) {
+            function halve() {
+                if (img.width) {
+                    img.width = Math.floor(img.width / 2);
+                }
+            }
+            if (img.complete) {
+                halve();
+            }
+            else {
+                var handler = function () {
+                    halve();
+                    img.removeEventListener('load', handler);
+                };
+                img.addEventListener('load', handler);
+            }
+        });
+    }
+    catch (e) {
+        // no-op on failures to avoid breaking page
+    }
+});
 // @ts-nocheck
 /**
 * Template Name: MyResume - v4.9.2
