@@ -74,3 +74,5 @@ assets/*.txt
 local.settings.json
 .azurite/
 azurite_storage/
+# Database backups
+db/*.bacpac
