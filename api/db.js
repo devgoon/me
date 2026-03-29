@@ -3,170 +3,57 @@ const sql = require('mssql');
 
 class Client {
   constructor(options) {
-    this._connectionString = (options && options.connectionString) || process.env.DATABASE_URL || null;
+    this._connectionString = (options && options.connectionString) || null;
     this._pool = null;
   }
 
   async connect() {
-    if (!this._connectionString) throw new Error('DATABASE_URL is not configured');
-    let cs = this._connectionString;
-    // Support connection strings that start with the sqlserver:// prefix
-    if (/^sqlserver:\/\//i.test(cs)) {
-      cs = cs.replace(/^sqlserver:\/\//i, '');
-    }
-
-    // Build a mssql config object from many possible connection string formats:
-    // - full URI: mssql://user:pass@host:port/db?encrypt=true
-    // - sqlserver://...
-    // - host:port;database=...;user=...;password=...
-    // - key=value;key2=value2; DSN
-    function buildConfig(orig) {
-      if (!orig || typeof orig !== 'string') return orig;
-      const s = orig.trim();
-
-      // Try URI parsing if it looks like a URI or contains an @ and / (user@host/db)
-      const looksLikeUri = /^[a-z0-9+.-]+:\/\//i.test(s) || (/@/.test(s) && /\/.+/.test(s));
-      if (looksLikeUri) {
-        try {
-          const raw = /^[a-z0-9+.-]+:\/\//i.test(s) ? s : `mssql://${s}`;
-          const u = new URL(raw);
-          const host = u.hostname;
-          const port = u.port ? Number(u.port) : undefined;
-          const user = u.username || undefined;
-          const password = u.password || undefined;
-          const database = (u.pathname || '').replace(/^\//, '') || undefined;
-          const opts = {};
-          for (const [k, v] of u.searchParams.entries()) {
-            opts[k.toLowerCase()] = v;
-          }
-          const config = {
-            server: host || undefined,
-            options: {
-              encrypt: (opts.encrypt || '').toLowerCase() === 'true',
-              trustServerCertificate: (opts.trustservercertificate || '').toLowerCase() === 'true'
-            }
-          };
-          // Default to encrypt=true for Azure SQL when not explicitly set
-          if (config.options.encrypt !== true && config.options.encrypt !== false) {
-            config.options.encrypt = true;
-          }
-          if (port) config.port = port;
-          if (user) config.user = user;
-          if (password) config.password = password;
-          if (database) config.database = database;
-          return config;
-        } catch (e) {
-          // fall through
-        }
+    // Prefer an explicit option, then DATABASE_URL.
+    const raw = this._connectionString || process.env.DATABASE_URL || '';
+    let connStr = '';
+    if (raw !== null && raw !== undefined) {
+      connStr = String(raw).trim();
+      // tolerate surrounding single or double quotes from .env files
+      if ((connStr.startsWith('"') && connStr.endsWith('"')) || (connStr.startsWith("'") && connStr.endsWith("'"))) {
+        connStr = connStr.slice(1, -1);
       }
-
-      // Otherwise, if it looks like key=value;... parse into kv map
-      if (/=/.test(s)) {
-        const parts = s.split(';').map(p => p.trim()).filter(Boolean);
+      // Support DATABASE_URL values emitted by some tools, e.g.:
+      // sqlserver://host:1433;database=NAME;user=USER;password=PW;encrypt=true;...
+      if (/^\s*sqlserver:\/\//i.test(connStr)) {
+        // split on semicolons
+        const parts = connStr.split(/;/).map((s) => s.trim()).filter(Boolean);
+        const first = parts.shift(); // sqlserver://host:port
+        const hostPort = first.replace(/^sqlserver:\/\//i, '');
+        let host = hostPort;
+        let port = '';
+        if (hostPort.includes(':')) {
+          const idx = hostPort.lastIndexOf(':');
+          host = hostPort.slice(0, idx);
+          port = hostPort.slice(idx + 1);
+        }
         const kv = {};
-        for (const part of parts) {
-          const eq = part.indexOf('=');
-          if (eq === -1) continue;
-          const k = part.slice(0, eq).trim();
-          const v = part.slice(eq + 1).trim();
-          kv[k.toLowerCase()] = v;
-        }
-
-        // server may be in 'server', 'data source', or in 'server=tcp:host,1433'
-        let serverRaw = kv['server'] || kv['data source'] || '';
-        if (!serverRaw && kv['data-source']) serverRaw = kv['data-source'];
-        if (serverRaw && serverRaw.toLowerCase().startsWith('tcp:')) serverRaw = serverRaw.slice(4);
-
-        let server = serverRaw;
-        let port = undefined;
-        if (serverRaw && serverRaw.indexOf(',') !== -1) {
-          const [h, p] = serverRaw.split(',');
-          server = h.trim();
-          port = Number(p.trim()) || undefined;
-        }
-
-        const config = {
-          server: server || undefined,
-          options: {
-            encrypt: (kv['encrypt'] || '').toLowerCase() === 'true',
-            trustServerCertificate: (kv['trustservercertificate'] || '').toLowerCase() === 'true'
-          }
-        };
-        // Default to encrypt=true for Azure SQL when not explicitly set
-        if (config.options.encrypt !== true && config.options.encrypt !== false) {
-          config.options.encrypt = true;
-        }
-        if (port) config.port = port;
-        if (kv['user id'] || kv['user'] || kv['uid']) config.user = kv['user id'] || kv['user'] || kv['uid'];
-        if (kv['password'] || kv['pwd']) config.password = kv['password'] || kv['pwd'];
-        if (kv['database'] || kv['initial catalog']) config.database = kv['database'] || kv['initial catalog'];
-        if (kv['connect timeout'] || kv['logintimeout']) config.connectionTimeout = Number(kv['connect timeout'] || kv['logintimeout']) * 1000;
-        return config;
+        parts.forEach((p) => {
+          const m = p.match(/^([^=]+)=(.*)$/);
+          if (m) kv[m[1].toLowerCase()] = m[2];
+        });
+        const dataSource = port ? `${host},${port}` : host;
+        const initialCatalog = kv.database || kv.db || '';
+        const user = kv.user || kv.username || kv.uid || kv.u || '';
+        const password = kv.password || kv.pw || kv.pass || '';
+        const encrypt = kv.encrypt || '';
+        // Build a driver-friendly connection string
+        let built = `Data Source=${dataSource};`;
+        if (initialCatalog) built += `Initial Catalog=${initialCatalog};`;
+        if (user) built += `User ID=${user};`;
+        if (password) built += `Password=${password};`;
+        if (encrypt) built += `Encrypt=${encrypt};`;
+        connStr = built;
       }
-
-      // Fallback: if it looks like host:port;... pattern (e.g., host:1433;database=...)
-      const hostPortMatch = s.match(/^([^;:]+):(\d+);?(.*)$/);
-      if (hostPortMatch) {
-        const host = hostPortMatch[1];
-        const port = Number(hostPortMatch[2]);
-        const rest = hostPortMatch[3] || '';
-        const kv = { server: `${host},${port}` };
-        if (rest) {
-          const parts = rest.split(';').map(p => p.trim()).filter(Boolean);
-          for (const part of parts) {
-            const eq = part.indexOf('=');
-            if (eq === -1) continue;
-            const k = part.slice(0, eq).trim();
-            const v = part.slice(eq + 1).trim();
-            kv[k.toLowerCase()] = v;
-          }
-        }
-        const config = {
-          server: host,
-          port: port,
-          options: { encrypt: (kv['encrypt'] || '').toLowerCase() === 'true' }
-        };
-        // Default to encrypt=true for Azure SQL when not explicitly set
-        if (config.options.encrypt !== true && config.options.encrypt !== false) {
-          config.options.encrypt = true;
-        }
-        if (kv['user'] || kv['user id']) config.user = kv['user'] || kv['user id'];
-        if (kv['password'] || kv['pwd']) config.password = kv['password'] || kv['pwd'];
-        if (kv['database'] || kv['initial catalog']) config.database = kv['database'] || kv['initial catalog'];
-        return config;
-      }
-
-      return orig;
     }
-
-    // If explicit AZURE_SQL_* env vars are provided, prefer them over DATABASE_URL
-    const azureServer = process.env.AZURE_SQL_SERVER;
-    if (azureServer) {
-      const cfg = {
-        server: azureServer,
-        options: {
-          encrypt: true,
-          trustServerCertificate: true
-        }
-      };
-      if (process.env.AZURE_SQL_PORT) cfg.port = Number(process.env.AZURE_SQL_PORT);
-      if (process.env.AZURE_SQL_DATABASE) cfg.database = process.env.AZURE_SQL_DATABASE;
-      if (process.env.AZURE_SQL_USER) cfg.user = process.env.AZURE_SQL_USER;
-      if (process.env.AZURE_SQL_PASSWORD) cfg.password = process.env.AZURE_SQL_PASSWORD;
-      // Note: advanced AAD authentication types are not configured here;
-      // if using managed identity/AAD, ensure local dev auth is handled separately.
-      this._pool = new sql.ConnectionPool(cfg);
-      await this._pool.connect();
-      return;
+    if (!connStr) {
+      throw new Error('Azure SQL connection string not provided. Set DATABASE_URL or pass connectionString option.');
     }
-
-    const built = buildConfig(cs);
-    if (built && typeof built === 'object' && !Array.isArray(built)) {
-      this._pool = new sql.ConnectionPool(built);
-    } else {
-      // fallback to passing connection string
-      this._pool = new sql.ConnectionPool(String(built || cs));
-    }
+    this._pool = new sql.ConnectionPool(String(connStr));
     await this._pool.connect();
   }
 

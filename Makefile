@@ -40,6 +40,10 @@ start:
 	if [ -f .env.local ]; then \
 		set -a; . .env.local; set +a; \
 	fi; \
+	# Ensure DEBUG_DB is enabled for local Functions host unless explicitly disabled
+	if [ -z "$$DEBUG_DB" ]; then \
+		export DEBUG_DB=1; \
+	fi; \
 	npx swa start --config swa-cli.config.json --config-name me-local
 
 stop:
@@ -113,20 +117,12 @@ stop:
 	fi; \
 	echo "Local app stack stopped."
 
-backup-db:
+backup-db: install-sqlcmd
 	@echo "Backing up Azure SQL database to db/export.bacpac (requires sqlpackage)"
 	@set -e; \
-	if [ ! -f .env.local ]; then echo ".env.local not found; create .env.local with AZURE_SQL_CONN set"; exit 1; fi; \
-	AZURE_SQL_CONN_LINE=$$(grep -E '^AZURE_SQL_CONN=' .env.local || true); \
-	if [ -z "$$AZURE_SQL_CONN_LINE" ]; then echo "AZURE_SQL_CONN not found in .env.local; please add it (wrap in quotes if it contains semicolons)"; exit 1; fi; \
-	AZURE_SQL_CONN=$$(echo "$$AZURE_SQL_CONN_LINE" | sed -E 's/^AZURE_SQL_CONN=//; s/^"(.*)"$$/\1/'); \
-	if [ -z "$$AZURE_SQL_CONN" ]; then echo "AZURE_SQL_CONN in .env.local is empty; please set it"; exit 1; fi; \
-	if ! command -v sqlpackage >/dev/null 2>&1; then echo "sqlpackage not found. Install Microsoft SQLPackage to export bacpac."; exit 1; fi; \
-	TIMESTAMP=$$(date +%Y%m%d%H%M%S); \
-	echo "Exporting to db/backup-$$TIMESTAMP.bacpac"; \
-	sqlpackage /Action:Export /SourceConnectionString:"$$AZURE_SQL_CONN" /TargetFile:db/backup-$$TIMESTAMP.bacpac || (echo "sqlpackage export failed"; exit 1); \
-	mv db/backup-$$TIMESTAMP.bacpac db/export.bacpac; \
-	echo "Backup complete: db/export.bacpac"
+	if [ ! -f .env.local ]; then echo ".env.local not found; create .env.local with DATABASE_ADO set"; exit 1; fi; \
+	# Delegate to the backup script which requires DATABASE_ADO
+	./scripts/backup-db.sh || (echo "backup script failed"; exit 1)
 
 deploy-db:
 	@echo "Starting base schema deploy: will run db/schema_azure.sql"

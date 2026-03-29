@@ -47,4 +47,4 @@ make start
 
 Backup & restore
 ----------------
-Use `make backup-db` to export the database. For Azure SQL this produces a `.bacpac` using `sqlpackage`. The Makefile reads the Azure connection string from `AZURE_SQL_CONN` in `.env.local`. The Makefile no longer performs Postgres dump or client operations — if you need to run SQL files locally for non-Azure DBs, prefer a Node-based runner (for example `node ./scripts/run-sql.js`) or use the cloud provider tooling.
+Use `make backup-db` to export the database. For Azure SQL this produces a `.bacpac` using `sqlpackage`. The Makefile reads the connection string from `DATABASE_URL` in `.env.local`. The Makefile no longer performs Postgres dump or client operations — if you need to run SQL files locally for non-Azure DBs, prefer a Node-based runner (for example `node ./scripts/run-sql.js`) or use the cloud provider tooling.

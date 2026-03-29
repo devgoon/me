@@ -459,9 +459,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
     );
 
     // Only require companyName (company_name is NOT NULL in the DB). Titles may be empty.
-    // Remove existing experiences for this candidate to avoid unique-key conflicts,
-    // then re-insert the provided list.
-    await client.query("DELETE FROM experiences WHERE candidate_id = @p1", [candidateId]);
+    // Upsert each experience row to preserve existing records and avoid unique-key conflicts.
     const validExperiences = experiences.filter((item) => asText(item.companyName));
     for (const [index, item] of validExperiences.entries()) {
       let impactJson = null;
@@ -478,17 +476,31 @@ async function saveAll(client, candidateId, payload, authEmail) {
       const _endDate = item.current ? null : (formatDateToYMD(item.endDate) || null);
 
       await client.query(
-        `INSERT INTO experiences (
-          candidate_id, company_name, title, title_progression, start_date, end_date, is_current,
-          bullet_points, why_joined, why_left, actual_contributions, proudest_achievement,
-          would_do_differently, challenges_faced, lessons_learned, manager_would_say,
-          reports_would_say, quantified_impact, display_order
-        ) VALUES (
-          @p1,@p2,@p3,@p4,@p5,@p6,@p7,
-          @p8,@p9,@p10,@p11,@p12,
-          @p13,@p14,@p15,@p16,
-          @p17,@p18,@p19
-        )`,
+        `MERGE INTO experiences AS target
+         USING (VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19))
+           AS src(candidate_id, company_name, title, title_progression, start_date, end_date, is_current, bullet_points, why_joined, why_left, actual_contributions, proudest_achievement, would_do_differently, challenges_faced, lessons_learned, manager_would_say, reports_would_say, quantified_impact, display_order)
+         ON target.candidate_id = src.candidate_id AND target.company_name = src.company_name AND target.start_date = src.start_date
+         WHEN MATCHED THEN
+           UPDATE SET
+             title = src.title,
+             title_progression = src.title_progression,
+             end_date = src.end_date,
+             is_current = src.is_current,
+             bullet_points = src.bullet_points,
+             why_joined = src.why_joined,
+             why_left = src.why_left,
+             actual_contributions = src.actual_contributions,
+             proudest_achievement = src.proudest_achievement,
+             would_do_differently = src.would_do_differently,
+             challenges_faced = src.challenges_faced,
+             lessons_learned = src.lessons_learned,
+             manager_would_say = src.manager_would_say,
+             reports_would_say = src.reports_would_say,
+             quantified_impact = src.quantified_impact,
+             display_order = src.display_order
+         WHEN NOT MATCHED BY TARGET THEN
+           INSERT (candidate_id, company_name, title, title_progression, start_date, end_date, is_current, bullet_points, why_joined, why_left, actual_contributions, proudest_achievement, would_do_differently, challenges_faced, lessons_learned, manager_would_say, reports_would_say, quantified_impact, display_order)
+           VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19);`,
         [
           candidateId,
           asText(item.companyName),
@@ -704,7 +716,7 @@ module.exports = async function(context, req) {
           if (module.exports && typeof module.exports.hideCacheRecords === "function") {
           }
         } catch (err) {
-          // don't fail the save because cache invalidation failed; log and continue
+          console.error("Error invalidating cache records:", err && err.stack ? err.stack : err);
         }
       context.res = {
         status: 200,
