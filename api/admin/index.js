@@ -714,6 +714,7 @@ module.exports = async function(context, req) {
         // Invalidate AI cache after profile updates that affect generated responses
         try {
           if (module.exports && typeof module.exports.hideCacheRecords === "function") {
+            await module.exports.hideCacheRecords(client);
           }
         } catch (err) {
           console.error("Error invalidating cache records:", err && err.stack ? err.stack : err);

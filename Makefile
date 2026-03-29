@@ -19,16 +19,23 @@ unit-test:
 	@echo "Running API tests"
 	cd api && npm test -- --runInBand
 
+coverage:
+	@echo "Running repository tests with coverage (console summary)"
+	@npm run coverage
+
 check:
-	@echo "==> [1/4] Running spellcheck"
+	@echo "==> [1/5] Running spellcheck"
 	@$(MAKE) spellcheck
-	@echo "==> [2/4] Running lint"
+	@echo "==> [2/5] Running lint"
 	@$(MAKE) lint
-	@echo "==> [3/4] Running unit tests"
+	@echo "==> [3/5] Running unit tests"
 	@$(MAKE) unit-test
-	@echo "==> [4/4] Running link check"
+	@echo "==> [4/5] Running link check"
 	@$(MAKE) link-check
+	@echo "==> [5/5] Running code coverage check"
+	@$(MAKE) coverage
 	@echo "==> Quality checks complete"
+
 
  
 start:
