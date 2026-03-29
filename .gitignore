@@ -81,3 +81,7 @@ azurite_storage/
 
 db/export.sql
 migrations/*.sql
+.nyc_output/
+coverage/
+api/coverage/
+api/.nyc_output/
