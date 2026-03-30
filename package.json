@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "test": "jest --runInBand",
+    "build": "echo 'No UI build required'",
     "coverage": "jest --coverage --coverageReporters=text --coverageReporters=text-summary --runInBand",
     "coverage:api": "cd api && npm run coverage",
     "coverage:assets": "cd assets && npm run coverage || true",
