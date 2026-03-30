@@ -161,6 +161,7 @@ jobs:
           action: upload
           app_location: "/"
           api_location: "api"
+          app_artifact_location: "/"
 
       - name: Smoke test AAD login endpoint
         if: ${{ env.SWA_DEPLOY_TOKEN != '' }}
