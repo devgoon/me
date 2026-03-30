@@ -201,15 +201,21 @@ jobs:
           echo "Listing swa-dist/api:"; ls -la swa-dist/api || true
           echo "Sizes:"; du -sh swa-dist swa-dist/api swa-dist/api/node_modules || true
 
-      - name: Deploy
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ env.SWA_DEPLOY_TOKEN }}
-          skip_deploy_on_missing_secrets: true
-          action: upload
-          app_location: "swa-dist"
-          api_location: "swa-dist/api"
-          skip_app_build: true
+      - name: Deploy using SWA CLI
+        shell: bash
+        env:
+          SWA_CLI_DEPLOYMENT_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SWA_CLI_DEPLOYMENT_TOKEN:-}" ]; then
+            echo "Missing deployment token; skipping deploy"
+            exit 0
+          fi
+          echo "Deploying swa-dist with SWA CLI"
+          npx --yes @azure/static-web-apps-cli@latest deploy swa-dist \
+            --api-location swa-dist/api \
+            --deployment-token "$SWA_CLI_DEPLOYMENT_TOKEN" \
+            --env production --verbose
 
       - name: Smoke test AAD login endpoint
         if: ${{ env.SWA_DEPLOY_TOKEN != '' }}
