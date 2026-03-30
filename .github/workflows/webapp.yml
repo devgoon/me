@@ -201,6 +201,18 @@ jobs:
           echo "Listing swa-dist/api:"; ls -la swa-dist/api || true
           echo "Sizes:"; du -sh swa-dist swa-dist/api swa-dist/api/node_modules || true
 
+      - name: Validate deployment package
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Checking critical files..."
+          [ -f swa-dist/staticwebapp.config.json ] || { echo "Missing staticwebapp.config.json"; exit 1; }
+          [ -d swa-dist/api ] || { echo "Missing api directory"; exit 1; }
+          [ -f swa-dist/api/package.json ] || { echo "Missing api/package.json"; exit 1; }
+          [ -d swa-dist/api/node_modules ] || { echo "Missing api/node_modules"; exit 1; }
+          echo "All critical files present"
+          find swa-dist/api/node_modules -maxdepth 0 -type d -exec du -sh {} \;
+
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
