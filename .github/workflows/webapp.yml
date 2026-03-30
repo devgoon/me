@@ -144,7 +144,7 @@ jobs:
           if [ -d api ]; then
             echo "Installing API dependencies (npm ci) in api/"
             pushd api >/dev/null
-            npm ci --production || npm ci
+            npm ci --omit=dev || npm ci
             popd >/dev/null
           else
             echo "No api/ directory found; skipping npm install"
@@ -171,6 +171,18 @@ jobs:
           # Remove common archive/backup artifacts if copied
           find swa-dist -type f \( -name "*.bacpac" -o -name "*.zip" -o -name "*.tar" -o -name "*.tgz" -o -name "*.bak" \) -exec rm -f {} + || true
           echo "swa-dist size:"; du -sh swa-dist || true
+
+      - name: Show swa-dist size (MB)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d swa-dist ]; then
+            SIZE_MB=$(du -sm swa-dist | awk '{print $1}')
+            echo "swa-dist size: ${SIZE_MB} MB"
+          else
+            echo "swa-dist not found"
+            exit 1
+          fi
 
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
