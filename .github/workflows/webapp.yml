@@ -26,6 +26,13 @@ jobs:
         with:
           node-version: 20.18.1
 
+      - name: Show Node and npm versions (ci)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Node (ci):"; node -v
+          echo "npm (ci):"; npm -v
+
       - name: Install dependencies
         run: make install
 
@@ -133,6 +140,13 @@ jobs:
                 AZURE_DATABASE_URL="$AZURE_DATABASE_URL" \
                 AI_MODEL="$AI_MODEL" \
               --output table
+
+      - name: Show Node and npm versions (deploy)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Node (deploy):"; node -v
+          echo "npm (deploy):"; npm -v
 
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
