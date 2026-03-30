@@ -75,6 +75,11 @@ jobs:
         with:
           submodules: false
 
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.18.1
+
       - name: Validate AI deployment settings
         shell: bash
         run: |
@@ -145,41 +150,41 @@ jobs:
           for p in *; do
             # Skip meta and known large directories/files
             case "$p" in
-              .git|swa-dist|db|.azurite|coverage|.nyc_output|node_modules)
+              .git|swa-dist|db|.azurite|coverage|.nyc_output|node_modules|.env|.env.local|dist|build|.vscode)
                 echo "Skipping $p"
                 continue
                 ;;
             esac
             cp -a "$p" swa-dist/ || true
           done
-          # Remove common archive/backup artifacts if copied
-          find swa-dist -type f \( -name "*.bacpac" -o -name "*.zip" -o -name "*.tar" -o -name "*.tgz" -o -name "*.bak" \) -exec rm -f {} + || true
-          # Ensure config files are present in the package
+
+          # Remove problematic file types
+          find swa-dist -type f \( \
+            -name "*.bacpac" -o -name "*.zip" -o -name "*.tar" -o -name "*.tgz" -o -name "*.bak" \
+            -o -name ".env*" -o -name "*.log" -o -name "*.lock" \) \
+            -exec rm -f {} + || true
+
+          # Ensure config files are present
           if [ -f staticwebapp.config.json ]; then
-            cp staticwebapp.config.json swa-dist/ || true
-          fi
-          if [ -f swa-cli.config.json ]; then
-            cp swa-cli.config.json swa-dist/ || true
+            cp staticwebapp.config.json swa-dist/
           fi
 
-          # Remove any copied api/node_modules to avoid shipping dev deps
+          # Remove copied api/node_modules
           if [ -d swa-dist/api/node_modules ]; then
             echo "Removing copied api/node_modules from swa-dist"
             rm -rf swa-dist/api/node_modules || true
           fi
 
-          # Install production API dependencies inside the package
+          # Install production API dependencies
           if [ -d swa-dist/api ]; then
-            echo "Installing production API dependencies into swa-dist/api"
+            echo "Installing production API dependencies"
             pushd swa-dist/api >/dev/null
-            npm ci && npm prune --production
+            npm ci --omit=dev
             popd >/dev/null
-          else
-            echo "No swa-dist/api directory found; skipping API install"
           fi
 
-          echo "swa-dist/staticwebapp.config.json contents:"; cat swa-dist/staticwebapp.config.json || true
-          echo "swa-dist size:"; du -sh swa-dist || true
+          echo "swa-dist prepared successfully"
+          du -sh swa-dist
 
       - name: Show swa-dist size (MB)
         shell: bash
