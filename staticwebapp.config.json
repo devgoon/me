@@ -1,9 +1,6 @@
 {
   "platform": {
-    "apiRuntime": {
-      "language": "node",
-      "version": "18"
-    }
+    "apiRuntime": "node:18"
   },
   "routes": [
     { "route": "/auth", "rewrite": "/auth.html" },
