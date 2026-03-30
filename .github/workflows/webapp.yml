@@ -94,10 +94,6 @@ jobs:
             echo "Missing required variable: AI_MODEL"
             exit 1
           fi
-          if [[ -z "${RESOURCE_GROUP:-}" ]]; then
-            echo "Missing required variable: AZURE_RESOURCE_GROUP"
-            exit 1
-          fi
 
       - name: Azure Login
         uses: azure/login@v2
