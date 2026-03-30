@@ -1,4 +1,4 @@
-.PHONY: install lint spellcheck link-check unit-test coverage check start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db
+.PHONY: install lint spellcheck link-check unit-test coverage check start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
 
 install:
 	npm install
@@ -155,3 +155,24 @@ restore-db: install-sqlcmd
 	fi
 	@echo "Restoring BACPAC '$(BACPAC)' into database '$(TARGET_DB)' (server from .env.local DATABASE_ADO)"
 	@./scripts/restore-db.sh "$(BACPAC)" "$(TARGET_DB)"
+
+gh-sync-env:
+	@# Usage: make gh-sync-env REPO=owner/repo ENV_FILE=.env.local
+	@ENV_FILE=${ENV_FILE:-.env.local}; \
+	REPO_FROM_MAKE="$(REPO)"; \
+	if [ -n "$$REPO_FROM_MAKE" ]; then \
+		REPO="$$REPO_FROM_MAKE"; \
+	else \
+		REPO=""; \
+	fi; \
+	if [ -z "$$REPO" ]; then \
+		echo "No REPO specified; attempting to detect via gh..."; \
+		REPO=$$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true); \
+		if [ -z "$$REPO" ]; then \
+			echo "Specify REPO=owner/repo"; exit 1; \
+		fi; \
+	fi; \
+	echo "About to sync env vars from $$ENV_FILE to $$REPO. This will create/update Secrets/Variables."; \
+	printf "Proceed? Type 'yes' to continue: "; read ans; \
+	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
+	./scripts/gh-sync-env-to-gh.sh --env-file "$$ENV_FILE" --repo "$$REPO"

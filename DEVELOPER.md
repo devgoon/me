@@ -101,3 +101,42 @@ Where outputs appear
 - Schema script: `db/schema.sql`
 - Bacpac exports: `db/backup-<timestamp>.bacpac`
 
+GitHub secrets sync
+-------------------
+You can synchronize local environment keys into GitHub repository Secrets and Variables using the helper script `scripts/gh-sync-env-to-gh.sh`.
+
+- Purpose: read a dotenv-style file (default: `.env.local`) and create/update GitHub Secrets or Repository Variables for the current repo.
+- Rule-of-thumb: keys containing `SECRET`, `TOKEN`, `PASSWORD`/`PASS`, `KEY`, or `API` are created as GitHub Secrets; other keys become GitHub Variables. The script prints which class it will create for each key and supports a `--dry-run` mode.
+- Basic usage / dry-run:
+
+```bash
+./scripts/gh-sync-env-to-gh.sh --env-file .env.local --repo owner/repo --dry-run
+```
+
+- Create/update interactively:
+
+```bash
+./scripts/gh-sync-env-to-gh.sh --env-file .env.local --repo owner/repo
+```
+
+- Non-interactive (CI):
+
+```bash
+./scripts/gh-sync-env-to-gh.sh --env-file .env.local --repo owner/repo --force
+```
+
+- Notes:
+	- The script requires the `gh` CLI to be installed and authenticated with permissions to modify repository Secrets/Variables.
+	- Always run with `--dry-run` first to verify which keys will become Secrets vs Variables.
+
+Make target
+-----------
+- `make gh-sync-env REPO=owner/repo ENV_FILE=.env.local` — interactive wrapper that prompts before running the sync script.
+  - Example:
+
+```bash
+make gh-sync-env REPO=devgoon/me ENV_FILE=.env.local
+```
+
+  - The Make target will attempt to detect the repo if `REPO=` is not supplied, and it requires you to type `yes` to proceed.
+
