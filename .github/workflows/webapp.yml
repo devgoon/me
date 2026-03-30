@@ -134,19 +134,6 @@ jobs:
                 RESOURCE_GROUP="${RESOURCE_GROUP:-}" \
               --output table
 
-      - name: Install API dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -d api ]; then
-            echo "Installing API dependencies (npm ci) in api/"
-            pushd api >/dev/null
-            npm ci && npm prune --production
-            popd >/dev/null
-          else
-            echo "No api/ directory found; skipping npm install"
-          fi
-
       - name: Prepare clean deploy package
         shell: bash
         run: |
@@ -175,6 +162,22 @@ jobs:
             cp swa-cli.config.json swa-dist/ || true
           fi
 
+          # Remove any copied api/node_modules to avoid shipping dev deps
+          if [ -d swa-dist/api/node_modules ]; then
+            echo "Removing copied api/node_modules from swa-dist"
+            rm -rf swa-dist/api/node_modules || true
+          fi
+
+          # Install production API dependencies inside the package
+          if [ -d swa-dist/api ]; then
+            echo "Installing production API dependencies into swa-dist/api"
+            pushd swa-dist/api >/dev/null
+            npm ci && npm prune --production
+            popd >/dev/null
+          else
+            echo "No swa-dist/api directory found; skipping API install"
+          fi
+
           echo "swa-dist/staticwebapp.config.json contents:"; cat swa-dist/staticwebapp.config.json || true
           echo "swa-dist size:"; du -sh swa-dist || true
 
@@ -189,6 +192,14 @@ jobs:
             echo "swa-dist not found"
             exit 1
           fi
+
+      - name: List swa-dist contents for debugging
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Listing swa-dist root:"; ls -la swa-dist || true
+          echo "Listing swa-dist/api:"; ls -la swa-dist/api || true
+          echo "Sizes:"; du -sh swa-dist swa-dist/api swa-dist/api/node_modules || true
 
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
