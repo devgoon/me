@@ -76,3 +76,4 @@ local.settings.json
 azurite_storage/
 # Database backups
 db/*.bacpac
+swa-dist/

@@ -137,6 +137,19 @@ jobs:
                 RESOURCE_GROUP="${RESOURCE_GROUP:-}" \
               --output table
 
+      - name: Install API dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d api ]; then
+            echo "Installing API dependencies (npm ci) in api/"
+            pushd api >/dev/null
+            npm ci --production || npm ci
+            popd >/dev/null
+          else
+            echo "No api/ directory found; skipping npm install"
+          fi
+
       - name: Prepare clean deploy package
         shell: bash
         run: |

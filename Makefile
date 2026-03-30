@@ -4,6 +4,12 @@ install:
 	npm install
 	cd api && npm install
 
+# CI-friendly install: install only runtime (non-dev) dependencies
+# Use `make install-ci` in CI to avoid devDependencies being installed.
+install-ci:
+	npm ci --omit=dev
+	cd api && npm ci --omit=dev
+
 lint:
 	@npx eslint "api/**/*.js" "assets/js/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
 
