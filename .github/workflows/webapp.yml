@@ -4,11 +4,6 @@ on:
   push:
     branches: [ ai-portfolio ]
   workflow_dispatch:
-    inputs:
-      debug:
-        description: 'Enable extra diagnostic steps (true/false)'
-        required: false
-        default: 'false'
 
 permissions:
   contents: read
@@ -142,40 +137,27 @@ jobs:
                 RESOURCE_GROUP="${RESOURCE_GROUP:-}" \
               --output table
 
-      - name: Debug diagnostics (pre-deploy)
-        if: ${{ github.event.inputs.debug == 'true' }}
+      - name: Prepare clean deploy package
         shell: bash
         run: |
           set -euo pipefail
-          echo "*** DEBUG: workspace root listing ***"
-          pwd
-          echo "--- top-level ---"
-          ls -la --color=auto || true
-          echo "--- sizes (human) ---"
-          du -sh ./* 2>/dev/null || true
-          echo "--- staticwebapp.config.json ---"
-          if [[ -f staticwebapp.config.json ]]; then
-            sed -n '1,200p' staticwebapp.config.json || true
-          else
-            echo "(no staticwebapp.config.json present)"
-          fi
-          echo "--- api tree (first 200 lines) ---"
-          if [[ -d api ]]; then
-            find api -maxdepth 3 -type f -print0 | xargs -0 ls -lh | sed -n '1,200p' || true
-          else
-            echo "(no api folder)"
-          fi
-          echo "--- node / npm versions ---"
-          node --version || true
-          npm --version || true
-          echo "--- git info ---"
-          git rev-parse --verify HEAD || true
-          git status --porcelain || true
-          echo "--- sample file checks (large files) ---"
-          find . -type f -size +5M -exec ls -lh {} \; || true
-          echo "--- Azure Static Web App info ---"
-          az staticwebapp show --name "${STATIC_WEB_APP_NAME:-}" --resource-group "${RESOURCE_GROUP:-}" -o table || true
-
+          echo "Preparing swa-dist (excluding db, local caches, and node_modules)"
+          rm -rf swa-dist
+          mkdir -p swa-dist
+          shopt -s dotglob || true
+          for p in *; do
+            # Skip meta and known large directories/files
+            case "$p" in
+              .git|swa-dist|db|.azurite|coverage|.nyc_output|api/node_modules)
+                echo "Skipping $p"
+                continue
+                ;;
+            esac
+            cp -a "$p" swa-dist/ || true
+          done
+          # Remove common archive/backup artifacts if copied
+          find swa-dist -type f \( -name "*.bacpac" -o -name "*.zip" -o -name "*.tar" -o -name "*.tgz" -o -name "*.bak" \) -exec rm -f {} + || true
+          echo "swa-dist size:"; du -sh swa-dist || true
 
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
@@ -183,8 +165,8 @@ jobs:
           azure_static_web_apps_api_token: ${{ env.SWA_DEPLOY_TOKEN }}
           skip_deploy_on_missing_secrets: true
           action: upload
-          app_location: "/"
-          api_location: "api"
+          app_location: "swa-dist"
+          api_location: "swa-dist/api"
           skip_app_build: true
 
       - name: Smoke test AAD login endpoint
