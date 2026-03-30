@@ -175,8 +175,12 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ env.SWA_DEPLOY_TOKEN }}
           skip_deploy_on_missing_secrets: true
+          # prevent Oryx from building the site (we deploy static files from repo root)
+          skip_app_build: true
           action: upload
           app_location: "/"
+          # app artifacts are the repo root (html + assets)
+          app_artifact_location: "."
           api_location: "api/dist"
           # No app_artifact_location: site is static from repo root (html + assets)
           # leaving this blank avoids Oryx scanning the repo root for builds
