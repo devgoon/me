@@ -26,9 +26,6 @@ jobs:
         with:
           node-version: 20.18.1
 
-      - name: Install pdftotext (poppler-utils)
-        run: sudo apt-get update && sudo apt-get install -y poppler-utils
-
       - name: Install dependencies
         run: make install
 
@@ -144,7 +141,7 @@ jobs:
           if [ -d api ]; then
             echo "Installing API dependencies (npm ci) in api/"
             pushd api >/dev/null
-            npm ci --omit=dev || npm ci
+            npm ci --omit=dev || (npm ci && npm prune --production)
             popd >/dev/null
           else
             echo "No api/ directory found; skipping npm install"
