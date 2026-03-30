@@ -167,6 +167,15 @@ jobs:
           done
           # Remove common archive/backup artifacts if copied
           find swa-dist -type f \( -name "*.bacpac" -o -name "*.zip" -o -name "*.tar" -o -name "*.tgz" -o -name "*.bak" \) -exec rm -f {} + || true
+          # Ensure config files are present in the package
+          if [ -f staticwebapp.config.json ]; then
+            cp staticwebapp.config.json swa-dist/ || true
+          fi
+          if [ -f swa-cli.config.json ]; then
+            cp swa-cli.config.json swa-dist/ || true
+          fi
+
+          echo "swa-dist/staticwebapp.config.json contents:"; cat swa-dist/staticwebapp.config.json || true
           echo "swa-dist size:"; du -sh swa-dist || true
 
       - name: Show swa-dist size (MB)
