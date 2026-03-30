@@ -153,6 +153,23 @@ jobs:
           echo "Node (deploy):"; node -v
           echo "npm (deploy):"; npm -v
 
+      - name: Build minimal API bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd api
+          # install production dependencies only
+          if [ -f package-lock.json ] || [ -f package.json ]; then
+            npm ci --omit=dev
+          fi
+          # create a slim dist folder using .funcignore to prune files
+          rm -rf dist
+          mkdir -p dist
+          rsync -a --exclude-from='.funcignore' --delete ./ ./dist/
+          # remove source maps and markdowns from dist just in case
+          find dist -name '*.map' -type f -delete || true
+          find dist -name '*.md' -type f -delete || true
+
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -160,8 +177,9 @@ jobs:
           skip_deploy_on_missing_secrets: true
           action: upload
           app_location: "/"
-          api_location: "api"
-          app_artifact_location: "/"
+          api_location: "api/dist"
+          # No app_artifact_location: site is static from repo root (html + assets)
+          # leaving this blank avoids Oryx scanning the repo root for builds
 
       - name: Smoke test AAD login endpoint
         if: ${{ env.SWA_DEPLOY_TOKEN != '' }}
