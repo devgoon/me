@@ -237,14 +237,14 @@ async function loadCandidateData(client) {
 module.exports = async function(context) {
   const req = context.req || null;
   const obs = beginRequest(context, req, "experience.get");
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = process.env.AZURE_DATABASE_URL;
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
   if (!databaseUrl) {
     context.res = {
       status: 500,
       headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
-      body: { error: "DATABASE_URL is not configured" }
+      body: { error: "AZURE_DATABASE_URL is not configured" }
     };
     endRequest(context, obs, 500);
     return;

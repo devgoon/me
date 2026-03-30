@@ -66,10 +66,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
       SWA_DEPLOY_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
       AI_MODEL: ${{ vars.AI_MODEL }}
-      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       SITE_HOSTNAME: ${{ vars.SITE_HOSTNAME }}
       STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
     steps:
@@ -87,8 +86,8 @@ jobs:
             echo "Missing required secret: ANTHROPIC_API_KEY"
             exit 1
           fi
-          if [[ -z "${DATABASE_URL:-}" ]]; then
-            echo "Missing required secret: DATABASE_URL"
+          if [[ -z "${AZURE_DATABASE_URL:-}" ]]; then
+            echo "Missing required secret: AZURE_DATABASE_URL"
             exit 1
           fi
           if [[ -z "${AI_MODEL:-}" ]]; then
@@ -133,7 +132,7 @@ jobs:
               --resource-group "$RESOURCE_GROUP" \
               --setting-names \
                 ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
-                DATABASE_URL="$DATABASE_URL" \
+                AZURE_DATABASE_URL="$AZURE_DATABASE_URL" \
                 AI_MODEL="$AI_MODEL" \
               --output table
 

@@ -21,7 +21,7 @@ module.exports = async function(context, req) {
     }
     return s;
   }
-  const databaseUrl = normalizeConn(process.env.DATABASE_URL);
+  const databaseUrl = normalizeConn(process.env.AZURE_DATABASE_URL);
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const aiModel = process.env.AI_MODEL;
  
@@ -41,7 +41,7 @@ module.exports = async function(context, req) {
     }
   };
 
-  // DB check (DATABASE_URL)
+  // DB check (AZURE_DATABASE_URL)
   if (databaseUrl) {
     const client = new Client({ connectionString: databaseUrl });
     try {

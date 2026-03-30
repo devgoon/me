@@ -5,12 +5,12 @@ jest.mock('../db', () => ({ Client: jest.fn() }));
 
 describe('fit-check API', () => {
   let client;
-  const originalDatabaseUrl = process.env.DATABASE_URL;
+  const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
   const originalApiKey = process.env.ANTHROPIC_API_KEY;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+    process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     process.env.ANTHROPIC_API_KEY = 'test-key';
     client = { connect: jest.fn().mockResolvedValue(undefined), query: jest.fn(), end: jest.fn().mockResolvedValue(undefined) };
     Client.mockImplementation(() => client);
@@ -18,7 +18,7 @@ describe('fit-check API', () => {
   });
 
   afterAll(() => {
-    if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL; else process.env.DATABASE_URL = originalDatabaseUrl;
+    if (originalDatabaseUrl === undefined) delete process.env.AZURE_DATABASE_URL; else process.env.AZURE_DATABASE_URL = originalDatabaseUrl;
     if (originalApiKey === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = originalApiKey;
   });
 

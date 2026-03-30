@@ -8,8 +8,8 @@ class Client {
   }
 
   async connect() {
-    // Prefer an explicit option, then DATABASE_URL.
-    const raw = this._connectionString || process.env.DATABASE_URL || '';
+    // Prefer an explicit option, then AZURE_DATABASE_URL.
+    const raw = this._connectionString || process.env.AZURE_DATABASE_URL || '';
     let connStr = '';
     if (raw !== null && raw !== undefined) {
       connStr = String(raw).trim();
@@ -17,7 +17,7 @@ class Client {
       if ((connStr.startsWith('"') && connStr.endsWith('"')) || (connStr.startsWith("'") && connStr.endsWith("'"))) {
         connStr = connStr.slice(1, -1);
       }
-      // Support DATABASE_URL values emitted by some tools, e.g.:
+      // Support AZURE_DATABASE_URL values emitted by some tools, e.g.:
       // sqlserver://host:1433;database=NAME;user=USER;password=PW;encrypt=true;...
       if (/^\s*sqlserver:\/\//i.test(connStr)) {
         // split on semicolons
@@ -51,7 +51,7 @@ class Client {
       }
     }
     if (!connStr) {
-      throw new Error('Azure SQL connection string not provided. Set DATABASE_URL or pass connectionString option.');
+      throw new Error('Azure SQL connection string not provided. Set AZURE_DATABASE_URL or pass connectionString option.');
     }
     this._pool = new sql.ConnectionPool(String(connStr));
     await this._pool.connect();

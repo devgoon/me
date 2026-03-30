@@ -64,11 +64,11 @@ function buildContext() {
 
 describe("admin API", () => {
   let client;
-  const originalDatabaseUrl = process.env.DATABASE_URL;
+  const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/test";
+    process.env.AZURE_DATABASE_URL = "postgresql://test:test@localhost:5432/test";
     client = {
       connect: jest.fn().mockResolvedValue(undefined),
       query: jest.fn(),
@@ -79,9 +79,9 @@ describe("admin API", () => {
 
   afterAll(() => {
     if (originalDatabaseUrl === undefined) {
-      delete process.env.DATABASE_URL;
+      delete process.env.AZURE_DATABASE_URL;
     } else {
-      process.env.DATABASE_URL = originalDatabaseUrl;
+      process.env.AZURE_DATABASE_URL = originalDatabaseUrl;
     }
   });
 

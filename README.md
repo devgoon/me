@@ -45,7 +45,7 @@ Architecture Diagram
 Environment (local)
 - Copy and fill `.env.local` from `.env.local.example` (DO NOT commit secrets).
 -- Key env vars:
-  - `DATABASE_URL` — Database connection string used by local tooling. Provide either an ADO-style connection string (suitable for `sqlpackage`/`sqlcmd`), for example:
+  - `AZURE_DATABASE_URL` — Database connection string used by local tooling. Provide either an ADO-style connection string (suitable for `sqlpackage`/`sqlcmd`), for example:
     `Server=tcp:myhost.database.windows.net,1433;Initial Catalog=mydb;User ID=myuser;Password=secret;Encrypt=true;TrustServerCertificate=false;`
     or a `sqlserver://...;key=val;...` form.
   - `ANTHROPIC_API_KEY` — AI provider key (required for AI-backed endpoints; missing this will cause AI endpoints to return 500 errors)
@@ -60,7 +60,7 @@ make start
 ```
 
 Database management
-- `make backup-db` — export the current database. For Azure SQL this will export a `.bacpac` using `sqlpackage`. `make backup-db` prefers an ADO-style connection string from `DATABASE_ADO` in `.env.local` (recommended for `sqlpackage`); if `DATABASE_ADO` is not present it falls back to `DATABASE_URL`. For other workflows, use a Node-based export script or the Azure portal. Ensure one of these is set in `.env.local`.
+- `make backup-db` — export the current database. For Azure SQL this will export a `.bacpac` using `sqlpackage`. `make backup-db` prefers an ADO-style connection string from `DATABASE_ADO` in `.env.local` (recommended for `sqlpackage`); if `DATABASE_ADO` is not present it falls back to `AZURE_DATABASE_URL`. For other workflows, use a Node-based export script or the Azure portal. Ensure one of these is set in `.env.local`.
 - `make deploy-db` — runs the full deployment workflow (pre/post schema dumps, migrations, verification). Review `Makefile` and ensure `.env.local` is configured before running.
 
 Quick commands:

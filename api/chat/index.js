@@ -229,7 +229,7 @@ module.exports = async function(context, req) {
   const obs = beginRequest(context, req, "chat.ask");
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    const databaseUrl = process.env.DATABASE_URL;
+    const databaseUrl = process.env.AZURE_DATABASE_URL;
 
       // Log the AI model being used for this request
       try {
@@ -256,7 +256,7 @@ module.exports = async function(context, req) {
       context.res = {
         status: 500,
         headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
-        body: { error: "DATABASE_URL is not configured" }
+        body: { error: "AZURE_DATABASE_URL is not configured" }
       };
       endRequest(context, obs, 500);
       return;

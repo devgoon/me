@@ -5,8 +5,8 @@ const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 10000;
 
 function getDbClient() {
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) throw new Error('DATABASE_URL is not configured');
+  const databaseUrl = process.env.AZURE_DATABASE_URL;
+  if (!databaseUrl) throw new Error('AZURE_DATABASE_URL is not configured');
   return new Client({
     connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false },
@@ -144,9 +144,9 @@ module.exports = async function(context, req) {
 
       // Validate inputs
       const apiKey = process.env.ANTHROPIC_API_KEY;
-      const databaseUrl = process.env.DATABASE_URL;
+      const databaseUrl = process.env.AZURE_DATABASE_URL;
       if (!apiKey) { context.res = { status: 500, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: 'ANTHROPIC_API_KEY is not configured' } }; endRequest(context, obs, 500); return; }
-      if (!databaseUrl) { context.res = { status: 500, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: 'DATABASE_URL is not configured' } }; endRequest(context, obs, 500); return; }
+      if (!databaseUrl) { context.res = { status: 500, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: 'AZURE_DATABASE_URL is not configured' } }; endRequest(context, obs, 500); return; }
 
       const jobDescription = req && req.body && typeof req.body.jobDescription === 'string' ? req.body.jobDescription.trim() : '';
       if (!jobDescription) { context.res = { status: 400, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: "Request body must include a non-empty 'jobDescription' string" } }; endRequest(context, obs, 400); return; }

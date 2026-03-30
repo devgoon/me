@@ -7,12 +7,12 @@ jest.mock("../db", () => ({
 
 describe("chat API", () => {
   let client;
-  const originalDatabaseUrl = process.env.DATABASE_URL;
+  const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
   const originalApiKey = process.env.ANTHROPIC_API_KEY;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/test";
+    process.env.AZURE_DATABASE_URL = "postgresql://test:test@localhost:5432/test";
     process.env.ANTHROPIC_API_KEY = "test-key";
     client = {
       connect: jest.fn().mockResolvedValue(undefined),
@@ -24,9 +24,9 @@ describe("chat API", () => {
 
   afterAll(() => {
     if (originalDatabaseUrl === undefined) {
-      delete process.env.DATABASE_URL;
+      delete process.env.AZURE_DATABASE_URL;
     } else {
-      process.env.DATABASE_URL = originalDatabaseUrl;
+      process.env.AZURE_DATABASE_URL = originalDatabaseUrl;
     }
     if (originalApiKey === undefined) {
       delete process.env.ANTHROPIC_API_KEY;
@@ -51,15 +51,15 @@ describe("chat API", () => {
   });
 
   test("returns 500 if database URL is missing", async () => {
-    process.env.DATABASE_URL = "";
+    process.env.AZURE_DATABASE_URL = "";
     const context = { res: null };
     await chatHandler(context, { method: "POST", body: { message: "Hello" } });
     expect(context.res.status).toBe(500);
-    expect(context.res.body.error).toMatch(/DATABASE_URL is not configured/);
+    expect(context.res.body.error).toMatch(/AZURE_DATABASE_URL is not configured/);
   });
 
   test("returns cached response if available", async () => {
-    process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/test";
+    process.env.AZURE_DATABASE_URL = "postgresql://test:test@localhost:5432/test";
     process.env.ANTHROPIC_API_KEY = "test-key";
     client.connect.mockResolvedValue(undefined);
     client.query
