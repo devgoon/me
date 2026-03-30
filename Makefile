@@ -57,7 +57,11 @@ start:
 	if [ -z "$$DEBUG_DB" ]; then \
 		export DEBUG_DB=1; \
 	fi; \
-	npx swa start --config swa-cli.config.json --config-name me-local
+	# Prepare swa-dist locally (like CI) and start the emulator from swa-dist
+	chmod +x scripts/prepare-swa-dist-local.sh || true; \
+	./scripts/prepare-swa-dist-local.sh; \
+	echo "Starting local SWA emulator from swa-dist"; \
+	npx @azure/static-web-apps-cli@latest start swa-dist --api-location swa-dist/api --port 4280
 
 stop:
 	@set -e; \
