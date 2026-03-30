@@ -69,7 +69,7 @@ jobs:
       AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
       SWA_DEPLOY_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
       AI_MODEL: ${{ vars.AI_MODEL }}
-      SITE_HOSTNAME: ${{ vars.SITE_HOSTNAME }}
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
     steps:
 
@@ -92,6 +92,10 @@ jobs:
           fi
           if [[ -z "${AI_MODEL:-}" ]]; then
             echo "Missing required variable: AI_MODEL"
+            exit 1
+          fi
+          if [[ -z "${RESOURCE_GROUP:-}" ]]; then
+            echo "Missing required variable: RESOURCE_GROUP"
             exit 1
           fi
 
@@ -130,6 +134,7 @@ jobs:
                 ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
                 AZURE_DATABASE_URL="$AZURE_DATABASE_URL" \
                 AI_MODEL="$AI_MODEL" \
+                RESOURCE_GROUP="$RESOURCE_GROUP" \
               --output table
 
       - name: Deploy
