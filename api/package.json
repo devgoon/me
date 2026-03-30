@@ -5,7 +5,8 @@
   "main": "chat/index.js",
   "scripts": {
     "test": "jest",
-    "coverage": "jest --coverage --coverageReporters=text --coverageReporters=text-summary --runInBand"
+    "coverage": "jest --coverage --coverageReporters=text --coverageReporters=text-summary --runInBand",
+    "build": "echo 'No build needed for API'"
   },
   "dependencies": {
     "mssql": "^12.2.1"
