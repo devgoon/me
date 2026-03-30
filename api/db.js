@@ -90,7 +90,7 @@ class Client {
       const types = values.map((v, i) => ({ i: i + 1, type: v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v, sample: (v && typeof v === 'string' ? (v.length > 100 ? v.slice(0, 100) + '...' : v) : v) }));
       console.log('[DB.query] SQL:', transformedText.replace(/\s+/g, ' '));
       console.log('[DB.query] params:', JSON.stringify(types));
-    } catch (e) {
+    } catch {
       // noop
     }
 
@@ -99,7 +99,7 @@ class Client {
       if (v !== null && v !== undefined && typeof v === 'object' && !(v instanceof Buffer) && !(v instanceof Date)) {
         try {
           v = JSON.stringify(v);
-        } catch (e) {
+        } catch {
           v = String(v);
         }
       }
@@ -115,7 +115,7 @@ class Client {
         await this._pool.close();
         this._pool = null;
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
   }

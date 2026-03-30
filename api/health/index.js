@@ -59,7 +59,7 @@ module.exports = async function(context, req) {
         masked = masked.replace(/(:|=)([^;@,]+)(@|;|,|$)/g, (m, p1, secret, p2) => `${p1}****${p2}`);
         masked = masked.split('?')[0];
         baseBody.dbConnection = masked;
-      } catch (e) { 
+      } catch { 
         void 0; 
       }
     } finally {
@@ -86,7 +86,7 @@ module.exports = async function(context, req) {
           let data = null;
           try {
             data = await res.json();
-          } catch (e) {
+          } catch {
             void 0;
           }
 

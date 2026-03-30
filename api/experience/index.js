@@ -85,7 +85,7 @@ function extractJsonObject(text) {
   const jsonSlice = candidate.slice(start, end + 1);
   try {
     return JSON.parse(jsonSlice);
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -110,7 +110,7 @@ function coerceToArray(val) {
     return s.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
   }
   if (typeof val === 'object') {
-    try { return Object.values(val).map(String); } catch (e) { return []; }
+    try { return Object.values(val).map(String); } catch { return []; }
   }
   return [];
 }
@@ -299,7 +299,7 @@ module.exports = async function(context) {
           verification_url: r.verification_url,
           notes: r.notes
         }));
-      } catch (err) {
+      } catch {
         compactCertifications = [];
       }
 
@@ -319,7 +319,7 @@ module.exports = async function(context) {
           const row = cacheSel.rows[0];
           try {
             aiContexts = JSON.parse(row.response || "{}");
-          } catch (err) {
+          } catch {
             aiContexts = {};
           }
 

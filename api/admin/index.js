@@ -31,7 +31,7 @@ function coerceToNewlineString(v) {
     try {
       const p = JSON.parse(v);
       return Array.isArray(p) ? p.join('\n') : Object.values(p).join('\n');
-    } catch (e) {
+    } catch {
       // Try Postgres array literal
       const pg = parsePgArray(v);
       if (pg !== null) return pg.join('\n');
@@ -232,7 +232,7 @@ async function loadAll(client, candidateId) {
        ORDER BY display_order ASC, CASE WHEN issue_date IS NULL THEN 1 ELSE 0 END ASC, issue_date DESC`,
       [candidateId]
     )) || { rows: [] };
-  } catch (err) {
+  } catch {
     certRes = { rows: [] };
   }
 
@@ -784,7 +784,7 @@ module.exports.cacheReport = async function(context, req) {
         body: mappedRows
       };
       endRequest(context, obs, 200);
-  } catch (error) {
+  } catch {
     failRequest(context, obs, error, 500);
     context.res = {
       status: 500,

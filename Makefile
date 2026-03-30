@@ -1,11 +1,11 @@
-.PHONY: clean install spellcheck spellcheck-pdf link-check syntax-check unit-test check start stop db-export backup-db migrate-db profile-data-db deploy-db profile-data-backup profile-data-upload pre-migration-schema migrate-db post-migration-schema verify-migration rollback-db verify-schema run-sql-file print-table
+.PHONY: install lint spellcheck link-check unit-test coverage check start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db
 
 install:
 	npm install
 	cd api && npm install
 
 lint:
-	@npx eslint@8 "api/**/*.js" "assets/js/**/*.js" --ext .js --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
+	@npx eslint "api/**/*.js" "assets/js/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
 
 spellcheck:
 	npx cspell "**/*.{html,css,js,ts}" "assets/*.txt" "api/**/*.js" --verbose
@@ -125,20 +125,13 @@ stop:
 	echo "Local app stack stopped."
 
 backup-db: install-sqlcmd
-	@echo "Backing up Azure SQL database to db/export.bacpac (requires sqlpackage)"
-	@set -e; \
-	if [ ! -f .env.local ]; then echo ".env.local not found; create .env.local with DATABASE_ADO set"; exit 1; fi; \
-	# Delegate to the backup script which requires DATABASE_ADO
-	./scripts/backup-db.sh || (echo "backup script failed"; exit 1)
-
-deploy-db:
-	@echo "Starting base schema deploy: will run db/schema_azure.sql"
-	@printf "Are you sure you want to deploy the base schema? Type 'yes' to continue: "; \
-	read CONFIRM; \
-	if [ "$${CONFIRM}" != "yes" ]; then echo "Aborting deploy-db."; exit 1; fi; \
-	@set -e; \
-	$(MAKE) run-sql-file file=db/schema_azure.sql || { echo "schema apply failed"; exit 1; }; \
-	echo "Database deployment complete."
+	@# Usage: make backup-db TARGET_DB=database_name
+	@if [ -z "$(TARGET_DB)" ]; then \
+		echo "Usage: make backup-db TARGET_DB=database_name"; exit 1; \
+	fi
+	@echo "Backing up database '$(TARGET_DB)' to db/*.bacpac (requires DATABASE_ADO in .env.local)"
+	@if [ ! -f .env.local ]; then echo ".env.local not found; create .env.local with DATABASE_ADO set"; exit 1; fi; \
+	./scripts/backup-db.sh "$(TARGET_DB)" || (echo "backup script failed"; exit 1)
 
 run-sql-file:
 	@echo "Running SQL file: $(file)"
@@ -149,3 +142,16 @@ install-sqlcmd:
 	@bash scripts/install-sqlcmd.sh
 	@echo "Ensuring sqlpackage is installed (for bacpac export/import)"
 	@bash scripts/install-sqlpackage.sh || echo "sqlpackage installer failed; please install sqlpackage manually if you need backup/restore"
+
+
+dump-schema: install-sqlcmd
+	@echo "Exporting database schema to db/schema.sql (requires DATABASE_ADO in .env.local)"
+	@bash scripts/dump-schema.sh db/schema.sql
+
+restore-db: install-sqlcmd
+	@# Usage: make restore-db BACPAC=path/to/file.bacpac TARGET_DB=target_db_name
+	@if [ -z "$(BACPAC)" ] || [ -z "$(TARGET_DB)" ]; then \
+		echo "Usage: make restore-db BACPAC=path/to/file.bacpac TARGET_DB=target_db_name"; exit 1; \
+	fi
+	@echo "Restoring BACPAC '$(BACPAC)' into database '$(TARGET_DB)' (server from .env.local DATABASE_ADO)"
+	@./scripts/restore-db.sh "$(BACPAC)" "$(TARGET_DB)"

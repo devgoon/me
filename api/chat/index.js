@@ -107,7 +107,7 @@ async function loadCandidateContext(client) {
            ORDER BY display_order ASC, CASE WHEN issue_date IS NULL THEN 1 ELSE 0 END ASC, issue_date DESC`,
         [candidateId]
     );
-  } catch (err) {
+  } catch {
     certificationsResult = { rows: [] };
   }
 
@@ -238,7 +238,7 @@ module.exports = async function(context, req) {
           if (typeof context.log.info === "function") context.log.info(JSON.stringify(modelLog));
           else if (typeof context.log === "function") context.log(JSON.stringify(modelLog));
         }
-      } catch (e) {
+      } catch {
         void 0;
       }
 

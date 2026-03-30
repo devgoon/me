@@ -35,7 +35,7 @@ function safeParseJson(raw) {
   if (s === '') return null;
   try {
     return JSON.parse(s);
-  } catch (e) {
+  } catch {
     return null;
   }
 }

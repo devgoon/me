@@ -25,7 +25,7 @@ async function handleMe(req) {
   try {
     const headerKeys = req && req.headers ? Object.keys(req.headers) : [];
     console.log('[auth.me] no client principal; request header keys:', headerKeys);
-  } catch (e) {
+  } catch {
     // ignore logging errors
   }
 
@@ -51,7 +51,7 @@ module.exports = async function(context, req) {
       body: response.body
     };
     endRequest(context, obs, response.status);
-  } catch (error) {
+  } catch {
     failRequest(context, obs, error, 500);
     context.res = {
       status: 500,
