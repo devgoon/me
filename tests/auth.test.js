@@ -1,6 +1,6 @@
-const { getClientPrincipal } = require("../_shared/auth");
+const { getClientPrincipal } = require("../api/_shared/auth");
 
-jest.mock("../_shared/auth", () => ({
+jest.mock("../api/_shared/auth", () => ({
   getClientPrincipal: jest.fn()
 }));
 

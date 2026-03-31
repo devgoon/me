@@ -1,5 +1,5 @@
-const { Client } = require("../db");
-const { getClientPrincipal } = require("../_shared/auth");
+const { Client } = require("../api/db");
+const { getClientPrincipal } = require("../api/_shared/auth");
 
 jest.mock("../db", () => ({
   Client: jest.fn()
@@ -9,7 +9,7 @@ jest.mock("../_shared/auth", () => ({
   getClientPrincipal: jest.fn()
 }));
 
-const adminHandler = require("../admin/index");
+const adminHandler = require("../api/admin/index");
 adminHandler.cacheReport = async function(context, req) {
   const client = {
     query: jest.fn().mockResolvedValue({
