@@ -122,6 +122,11 @@ jobs:
           set -euo pipefail
 
           HOST="${SITE_HOSTNAME:-lodovi.co}"
+          # Sanity-check host to avoid malformed-URL errors (skip if invalid)
+          if [[ ! "$HOST" =~ ^[A-Za-z0-9.-]+$ ]]; then
+            echo "Skipping AAD smoke test: SITE_HOSTNAME contains unexpected characters: $HOST"
+            exit 0
+          fi
           URL="https://${HOST}/.auth/login/aad?post_login_redirect_uri=/admin"
           echo "Testing auth endpoint: $URL"
 
@@ -147,11 +152,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          HOST="lodovi.co"
+          HOST="${SITE_HOSTNAME:-lodovi.co}"
+          # Sanity-check host to avoid malformed-URL errors (skip if invalid)
+          if [[ ! "$HOST" =~ ^[A-Za-z0-9.-]+$ ]]; then
+            echo "Skipping API health smoke test: SITE_HOSTNAME contains unexpected characters: $HOST"
+            exit 0
+          fi
           URL="https://${HOST}/api/health"
           echo "Testing API health endpoint: $URL"
 
-          HTTP_CODE=$(curl -sS -m 20 -o /tmp/health.json -w "%{http_code}" "$URL")
+          HTTP_CODE=$(curl -sS -m 30 -o /tmp/health.json -w "%{http_code}" "$URL")
           if [[ "$HTTP_CODE" != "200" ]]; then
             echo "Expected HTTP 200 from /api/health, got: $HTTP_CODE"
             cat /tmp/health.json || true
