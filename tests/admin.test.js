@@ -1,11 +1,11 @@
 const { Client } = require("../api/db");
 const { getClientPrincipal } = require("../api/_shared/auth");
 
-jest.mock("../db", () => ({
+jest.mock("../api/db", () => ({
   Client: jest.fn()
 }));
 
-jest.mock("../_shared/auth", () => ({
+jest.mock("../api/_shared/auth", () => ({
   getClientPrincipal: jest.fn()
 }));
 

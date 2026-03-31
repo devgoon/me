@@ -1,4 +1,4 @@
-const { Client } = require('../db');
+const { Client } = require('../api/db');
 const experienceHandler = require('../api/experience/index');
 
 jest.mock('../api/db', () => ({ Client: jest.fn() }));
