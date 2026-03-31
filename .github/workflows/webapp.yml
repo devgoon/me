@@ -144,6 +144,14 @@ jobs:
                 AZURE_DATABASE_URL="$AZURE_DATABASE_URL" \
                 AI_MODEL="$AI_MODEL" \
               --output table
+      - name: Show project structure
+        run: |
+          echo "=== Root Directory ==="
+          ls -al .
+          echo "=== API Directory ==="
+          ls -al api
+          echo "=== API Subdirectories ==="
+          find api -maxdepth 3 -type f
 
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
