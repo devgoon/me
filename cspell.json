@@ -31,7 +31,7 @@
     "**/node_modules/**",
     "node_modules/**",
     ".github/**",
-    "assets/*/**",
+    "**/assets/**",
     ".git/**",
     "db/**",
     "coverage/**",

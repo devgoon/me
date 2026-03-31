@@ -11,13 +11,13 @@ install-ci:
 	cd api && npm ci --omit=dev
 
 lint:
-	@npx eslint "api/**/*.js" "assets/js/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
+	@npx eslint "api/**/*.js" "frontend/assets/js/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
 
 spellcheck:
-	npx cspell "**/*.{html,css,js,ts}" "assets/*.txt" "api/**/*.js" --verbose
+	npx cspell "**/*.{html,css,js,ts}" "frontend/assets/*.txt" "api/**/*.js" --verbose
 
 link-check:
-	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html
+	npx linkinator ./frontend/index.html ./frontend/admin.html ./frontend/auth.html ./frontend/experience-ai.html ./frontend/fit-ai.html
 
 unit-test:
 	@echo "Running top-level tests"
@@ -32,10 +32,10 @@ check:
 	@$(MAKE) spellcheck
 	@echo "==> [2/5] Running lint"
 	@$(MAKE) lint
-	@echo "==> [3/5] Running unit tests"
-	@$(MAKE) unit-test
-	@echo "==> [4/5] Running link check"
+	@echo "==> [3/5] Running link check"
 	@$(MAKE) link-check
+	@echo "==> [4/5] Running unit tests"
+	@$(MAKE) unit-test
 	@echo "==> [5/5] Running code coverage check"
 	@$(MAKE) coverage
 	@echo "==> Quality checks complete"

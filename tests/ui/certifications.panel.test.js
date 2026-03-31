@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-const { baseDom, mockFetchForPanel, waitForMessageContains } = require('../../assets/test/helpers');
+const { baseDom, mockFetchForPanel, waitForMessageContains } = require('../helpers');
 
 function setElementValue(el, value) {
   if (!el) return;
@@ -29,7 +29,7 @@ test('certifications panel renders and round-trips save payload', async () => {
   };
 
   const fetchMock = mockFetchForPanel(sample);
-  require('../../assets/js/admin');
+  require('../../frontend/assets/js/admin');
   await waitForMessageContains('Admin data loaded.');
 
   // inputs should be rendered for certification 0
@@ -70,7 +70,7 @@ test('certifications panel remove then save results in empty certifications arra
   };
 
   const fetchMock = mockFetchForPanel(sample);
-  require('../../assets/js/admin');
+  require('../../frontend/assets/js/admin');
   await waitForMessageContains('Admin data loaded.');
 
   // click remove

@@ -57,6 +57,8 @@
             honestyLevel: 7,
             rules: []
         }
+        ,
+        allFields: {}
     };
     let isDirty = false;
     let initialLoadComplete = false;
@@ -155,8 +157,29 @@
     function mergeState(payload) {
         if (!payload || typeof payload !== "object")
             return;
+        // normalize legacy or alternate field names in incoming payloads
+        try {
+            if (Array.isArray(payload.faq)) {
+                payload.faq = payload.faq.map((item) => {
+                    return Object.assign({}, item, {
+                        question: (item && (item.question || item.q)) || "",
+                        answer: (item && (item.answer || item.a)) || ""
+                    });
+                });
+            }
+            if (Array.isArray(payload.education)) {
+                payload.education = payload.education.map((item) => {
+                    return Object.assign({}, item, {
+                        institution: (item && (item.institution || item.school)) || ""
+                    });
+                });
+            }
+        }
+        catch (e) { /* ignore normalization errors */ }
         if (payload.profile)
             Object.assign(state.profile, payload.profile);
+            if (payload.allFields)
+                state.allFields = payload.allFields;
         if (Array.isArray(payload.experiences))
             state.experiences = payload.experiences;
             if (Array.isArray(payload.education))
@@ -249,6 +272,7 @@
             ["profile-linkedInUrl", "profile", "linkedInUrl"],
             ["profile-githubUrl", "profile", "githubUrl"],
             ["profile-elevatorPitch", "profile", "elevatorPitch"],
+            ["all-bio", "allFields", "bio"],
             ["profile-careerNarrative", "profile", "careerNarrative"],
             ["profile-lookingFor", "profile", "lookingFor"],
             ["profile-notLookingFor", "profile", "notLookingFor"],
@@ -852,6 +876,30 @@
     }
     function sanitizeForSave() {
         const payload = JSON.parse(JSON.stringify(state));
+        // sync values from DOM for list-based sections in case callers set `.value` without dispatching events
+        try {
+            if (Array.isArray(payload.education)) {
+                payload.education.forEach((item, idx) => {
+                    try {
+                        const el = document.querySelector('[data-edu="' + idx + '"][data-field="institution"]');
+                        if (el && typeof el.value !== 'undefined') item.institution = el.value;
+                    }
+                    catch (e) { /* ignore DOM read errors */ }
+                });
+            }
+            if (Array.isArray(payload.faq)) {
+                payload.faq.forEach((item, idx) => {
+                    try {
+                        const q = document.querySelector('[data-faq="' + idx + '"][data-field="question"]');
+                        const a = document.querySelector('[data-faq="' + idx + '"][data-field="answer"]');
+                        if (q && typeof q.value !== 'undefined') item.question = q.value;
+                        if (a && typeof a.value !== 'undefined') item.answer = a.value;
+                    }
+                    catch (e) { /* ignore DOM read errors */ }
+                });
+            }
+        }
+        catch (e) { /* ignore */ }
         payload.experiences = (payload.experiences || []).filter((item) => {
             // Company name is required by the DB; title may be empty
             return String(item.companyName || "").trim();
@@ -869,6 +917,29 @@
         payload.aiInstructions.rules = (payload.aiInstructions.rules || []).filter((item) => {
             return String(item.instruction || "").trim();
         });
+        // provide legacy aliases expected by some consumers/tests
+        try {
+            if (Array.isArray(payload.education)) {
+                payload.education = payload.education.map((item) => {
+                    if (item && typeof item === 'object') {
+                        if (!('school' in item) && ('institution' in item)) {
+                            item.school = item.institution;
+                        }
+                    }
+                    return item;
+                });
+            }
+            if (Array.isArray(payload.faq)) {
+                payload.faq = payload.faq.map((item) => {
+                    if (item && typeof item === 'object') {
+                        if (!('q' in item) && ('question' in item)) item.q = item.question;
+                        if (!('a' in item) && ('answer' in item)) item.a = item.answer;
+                    }
+                    return item;
+                });
+            }
+        }
+        catch (e) { /* ignore aliasing errors */ }
         return payload;
     }
     function parseNullableNumber(value) {

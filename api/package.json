@@ -3,17 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "main": "chat/index.js",
-  "scripts": {
-    "test": "jest",
-    "coverage": "jest --coverage --coverageReporters=text --coverageReporters=text-summary --runInBand",
-    "build": "echo 'No build needed for API'"
-  },
+  "author": "Lodovico Minnocci",
+  "license": "MIT",
   "dependencies": {
     "mssql": "^12.2.1"
-  },
-  "devDependencies": {
-    "jest": "^30.2.0",
-    "nyc": "^15.1.0"
   },
   "engines": {
     "node": ">=20"

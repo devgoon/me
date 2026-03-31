@@ -160,7 +160,7 @@ jobs:
           skip_deploy_on_missing_secrets: true
           skip_app_build: true # ✅ prevents Oryx from rebuilding the static app
           action: upload
-          app_location: "/" # ✅ static files already in repo root
+          app_location: "/" # serve site from repo root (frontend/ + assets/ present)
           api_location: "api/" # ✅ deploy functions directly from api/: site is static from repo root (html + assets)
           # leaving this blank avoids Oryx scanning the repo root for builds
 
