@@ -1,12 +1,12 @@
-const { Client } = require('pg');
+const { Client } = require('../db');
 const { beginRequest, endRequest, failRequest, withRequestId } = require('../_shared/observability');
 
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 10000;
 
 function getDbClient() {
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) throw new Error('DATABASE_URL is not configured');
+  const databaseUrl = process.env.AZURE_DATABASE_URL;
+  if (!databaseUrl) throw new Error('AZURE_DATABASE_URL is not configured');
   return new Client({
     connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false },
@@ -49,26 +49,26 @@ module.exports = async function(context, req) {
       const { buildFitPrompt } = require('../prompts');
 
       const loadCandidateContext = async (client) => {
-        const profileResult = await client.query(`SELECT * FROM candidate_profile ORDER BY updated_at DESC, created_at DESC LIMIT 1`);
+        const profileResult = await client.query(`SELECT TOP 1 * FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`);
         if (profileResult.rows.length === 0) throw new Error('No candidate profile found');
         const profile = profileResult.rows[0];
         const candidateId = profile.id;
-
-        const experiencesResult = await client.query(`SELECT * FROM experiences WHERE candidate_id = $1 ORDER BY display_order ASC, start_date DESC NULLS LAST`, [candidateId]);
+        const experiencesResult = await client.query(`SELECT * FROM experiences WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`, [candidateId]);
         // Load skills and their equivalents (text-based)
         const skillsResult = await client.query(`
-          SELECT s.*, array_agg(eq.equivalent_name) AS equivalents
+          SELECT s.id, s.candidate_id, s.skill_name, s.category, s.self_rating, s.evidence, s.honest_notes, s.years_experience, s.last_used,
+                 STRING_AGG(eq.equivalent_name, ',') AS equivalents
           FROM skills s
           LEFT JOIN skill_equivalence eq ON s.skill_name = eq.skill_name
-          WHERE s.candidate_id = $1
-          GROUP BY s.id
-          ORDER BY s.category ASC, s.self_rating DESC NULLS LAST, s.skill_name ASC
+          WHERE s.candidate_id = @p1
+          GROUP BY s.id, s.candidate_id, s.skill_name, s.category, s.self_rating, s.evidence, s.honest_notes, s.years_experience, s.last_used
+          ORDER BY s.category ASC, CASE WHEN s.self_rating IS NULL THEN 1 ELSE 0 END ASC, s.self_rating DESC, s.skill_name ASC
         `, [candidateId]);
-        const gapsResult = await client.query(`SELECT * FROM gaps_weaknesses WHERE candidate_id = $1 ORDER BY id ASC`, [candidateId]);
-        const valuesResult = await client.query(`SELECT * FROM values_culture WHERE candidate_id = $1 ORDER BY created_at DESC LIMIT 1`, [candidateId]);
-        const faqResult = await client.query(`SELECT * FROM faq_responses WHERE candidate_id = $1 ORDER BY is_common_question DESC, id ASC`, [candidateId]);
-        const aiInstructionsResult = await client.query(`SELECT * FROM ai_instructions WHERE candidate_id = $1 ORDER BY priority ASC, id ASC`, [candidateId]);
-        const educationResult = await client.query(`SELECT * FROM education WHERE candidate_id = $1 ORDER BY display_order ASC, start_date DESC NULLS LAST`, [candidateId]);
+        const gapsResult = await client.query(`SELECT * FROM gaps_weaknesses WHERE candidate_id = @p1 ORDER BY id ASC`, [candidateId]);
+        const valuesResult = await client.query(`SELECT TOP 1 * FROM values_culture WHERE candidate_id = @p1 ORDER BY created_at DESC`, [candidateId]);
+        const faqResult = await client.query(`SELECT * FROM faq_responses WHERE candidate_id = @p1 ORDER BY is_common_question DESC, id ASC`, [candidateId]);
+        const aiInstructionsResult = await client.query(`SELECT * FROM ai_instructions WHERE candidate_id = @p1 ORDER BY priority ASC, id ASC`, [candidateId]);
+        const educationResult = await client.query(`SELECT * FROM education WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`, [candidateId]);
 
         // Attempt to load certifications if the table exists
         let certificationsResult = { rows: [] };
@@ -76,8 +76,8 @@ module.exports = async function(context, req) {
           certificationsResult = (await client.query(
             `SELECT id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
              FROM certifications
-             WHERE candidate_id = $1
-             ORDER BY display_order ASC, issue_date DESC NULLS LAST`,
+            WHERE candidate_id = @p1
+             ORDER BY display_order ASC, CASE WHEN issue_date IS NULL THEN 1 ELSE 0 END ASC, issue_date DESC`,
             [candidateId]
           )) || { rows: [] };
         } catch (err) {
@@ -144,9 +144,9 @@ module.exports = async function(context, req) {
 
       // Validate inputs
       const apiKey = process.env.ANTHROPIC_API_KEY;
-      const databaseUrl = process.env.DATABASE_URL;
+      const databaseUrl = process.env.AZURE_DATABASE_URL;
       if (!apiKey) { context.res = { status: 500, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: 'ANTHROPIC_API_KEY is not configured' } }; endRequest(context, obs, 500); return; }
-      if (!databaseUrl) { context.res = { status: 500, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: 'DATABASE_URL is not configured' } }; endRequest(context, obs, 500); return; }
+      if (!databaseUrl) { context.res = { status: 500, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: 'AZURE_DATABASE_URL is not configured' } }; endRequest(context, obs, 500); return; }
 
       const jobDescription = req && req.body && typeof req.body.jobDescription === 'string' ? req.body.jobDescription.trim() : '';
       if (!jobDescription) { context.res = { status: 400, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: "Request body must include a non-empty 'jobDescription' string" } }; endRequest(context, obs, 400); return; }
@@ -186,7 +186,7 @@ module.exports = async function(context, req) {
     await client.connect();
 
     // load latest candidate profile
-    const profileRes = await client.query(`SELECT id, name, title, elevator_pitch FROM candidate_profile ORDER BY updated_at DESC, created_at DESC LIMIT 1`);
+    const profileRes = await client.query(`SELECT TOP 1 id, name, title, elevator_pitch FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`);
     if (!profileRes.rows.length) {
       context.res = { status: 404, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: 'No profile available' } };
       endRequest(context, obs, 404);
@@ -194,9 +194,9 @@ module.exports = async function(context, req) {
     }
     const profile = toCamel(profileRes.rows[0]);
 
-    const skillsRes = await client.query(`SELECT skill_name, category, honest_notes, evidence FROM skills WHERE candidate_id = $1 ORDER BY category ASC, self_rating DESC NULLS LAST, skill_name ASC`, [profileRes.rows[0].id]);
-    const gapsRes = await client.query(`SELECT description, why_its_a_gap FROM gaps_weaknesses WHERE candidate_id = $1 ORDER BY id ASC`, [profileRes.rows[0].id]);
-    const educationRes = await client.query(`SELECT institution, degree, field_of_study, start_date, end_date, is_current, grade, notes FROM education WHERE candidate_id = $1 ORDER BY display_order ASC, start_date DESC NULLS LAST`, [profileRes.rows[0].id]);
+    const skillsRes = await client.query(`SELECT skill_name, category, honest_notes, evidence FROM skills WHERE candidate_id = @p1 ORDER BY category ASC, CASE WHEN self_rating IS NULL THEN 1 ELSE 0 END ASC, self_rating DESC, skill_name ASC`, [profileRes.rows[0].id]);
+    const gapsRes = await client.query(`SELECT description, why_its_a_gap FROM gaps_weaknesses WHERE candidate_id = @p1 ORDER BY id ASC`, [profileRes.rows[0].id]);
+    const educationRes = await client.query(`SELECT institution, degree, field_of_study, start_date, end_date, is_current, grade, notes FROM education WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`, [profileRes.rows[0].id]);
 
     const skills = skillsRes.rows.map(r => ({ skillName: r.skill_name || '', category: r.category || '', honestNotes: r.honest_notes || '', evidence: r.evidence || '' }));
     const gaps = gapsRes.rows.map(r => ({ description: r.description || '', whyItsAGap: r.why_its_a_gap || '' }));

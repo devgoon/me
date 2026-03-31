@@ -1,8 +1,6 @@
-const { Client } = require("pg");
+const { Client } = require("../db");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 
-const DB_CONNECT_TIMEOUT_MS = 3000;
-const DB_QUERY_TIMEOUT_MS = 3000;
 const API_TIMEOUT_MS = 3000;
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/models";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -15,7 +13,15 @@ function timeoutSignal(ms) {
 
 module.exports = async function(context, req) {
   const obs = beginRequest(context, req, "health.get");
-  const databaseUrl = process.env.DATABASE_URL;
+  function normalizeConn(raw) {
+    if (raw === null || raw === undefined) return '';
+    let s = String(raw).trim();
+    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+      s = s.slice(1, -1);
+    }
+    return s;
+  }
+  const databaseUrl = normalizeConn(process.env.AZURE_DATABASE_URL);
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const aiModel = process.env.AI_MODEL;
  
@@ -26,24 +32,18 @@ module.exports = async function(context, req) {
     timestamp: new Date().toISOString(),
     checks: {
       env: {
-        databaseUrl: databaseUrl ? "ok" : "not_configured",
-        anthropicKey: anthropicKey ? "ok" : "not_configured",
-        aiModel: aiModel ? "ok" : "not_configured"
-      },
+          databaseUrl: databaseUrl ? "ok" : "not_configured",
+          anthropicKey: anthropicKey ? "ok" : "not_configured",
+          aiModel: aiModel ? "ok" : "not_configured"
+        },
       database: "unknown",
       anthropic: "unknown"
     }
   };
 
-  // DB check
+  // DB check (AZURE_DATABASE_URL)
   if (databaseUrl) {
-    const client = new Client({
-      connectionString: databaseUrl,
-      ssl: { rejectUnauthorized: false },
-      connectionTimeoutMillis: DB_CONNECT_TIMEOUT_MS,
-      query_timeout: DB_QUERY_TIMEOUT_MS,
-      statement_timeout: DB_QUERY_TIMEOUT_MS
-    });
+    const client = new Client({ connectionString: databaseUrl });
     try {
       await client.connect();
       await client.query("SELECT 1");
@@ -52,6 +52,16 @@ module.exports = async function(context, req) {
       baseBody.checks.database = "error";
       baseBody.ok = false;
       baseBody.dbError = error && error.message ? error.message : String(error);
+      baseBody.dbStack = error && error.stack ? error.stack : null;
+      try {
+        const s = String(databaseUrl || '');
+        let masked = s.replace(/\s+/g, '');
+        masked = masked.replace(/(:|=)([^;@,]+)(@|;|,|$)/g, (m, p1, secret, p2) => `${p1}****${p2}`);
+        masked = masked.split('?')[0];
+        baseBody.dbConnection = masked;
+      } catch { 
+        void 0; 
+      }
     } finally {
       await client.end().catch(() => {});
     }
@@ -76,7 +86,7 @@ module.exports = async function(context, req) {
           let data = null;
           try {
             data = await res.json();
-          } catch (e) {
+          } catch {
             void 0;
           }
 

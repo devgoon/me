@@ -1,4 +1,4 @@
-const { Client } = require("pg");
+const { Client } = require("../db");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 const crypto = require("crypto");
 
@@ -7,7 +7,7 @@ const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-20250514";
 const MAX_TOKENS = 1024;
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 10000;
-const AI_TIMEOUT_MS = 20000;
+const AI_TIMEOUT_MS = 60000;
 
 function timeoutSignal(ms) {
   const controller = new AbortController();
@@ -26,10 +26,9 @@ const { buildChatPrompt } = require('../prompts');
 
 async function loadCandidateContext(client) {
   const profileResult = await client.query(
-    `SELECT *
+    `SELECT TOP 1 *
      FROM candidate_profile
-     ORDER BY updated_at DESC, created_at DESC
-     LIMIT 1`
+     ORDER BY updated_at DESC, created_at DESC`,
   );
 
   if (profileResult.rows.length === 0) {
@@ -42,42 +41,42 @@ async function loadCandidateContext(client) {
   const experiencesResult = await client.query(
     `SELECT *
      FROM experiences
-     WHERE candidate_id = $1
-     ORDER BY display_order ASC, start_date DESC NULLS LAST`,
+     WHERE candidate_id = @p1
+     ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
     [candidateId]
   );
 
   const skillsResult = await client.query(
-    `SELECT s.*, array_agg(eq.equivalent_name) AS equivalents
+    `SELECT s.id, s.candidate_id, s.skill_name, s.category, s.self_rating, s.evidence, s.honest_notes, s.years_experience, s.last_used,
+            STRING_AGG(eq.equivalent_name, ',') AS equivalents
      FROM skills s
      LEFT JOIN skill_equivalence eq ON s.skill_name = eq.skill_name
-     WHERE s.candidate_id = $1
-     GROUP BY s.id
-     ORDER BY s.category ASC, s.self_rating DESC NULLS LAST, s.skill_name ASC`,
+    WHERE s.candidate_id = @p1
+     GROUP BY s.id, s.candidate_id, s.skill_name, s.category, s.self_rating, s.evidence, s.honest_notes, s.years_experience, s.last_used
+     ORDER BY s.category ASC, CASE WHEN s.self_rating IS NULL THEN 1 ELSE 0 END ASC, s.self_rating DESC, s.skill_name ASC`,
     [candidateId]
   );
 
   const gapsResult = await client.query(
     `SELECT *
      FROM gaps_weaknesses
-     WHERE candidate_id = $1
+    WHERE candidate_id = @p1
      ORDER BY id ASC`,
     [candidateId]
   );
 
   const valuesResult = await client.query(
-    `SELECT *
+    `SELECT TOP 1 *
      FROM values_culture
-     WHERE candidate_id = $1
-     ORDER BY created_at DESC
-     LIMIT 1`,
+    WHERE candidate_id = @p1
+     ORDER BY created_at DESC`,
     [candidateId]
   );
 
   const faqResult = await client.query(
     `SELECT *
      FROM faq_responses
-     WHERE candidate_id = $1
+      WHERE candidate_id = @p1
      ORDER BY is_common_question DESC, id ASC`,
     [candidateId]
   );
@@ -85,7 +84,7 @@ async function loadCandidateContext(client) {
   const aiInstructionsResult = await client.query(
     `SELECT *
      FROM ai_instructions
-     WHERE candidate_id = $1
+      WHERE candidate_id = @p1
      ORDER BY priority ASC, id ASC`,
     [candidateId]
   );
@@ -93,8 +92,8 @@ async function loadCandidateContext(client) {
   const educationResult = await client.query(
     `SELECT *
      FROM education
-     WHERE candidate_id = $1
-     ORDER BY display_order ASC, start_date DESC NULLS LAST`,
+      WHERE candidate_id = @p1
+      ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
     [candidateId]
   );
 
@@ -102,13 +101,13 @@ async function loadCandidateContext(client) {
   let certificationsResult = { rows: [] };
   try {
     certificationsResult = await client.query(
-      `SELECT id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
-       FROM certifications
-       WHERE candidate_id = $1
-       ORDER BY display_order ASC, issue_date DESC NULLS LAST`,
-      [candidateId]
+        `SELECT id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
+         FROM certifications
+         WHERE candidate_id = @p1
+           ORDER BY display_order ASC, CASE WHEN issue_date IS NULL THEN 1 ELSE 0 END ASC, issue_date DESC`,
+        [candidateId]
     );
-  } catch (err) {
+  } catch {
     certificationsResult = { rows: [] };
   }
 
@@ -181,8 +180,10 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
     } catch (error) {
       if (error && error.name === "AbortError") {
         lastErr = new Error("Anthropic API timeout");
+        try { console.warn(`chat.callAnthropic: Anthropic API timeout after ${AI_TIMEOUT_MS}ms on attempt ${attempt}`); } catch(_) { /* noop */ }
       } else {
         lastErr = error;
+        try { console.warn(`chat.callAnthropic: Anthropic API error on attempt ${attempt}:`, error && error.message ? error.message : error); } catch(_) { /* noop */ }
       }
       // exponential backoff before retrying
       const backoff = 200 * Math.pow(2, attempt - 1);
@@ -198,12 +199,12 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
 async function getCache(client, model, question) {
   const hash = crypto.createHash("sha256").update(model + "|" + question).digest("hex");
   const result = await client.query(
-    `SELECT response, cache_hit_count FROM ai_response_cache WHERE hash = $1 AND is_cached = TRUE`,
+    `SELECT TOP 1 response, cache_hit_count FROM ai_response_cache WHERE hash = @p1 AND is_cached = 1`,
     [hash]
   );
-  if (result.rows.length > 0) {
+    if (result.rows.length > 0) {
     await client.query(
-      `UPDATE ai_response_cache SET cache_hit_count = cache_hit_count + 1, last_accessed = NOW() WHERE hash = $1`,
+      `UPDATE ai_response_cache SET cache_hit_count = cache_hit_count + 1, last_accessed = GETUTCDATE() WHERE hash = @p1`,
       [hash]
     );
     return result.rows[0].response;
@@ -214,10 +215,15 @@ async function getCache(client, model, question) {
 async function setCache(client, model, question, response) {
   const hash = crypto.createHash("sha256").update(model + "|" + question).digest("hex");
   await client.query(
-    `INSERT INTO ai_response_cache (hash, question, model, response, cache_hit_count, last_accessed, updated_at, is_cached)
-     VALUES ($1, $2, $3, $4, 1, NOW(), NOW(), TRUE)
-     ON CONFLICT (hash) DO UPDATE SET response = EXCLUDED.response, cache_hit_count = ai_response_cache.cache_hit_count + 1, last_accessed = NOW(), updated_at = NOW(), is_cached = TRUE`,
-    [hash, question, model, response]
+      `MERGE ai_response_cache AS target
+       USING (SELECT @p1 AS hash, @p2 AS question, @p3 AS model, @p4 AS response, 1 AS cache_hit_count, GETUTCDATE() AS last_accessed, GETUTCDATE() AS updated_at, 1 AS is_cached) AS src
+       ON target.hash = src.hash AND target.model = src.model
+       WHEN MATCHED THEN
+         UPDATE SET response = src.response, cache_hit_count = ISNULL(target.cache_hit_count, 0) + 1, last_accessed = src.last_accessed, updated_at = src.updated_at, is_cached = src.is_cached
+       WHEN NOT MATCHED THEN
+         INSERT (hash, question, model, response, cache_hit_count, last_accessed, updated_at, is_cached)
+         VALUES (src.hash, src.question, src.model, src.response, src.cache_hit_count, src.last_accessed, src.updated_at, src.is_cached);`,
+      [hash, question, model, response]
   );
 }
 
@@ -225,7 +231,7 @@ module.exports = async function(context, req) {
   const obs = beginRequest(context, req, "chat.ask");
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    const databaseUrl = process.env.DATABASE_URL;
+    const databaseUrl = process.env.AZURE_DATABASE_URL;
 
       // Log the AI model being used for this request
       try {
@@ -234,7 +240,7 @@ module.exports = async function(context, req) {
           if (typeof context.log.info === "function") context.log.info(JSON.stringify(modelLog));
           else if (typeof context.log === "function") context.log(JSON.stringify(modelLog));
         }
-      } catch (e) {
+      } catch {
         void 0;
       }
 
@@ -252,7 +258,7 @@ module.exports = async function(context, req) {
       context.res = {
         status: 500,
         headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
-        body: { error: "DATABASE_URL is not configured" }
+        body: { error: "AZURE_DATABASE_URL is not configured" }
       };
       endRequest(context, obs, 500);
       return;

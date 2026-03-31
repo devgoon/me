@@ -1,4 +1,4 @@
-const { Client } = require("pg");
+const { Client } = require("../db");
 const { getClientPrincipal } = require("../_shared/auth");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 
@@ -6,9 +6,9 @@ const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 15000;
 
 function getDbClient() {
-	const databaseUrl = process.env.DATABASE_URL;
+	const databaseUrl = process.env.AZURE_DATABASE_URL;
 	if (!databaseUrl) {
-		throw new Error("DATABASE_URL is not configured");
+		throw new Error("AZURE_DATABASE_URL is not configured");
 	}
 
 	return new Client({

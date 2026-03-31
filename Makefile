@@ -1,34 +1,45 @@
-.PHONY: clean install spellcheck spellcheck-pdf link-check syntax-check unit-test check start stop db-export backup-db migrate-db profile-data-db deploy-db profile-data-backup profile-data-upload pre-migration-schema migrate-db post-migration-schema verify-migration rollback-db verify-schema run-sql-file print-table
+.PHONY: install lint spellcheck link-check unit-test coverage check start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
 
 install:
 	npm install
 	cd api && npm install
 
+# CI-friendly install: install only runtime (non-dev) dependencies
+# Use `make install-ci` in CI to avoid devDependencies being installed.
+install-ci:
+	npm ci --omit=dev
+	cd api && npm ci --omit=dev
+
 lint:
-	@npx eslint@8 "api/**/*.js" "assets/js/**/*.js" --ext .js --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
+	@npx eslint "api/**/*.js" "frontend/assets/js/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
 
 spellcheck:
-	npx cspell "**/*.{html,css,js,ts}" "assets/*.txt" "api/**/*.js" --verbose
+	npx cspell "**/*.{html,css,js,ts}" "frontend/assets/*.txt" "api/**/*.js" --verbose
 
 link-check:
-	npx linkinator ./index.html ./admin.html ./auth.html ./experience-ai.html ./fit-ai.html
+	npx linkinator ./frontend/index.html ./frontend/admin.html ./frontend/auth.html ./frontend/experience-ai.html ./frontend/fit-ai.html
 
 unit-test:
 	@echo "Running top-level tests"
 	npm test
-	@echo "Running API tests"
-	cd api && npm test -- --runInBand
+
+coverage:
+	@echo "Running repository tests with coverage (console summary)"
+	@npm run coverage
 
 check:
-	@echo "==> [1/4] Running spellcheck"
+	@echo "==> [1/5] Running spellcheck"
 	@$(MAKE) spellcheck
-	@echo "==> [2/4] Running lint"
+	@echo "==> [2/5] Running lint"
 	@$(MAKE) lint
-	@echo "==> [3/4] Running unit tests"
-	@$(MAKE) unit-test
-	@echo "==> [4/4] Running link check"
+	@echo "==> [3/5] Running link check"
 	@$(MAKE) link-check
+	@echo "==> [4/5] Running unit tests"
+	@$(MAKE) unit-test
+	@echo "==> [5/5] Running code coverage check"
+	@$(MAKE) coverage
 	@echo "==> Quality checks complete"
+
 
  
 start:
@@ -40,7 +51,14 @@ start:
 	if [ -f .env.local ]; then \
 		set -a; . .env.local; set +a; \
 	fi; \
-	npx swa start --config swa-cli.config.json --config-name me-local
+	# Ensure DEBUG_DB is enabled for local Functions host unless explicitly disabled
+	if [ -z "$$DEBUG_DB" ]; then \
+		export DEBUG_DB=1; \
+	fi; \
+	# Prepare swa-dist locally (like CI) and start the emulator from swa-dist
+	# Start the SWA emulator directly from the frontend directory (no swa-dist copy)
+	echo "Starting local SWA emulator from frontend/ with api/"; \
+	npx @azure/static-web-apps-cli@latest start frontend --api-location api --port 4280
 
 stop:
 	@set -e; \
@@ -112,28 +130,56 @@ stop:
 		exit 1; \
 	fi; \
 	echo "Local app stack stopped."
-	
- backup-db:
-	@echo "Backing up database..."
-	@DB_URL=$$(grep DATABASE_URL .env.local | cut -d '=' -f2- | tr -d '\n' | xargs) ; \
-	TIMESTAMP=$$(date +%Y%m%d%H%M%S) ; \
-	pg_dump --no-owner --no-acl --format=plain --file=db/backup-$$TIMESTAMP.sql "$$DB_URL" ; \
-	mv db/backup-$$TIMESTAMP.sql db/export.sql
 
-deploy-db:
-	@echo "Starting full database deployment workflow..."
-	@set -e; \
-	# Dump pre-migration schema, backup, and profile data in parallel
-	$(MAKE) pre-migration-schema backup-db profile-data-backup || { $(MAKE) rollback-db; exit 1; }; \
-	# Run migration and dump post-migration schema
-	$(MAKE) migrate-db post-migration-schema || { $(MAKE) rollback-db; exit 1; }; \
-	# Verify migration and upload profile data
-	$(MAKE) verify-migration profile-data-upload || { $(MAKE) rollback-db; exit 1; }; \
-	echo "Database deployment complete."
+backup-db: install-sqlcmd
+	@# Usage: make backup-db TARGET_DB=database_name
+	@if [ -z "$(TARGET_DB)" ]; then \
+		echo "Usage: make backup-db TARGET_DB=database_name"; exit 1; \
+	fi
+	@echo "Backing up database '$(TARGET_DB)' to db/*.bacpac (requires DATABASE_ADO in .env.local)"
+	@if [ ! -f .env.local ]; then echo ".env.local not found; create .env.local with DATABASE_ADO set"; exit 1; fi; \
+	./scripts/backup-db.sh "$(TARGET_DB)" || (echo "backup script failed"; exit 1)
 
 run-sql-file:
 	@echo "Running SQL file: $(file)"
-	@set -a; . .env.local; set +a; \
-	db_url=$$DATABASE_URL; \
-	if [ -z "$$db_url" ]; then echo "DATABASE_URL not set"; exit 1; fi; \
-	psql "$$db_url" -f $(file)
+	@bash scripts/run-sql-file.sh $(file)
+
+install-sqlcmd:
+	@echo "Running sqlcmd installer script scripts/install-sqlcmd.sh"
+	@bash scripts/install-sqlcmd.sh
+	@echo "Ensuring sqlpackage is installed (for bacpac export/import)"
+	@bash scripts/install-sqlpackage.sh || echo "sqlpackage installer failed; please install sqlpackage manually if you need backup/restore"
+
+
+dump-schema: install-sqlcmd
+	@echo "Exporting database schema to db/schema.sql (requires DATABASE_ADO in .env.local)"
+	@bash scripts/dump-schema.sh db/schema.sql
+
+restore-db: install-sqlcmd
+	@# Usage: make restore-db BACPAC=path/to/file.bacpac TARGET_DB=target_db_name
+	@if [ -z "$(BACPAC)" ] || [ -z "$(TARGET_DB)" ]; then \
+		echo "Usage: make restore-db BACPAC=path/to/file.bacpac TARGET_DB=target_db_name"; exit 1; \
+	fi
+	@echo "Restoring BACPAC '$(BACPAC)' into database '$(TARGET_DB)' (server from .env.local DATABASE_ADO)"
+	@./scripts/restore-db.sh "$(BACPAC)" "$(TARGET_DB)"
+
+gh-sync-env:
+	@# Usage: make gh-sync-env REPO=owner/repo ENV_FILE=.env.local
+	@ENV_FILE=${ENV_FILE:-.env.local}; \
+	REPO_FROM_MAKE="$(REPO)"; \
+	if [ -n "$$REPO_FROM_MAKE" ]; then \
+		REPO="$$REPO_FROM_MAKE"; \
+	else \
+		REPO=""; \
+	fi; \
+	if [ -z "$$REPO" ]; then \
+		echo "No REPO specified; attempting to detect via gh..."; \
+		REPO=$$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true); \
+		if [ -z "$$REPO" ]; then \
+			echo "Specify REPO=owner/repo"; exit 1; \
+		fi; \
+	fi; \
+	echo "About to sync env vars from $$ENV_FILE to $$REPO. This will create/update Secrets/Variables."; \
+	printf "Proceed? Type 'yes' to continue: "; read ans; \
+	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
+	./scripts/gh-sync-env-to-gh.sh --env-file "$$ENV_FILE" --repo "$$REPO"
