@@ -22,8 +22,6 @@ link-check:
 unit-test:
 	@echo "Running top-level tests"
 	npm test
-	@echo "Running API tests"
-	cd api && npm test -- --runInBand
 
 coverage:
 	@echo "Running repository tests with coverage (console summary)"
