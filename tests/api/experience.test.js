@@ -1,7 +1,7 @@
-const { Client } = require('../api/db');
-const experienceHandler = require('../api/experience/index');
+const { Client } = require('../../api/db');
+const experienceHandler = require('../../api/experience/index');
 
-jest.mock('../api/db', () => ({ Client: jest.fn() }));
+jest.mock('../../api/db', () => ({ Client: jest.fn() }));
 
 describe('experience API', () => {
   let client;

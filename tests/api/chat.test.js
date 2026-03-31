@@ -1,7 +1,7 @@
-const { Client } = require("../api/db");
-const chatHandler = require("../api/chat/index");
+const { Client } = require("../../api/db");
+const chatHandler = require("../../api/chat/index");
 
-jest.mock("../api/db", () => ({
+jest.mock("../../api/db", () => ({
   Client: jest.fn()
 }));
 

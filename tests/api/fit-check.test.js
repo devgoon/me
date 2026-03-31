@@ -1,7 +1,7 @@
-const { Client } = require('../api/db');
-const fitHandler = require('../api/fit/index');
+const { Client } = require('../../api/db');
+const fitHandler = require('../../api/fit/index');
 
-jest.mock('../api/db', () => ({ Client: jest.fn() }));
+jest.mock('../../api/db', () => ({ Client: jest.fn() }));
 
 describe('fit-check API', () => {
   let client;

@@ -1,10 +1,10 @@
-const { getClientPrincipal } = require("../api/_shared/auth");
+const { getClientPrincipal } = require("../../api/_shared/auth");
 
-jest.mock("../api/_shared/auth", () => ({
+jest.mock("../../api/_shared/auth", () => ({
   getClientPrincipal: jest.fn()
 }));
 
-const authHandler = require("../api/auth/index");
+const authHandler = require("../../api/auth/index");
 
 function buildContext() {
   return {
