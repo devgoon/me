@@ -28,7 +28,7 @@
   },
     "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/frontend/assets/*", "/images/*", "/favicon.ico", "/auth", "/auth/*", "/admin", "/admin/*"]
+    "exclude": ["/assets/*", "/images/*", "/favicon.ico", "/auth", "/auth/*", "/admin", "/admin/*"]
   },
   "mimeTypes": {
     ".webmanifest": "application/manifest+json"

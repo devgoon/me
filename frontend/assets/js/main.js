@@ -345,127 +345,146 @@ document.addEventListener('DOMContentLoaded', function () {
     /**
      * Ask AI slide-in chat
      */
-    const chatToggle = select('#ask-ai-toggle');
-    const chatPanel = select('#ai-chat-panel');
-    const chatOverlay = select('#ai-chat-overlay');
-    const chatClose = select('#ai-chat-close');
-    const chatHistory = select('#ai-chat-history');
-    const chatInput = select('#ai-chat-input');
-    const chatSend = select('#ai-chat-send');
-    const chatSuggestions = select('.ai-suggestion', true);
-    const appendMessage = (text, role) => {
-        if (!chatHistory)
-            return;
-        const bubble = document.createElement('div');
-        bubble.classList.add('ai-msg', role === 'user' ? 'ai-msg-user' : 'ai-msg-assistant');
-        bubble.textContent = text;
-        chatHistory.appendChild(bubble);
-        chatHistory.scrollTop = chatHistory.scrollHeight;
-    };
-    const callChatApi = async (prompt) => {
-        const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), 15000);
-        let response;
-        try {
-            response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ message: prompt }),
-                signal: controller.signal
-            });
-        }
-        finally {
-            window.clearTimeout(timeoutId);
-        }
-        if (!response.ok) {
-            let details = '';
+    // Bind chat handlers after the DOM is ready so elements inserted after scripts are available
+    document.addEventListener('DOMContentLoaded', function () {
+        const chatToggle = select('#ask-ai-toggle');
+        const chatPanel = select('#ai-chat-panel');
+        const chatOverlay = select('#ai-chat-overlay');
+        const chatClose = select('#ai-chat-close');
+        const chatHistory = select('#ai-chat-history');
+        const chatInput = select('#ai-chat-input');
+        const chatSend = select('#ai-chat-send');
+        const chatSuggestions = select('.ai-suggestion', true);
+        const appendMessage = (text, role) => {
+            if (!chatHistory)
+                return;
+            const bubble = document.createElement('div');
+            bubble.classList.add('ai-msg', role === 'user' ? 'ai-msg-user' : 'ai-msg-assistant');
+            bubble.textContent = text;
+            chatHistory.appendChild(bubble);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        };
+        const callChatApi = async (prompt) => {
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+            let response;
             try {
-                const errorData = await response.json();
-                details = errorData && errorData.error ? `: ${errorData.error}` : '';
+                response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: prompt }),
+                    signal: controller.signal
+                });
             }
-            catch (e) {
-                details = '';
+            finally {
+                window.clearTimeout(timeoutId);
             }
-            throw new Error(`AI request failed (${response.status})${details}`);
-        }
-        const data = await response.json();
-        return data && data.response ? data.response : 'I could not generate a response right now.';
-    };
-    const sendPrompt = async (rawPrompt) => {
-        const prompt = (rawPrompt || '').trim();
-        if (!prompt)
-            return;
-        appendMessage(prompt, 'user');
-        chatInput.value = '';
-        if (chatSend) {
-            chatSend.disabled = true;
-        }
-        try {
-            const answer = await callChatApi(prompt);
-            appendMessage(answer, 'assistant');
-        }
-        catch (error) {
-            const msg = error && error.name === 'AbortError'
-                ? 'The AI service timed out. Please try again in a moment.'
-                : `I am having trouble reaching the AI service right now. ${error && error.message ? error.message : ''}`.trim();
-            appendMessage(msg, 'assistant');
-        }
-        finally {
+            if (!response.ok) {
+                let details = '';
+                try {
+                    const errorData = await response.json();
+                    details = errorData && errorData.error ? `: ${errorData.error}` : '';
+                }
+                catch (e) {
+                    details = '';
+                }
+                throw new Error(`AI request failed (${response.status})${details}`);
+            }
+            const data = await response.json();
+            return data && data.response ? data.response : 'I could not generate a response right now.';
+        };
+        const sendPrompt = async (rawPrompt) => {
+            const prompt = (rawPrompt || '').trim();
+            if (!prompt)
+                return;
+            appendMessage(prompt, 'user');
+            if (chatInput)
+                chatInput.value = '';
             if (chatSend) {
-                chatSend.disabled = false;
+                chatSend.disabled = true;
             }
+            try {
+                const answer = await callChatApi(prompt);
+                appendMessage(answer, 'assistant');
+            }
+            catch (error) {
+                const msg = error && error.name === 'AbortError'
+                    ? 'The AI service timed out. Please try again in a moment.'
+                    : `I am having trouble reaching the AI service right now. ${error && error.message ? error.message : ''}`.trim();
+                appendMessage(msg, 'assistant');
+            }
+            finally {
+                if (chatSend) {
+                    chatSend.disabled = false;
+                }
+            }
+        };
+        const openChat = () => {
+            document.body.classList.add('ai-chat-open');
+            if (chatPanel)
+                chatPanel.setAttribute('aria-hidden', 'false');
+            if (chatOverlay)
+                chatOverlay.setAttribute('aria-hidden', 'false');
+            if (chatHistory && !chatHistory.hasChildNodes()) {
+                appendMessage('Ask me about strengths, hard lessons, leadership, or project outcomes.', 'assistant');
+            }
+            if (chatInput)
+                chatInput.focus();
+        };
+        const closeChat = () => {
+            document.body.classList.remove('ai-chat-open');
+            if (chatPanel)
+                chatPanel.setAttribute('aria-hidden', 'true');
+            if (chatOverlay)
+                chatOverlay.setAttribute('aria-hidden', 'true');
+        };
+        if (chatToggle && chatPanel) {
+            chatToggle.addEventListener('click', openChat);
         }
-    };
-    const openChat = () => {
-        document.body.classList.add('ai-chat-open');
-        if (chatPanel)
-            chatPanel.setAttribute('aria-hidden', 'false');
-        if (chatOverlay)
-            chatOverlay.setAttribute('aria-hidden', 'false');
-        if (chatHistory && !chatHistory.hasChildNodes()) {
-            appendMessage('Ask me about strengths, hard lessons, leadership, or project outcomes.', 'assistant');
+        if (chatClose) {
+            chatClose.addEventListener('click', closeChat);
         }
-        if (chatInput)
-            chatInput.focus();
-    };
-    const closeChat = () => {
-        document.body.classList.remove('ai-chat-open');
-        if (chatPanel)
-            chatPanel.setAttribute('aria-hidden', 'true');
-        if (chatOverlay)
-            chatOverlay.setAttribute('aria-hidden', 'true');
-    };
-    if (chatToggle && chatPanel) {
-        chatToggle.addEventListener('click', openChat);
-    }
-    if (chatClose) {
-        chatClose.addEventListener('click', closeChat);
-    }
-    if (chatOverlay) {
-        chatOverlay.addEventListener('click', closeChat);
-    }
-    if (chatSend) {
-        chatSend.addEventListener('click', () => sendPrompt(chatInput ? chatInput.value : ''));
-    }
-    if (chatInput) {
-        chatInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                sendPrompt(chatInput.value);
-            }
-            if (event.key === 'Escape') {
-                closeChat();
-            }
-        });
-    }
-    if (chatSuggestions && chatSuggestions.length > 0) {
-        chatSuggestions.forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const text = btn.textContent || '';
-                sendPrompt(text);
+        if (chatOverlay) {
+            chatOverlay.addEventListener('click', closeChat);
+        }
+        if (chatSend) {
+            chatSend.addEventListener('click', () => sendPrompt(chatInput ? chatInput.value : ''));
+        }
+        if (chatInput) {
+            chatInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    sendPrompt(chatInput.value);
+                }
+                if (event.key === 'Escape') {
+                    closeChat();
+                }
             });
-        });
-    }
+        }
+        if (chatSuggestions && chatSuggestions.length > 0) {
+            chatSuggestions.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const text = btn.textContent || '';
+                    sendPrompt(text);
+                });
+            });
+        }
+    });
+    // Delegate clicks for suggestion buttons that may be added dynamically
+    document.addEventListener('click', function (e) {
+        try {
+            var tgt = e.target;
+            if (tgt && tgt.classList && tgt.classList.contains('ai-suggestion')) {
+                var text = (tgt.textContent || '').trim();
+                if (text) {
+                    sendPrompt(text);
+                }
+            }
+        }
+        catch (err) {
+            // swallow errors to avoid breaking unrelated click handlers
+        }
+    });
 })();

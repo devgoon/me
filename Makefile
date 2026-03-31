@@ -56,10 +56,9 @@ start:
 		export DEBUG_DB=1; \
 	fi; \
 	# Prepare swa-dist locally (like CI) and start the emulator from swa-dist
-	chmod +x scripts/prepare-swa-dist-local.sh || true; \
-	./scripts/prepare-swa-dist-local.sh; \
-	echo "Starting local SWA emulator from swa-dist"; \
-	npx @azure/static-web-apps-cli@latest start swa-dist --api-location swa-dist/api --port 4280
+	# Start the SWA emulator directly from the frontend directory (no swa-dist copy)
+	echo "Starting local SWA emulator from frontend/ with api/"; \
+	npx @azure/static-web-apps-cli@latest start frontend --api-location api --port 4280
 
 stop:
 	@set -e; \
