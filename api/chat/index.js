@@ -7,7 +7,7 @@ const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-20250514";
 const MAX_TOKENS = 1024;
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 10000;
-const AI_TIMEOUT_MS = 20000;
+const AI_TIMEOUT_MS = 60000;
 
 function timeoutSignal(ms) {
   const controller = new AbortController();
@@ -180,8 +180,10 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
     } catch (error) {
       if (error && error.name === "AbortError") {
         lastErr = new Error("Anthropic API timeout");
+        try { console.warn(`chat.callAnthropic: Anthropic API timeout after ${AI_TIMEOUT_MS}ms on attempt ${attempt}`); } catch(_) { /* noop */ }
       } else {
         lastErr = error;
+        try { console.warn(`chat.callAnthropic: Anthropic API error on attempt ${attempt}:`, error && error.message ? error.message : error); } catch(_) { /* noop */ }
       }
       // exponential backoff before retrying
       const backoff = 200 * Math.pow(2, attempt - 1);

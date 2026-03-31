@@ -2,7 +2,7 @@
 
 **Purpose:** Describe the high-level architecture, data flows, security and operational considerations for the `me` site, focusing on LLM integration, prompt centralization, caching, and CI quality gates.
 
-**Scope:** frontend static site + Azure Functions API (chat/fit/experience), Postgres DB, ai_response_cache, prompt builders (`api/prompts.js`), and the Anthropic LLM provider.
+**Scope:** frontend static site + Azure Functions API (chat/fit/experience), Azure SQL Database (managed), ai_response_cache, prompt builders (`api/prompts.js`), and the Anthropic LLM provider.
 
 ---
 
@@ -13,7 +13,7 @@ flowchart LR
   Browser[Browser / Static Frontend] -->|HTTP| SWA[Static Web App]
   SWA --> FrontendJS[assets/js/main.js + UI]
   FrontendJS -->|POST /api/chat, /api/fit, /api/experience| API[Azure Functions: api/*]
-  API -->|SQL| DB[(Postgres)]
+  API -->|SQL| DB[(Azure SQL Database)]
   API -->|reads/writes| Cache[(ai_response_cache)]
   API -->|prompts| Prompts[api/prompts.js]
   API -->|LLM calls| Anthropic[(Anthropic LLM)]
@@ -22,8 +22,7 @@ flowchart LR
 **Key components**
 - Frontend: static pages, UI wires to `/api/*` endpoints in `assets/js/*`.
 - API: Azure Functions endpoints in `api/` (chat, fit, experience). Centralized prompt builders live in `api/prompts.js`.
-- DB: Postgres holds candidate_profile, skills, skill_equivalence, ai_response_cache, etc.
-- LLM: Anthropic-style API used via `callAnthropic()` wrapper with retry/backoff and timeout handling.
+- DB: Azure SQL Database (managed) holds `candidate_profile`, `skills`, `skill_equivalence`, `ai_response_cache`, etc. Use the `AZURE_DATABASE_URL` connection string and enable transient fault retry/backoff logic appropriate for Azure SQL.
 
 ---
 
@@ -37,7 +36,7 @@ sequenceDiagram
   participant B as Browser
   participant F as Frontend
   participant A as API
-  participant DB as Postgres
+  participant DB as AzureSQL
   participant C as Cache
   participant L as LLM
 
@@ -70,7 +69,7 @@ sequenceDiagram
   participant B as Browser
   participant F as Frontend
   participant A as API
-  participant DB as Postgres
+  participant DB as AzureSQL
   participant C as Cache
   participant L as LLM
 
@@ -102,7 +101,7 @@ sequenceDiagram
   participant B as Browser
   participant F as Frontend
   participant A as API
-  participant DB as Postgres
+  participant DB as AzureSQL
   participant C as Cache
   participant L as LLM
 

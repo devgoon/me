@@ -34,7 +34,8 @@
     for (let attempt = 1; attempt <= __SKILLS_API_MAX_ATTEMPTS; attempt++) {
       try {
         console.info(`[skills] API attempt ${attempt}/${__SKILLS_API_MAX_ATTEMPTS}`);
-        const res = await fetchWithTimeout('/api/experience', { method: 'GET', headers: { 'Accept': 'application/json' } }, 8000);
+        // use the lightweight skills endpoint (reads DB directly, no AI)
+        const res = await fetchWithTimeout('/api/skills', { method: 'GET', headers: { 'Accept': 'application/json' } }, 8000);
         if (!res.ok) throw new Error('Non-OK response ' + res.status);
         const data = await res.json();
         const skills = data && data.skills ? data.skills : null;
