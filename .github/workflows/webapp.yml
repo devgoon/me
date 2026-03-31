@@ -145,10 +145,6 @@ jobs:
                 AI_MODEL="$AI_MODEL" \
               --output table
 
-      - name: Install production dependencies for API
-        working-directory: api
-        run: npm ci --omit=dev
-
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
