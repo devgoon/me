@@ -28,5 +28,12 @@
     "testMatch": [
       "<rootDir>/tests/**/*.test.js"
     ]
+    ,
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "api/**/*.js",
+      "frontend/assets/js/**/*.js"
+    ],
+    "coverageDirectory": "coverage"
   }
 }

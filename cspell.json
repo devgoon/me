@@ -35,6 +35,7 @@
     ".git/**",
     "db/**",
     "coverage/**",
-    "api/coverage/**"
+    "api/coverage/**",
+    "tests/**"
   ]
 }
