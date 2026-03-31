@@ -117,7 +117,6 @@ jobs:
           # leaving this blank avoids Oryx scanning the repo root for builds
 
       - name: Smoke test AAD login endpoint
-        if: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -145,12 +144,10 @@ jobs:
           echo "AAD login endpoint looks healthy for $HOST"
 
       - name: Smoke test API health endpoint
-        if: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != '' }}
         shell: bash
         run: |
           set -euo pipefail
-
-          HOST="${SITE_HOSTNAME:-lodovi.co}"
+          HOST="lodovi.co}"
           URL="https://${HOST}/api/health"
           echo "Testing API health endpoint: $URL"
 
