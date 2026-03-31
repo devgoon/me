@@ -147,7 +147,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          HOST="lodovi.co}"
+          HOST="lodovi.co"
           URL="https://${HOST}/api/health"
           echo "Testing API health endpoint: $URL"
 
