@@ -86,13 +86,7 @@ class Client {
     const req = this._transaction ? new sql.Request(this._transaction) : this._pool.request();
     const values = Array.isArray(params) ? params : [];
 
-    try {
-      const types = values.map((v, i) => ({ i: i + 1, type: v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v, sample: (v && typeof v === 'string' ? (v.length > 100 ? v.slice(0, 100) + '...' : v) : v) }));
-      console.log('[DB.query] SQL:', transformedText.replace(/\s+/g, ' '));
-      console.log('[DB.query] params:', JSON.stringify(types));
-    } catch {
-      // noop
-    }
+    // Logging of SQL and params removed to avoid leaking queries in logs.
 
     for (let i = 0; i < values.length; i++) {
       let v = values[i];
