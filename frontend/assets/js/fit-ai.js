@@ -48,9 +48,74 @@
         { class: "fit-verdict-row" },
         ce("h2", null, "Assessment"),
         ce(
-          "span",
-          { class: "verdict-badge " + (res.verdictClass || "mid") },
-          res.verdict,
+          "div",
+          { class: "verdict-wrap" },
+          ce(
+            "span",
+            { class: "verdict-badge " + (res.verdictClass || "mid") },
+            res.verdict,
+          ),
+          ce(
+            "button",
+            {
+              class: "copy-btn",
+              "aria-label": "Copy assessment",
+              onclick: function (e) {
+                try {
+                  const parts = [];
+                  parts.push(`Assessment: ${res.verdict}`);
+                  if (res.opening) parts.push(res.opening);
+                  if (res.recommendation) parts.push(`Recommendation: ${res.recommendation}`);
+                  if (Array.isArray(res.gaps) && res.gaps.length) {
+                    parts.push("WHERE I DON'T FIT:");
+                    res.gaps.forEach((g) => parts.push(`- ${g}`));
+                  }
+                  if (Array.isArray(res.transfers) && res.transfers.length) {
+                    parts.push('WHAT TRANSFERS:');
+                    res.transfers.forEach((t) => parts.push(`- ${t}`));
+                  }
+                  const text = parts.join('\n');
+                  const btn = e.currentTarget;
+                  const orig = btn.innerHTML;
+                  const showCopied = () => {
+                    btn.classList.add('copied');
+                    btn.innerHTML = '<i class="bx bx-check" aria-hidden="true"></i><span class="copy-label">Copied</span>';
+                    setTimeout(() => {
+                      btn.innerHTML = orig;
+                      btn.classList.remove('copied');
+                    }, 1400);
+                  };
+
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(showCopied).catch((err) => {
+                      console.error('clipboard.writeText failed', err);
+                      showCopied();
+                    });
+                  } else {
+                    // fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try {
+                      document.execCommand('copy');
+                      showCopied();
+                    } catch (err) {
+                      console.error('fallback copy failed', err);
+                      alert('Copy failed');
+                    }
+                    document.body.removeChild(ta);
+                  }
+                } catch (err) {
+                  console.error('copy failed', err);
+                }
+              },
+            },
+            ce('i', { class: 'bx bx-copy', 'aria-hidden': 'true' }),
+            ce('span', { class: 'copy-label' }, 'Copy'),
+          ),
         ),
       ),
       ce("p", { class: "opening-assessment" }, res.opening || ""),
@@ -110,7 +175,7 @@
       const jd = qs("#job-description").value.trim();
       if (!jd) return alert("Paste a job description first");
       let analysis = null;
-      status.textContent = "Analyzing fit...";
+      status.innerHTML = `<article class="role-card" style="text-align:center;padding:12px"><div class="loading" aria-busy="true" aria-live="polite">Determining fit…</div></article>`;
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30000); // 30 seconds

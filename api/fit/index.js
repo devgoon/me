@@ -169,10 +169,6 @@ module.exports = async function(context, req) {
           parsed = { score: 50, verdict: 'MARGINAL', reasons: ['AI response could not be parsed; fallback used'], mismatches: [], suggestedMessage: "I'd like to learn more about this role to confirm fit." };
         }
 
-          // Print the AI response result to the console for debugging
-          console.log('Claude AI response:', aiResponse);
-          console.log('Parsed result:', parsed);
-
         context.res = { status: 200, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: parsed };
         endRequest(context, obs, 200);
         return;
