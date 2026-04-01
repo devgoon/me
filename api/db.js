@@ -86,8 +86,6 @@ class Client {
     const req = this._transaction ? new sql.Request(this._transaction) : this._pool.request();
     const values = Array.isArray(params) ? params : [];
 
-    // Logging of SQL and params removed to avoid leaking queries in logs.
-
     for (let i = 0; i < values.length; i++) {
       let v = values[i];
       if (v !== null && v !== undefined && typeof v === 'object' && !(v instanceof Buffer) && !(v instanceof Date)) {
