@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Chat API integrating with Anthropic AI models.
+ * @module api/chat/index.js
+ */
+
 const { Client } = require("../db");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 const crypto = require("crypto");
@@ -180,16 +185,16 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
     } catch (error) {
       if (error && error.name === "AbortError") {
         lastErr = new Error("Anthropic API timeout");
-        try { console.warn(`chat.callAnthropic: Anthropic API timeout after ${AI_TIMEOUT_MS}ms on attempt ${attempt}`); } catch(_) { /* noop */ }
+        try { console.warn(`chat.callAnthropic: Anthropic API timeout after ${AI_TIMEOUT_MS}ms on attempt ${attempt}`); } catch { /* noop */ }
       } else {
         lastErr = error;
-        try { console.warn(`chat.callAnthropic: Anthropic API error on attempt ${attempt}:`, error && error.message ? error.message : error); } catch(_) { /* noop */ }
+        try { console.warn(`chat.callAnthropic: Anthropic API error on attempt ${attempt}:`, error && error.message ? error.message : error); } catch { /* noop */ }
       }
       // exponential backoff before retrying
       const backoff = 200 * Math.pow(2, attempt - 1);
       await new Promise((r) => setTimeout(r, backoff));
     } finally {
-      try { timeout.clear(); } catch (_) { void 0; }
+      try { timeout.clear(); } catch { void 0; }
     }
   }
 

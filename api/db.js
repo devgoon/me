@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Lightweight DB client wrapper used by the API functions.
+ * @module api/db.js
+ */
+
 const sql = require('mssql');
 
 

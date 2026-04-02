@@ -1,4 +1,8 @@
 /** @jest-environment jsdom */
+/**
+ * @fileoverview UI panel tests for gaps.
+ * @module tests/ui/gaps.panel.test.js
+ */
 const { baseDom, mockFetchForPanel, waitForMessageContains } = require('../helpers');
 
 test('gaps panel removes gap and saves empty array', async () => {

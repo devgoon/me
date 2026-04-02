@@ -1,4 +1,8 @@
 /** @jest-environment jsdom */
+/**
+ * @fileoverview UI panel tests for education.
+ * @module tests/ui/education.panel.test.js
+ */
 const { baseDom, mockFetchForPanel, waitForMessageContains } = require('../helpers');
 
 test('education panel renders items and allows adding a new entry', async () => {

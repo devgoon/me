@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Utilities for parsing small data shapes (Postgres arrays, JSON).
+ * @module api/_shared/parse.js
+ */
+
 function parsePgArray(raw) {
   if (raw === null || raw === undefined) return null;
   if (Array.isArray(raw)) return raw;

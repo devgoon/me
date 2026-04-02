@@ -1,4 +1,8 @@
 /** @jest-environment jsdom */
+/**
+ * @fileoverview UI panel tests for certifications.
+ * @module tests/ui/certifications.panel.test.js
+ */
 const { baseDom, mockFetchForPanel, waitForMessageContains } = require('../helpers');
 
 function setElementValue(el, value) {

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Static skills dataset used by the frontend.
+ * @module frontend/assets/js/skills-data.js
+ */
+
 // Skills data: strong = currently working with, moderate = broader expertise
 window.SKILLS_DATA = {
   strong: [

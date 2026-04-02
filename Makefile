@@ -17,7 +17,7 @@ spellcheck:
 	npx cspell "**/*.{html,css,js,ts}" "frontend/assets/*.txt" "api/**/*.js" --verbose
 
 link-check:
-	npx linkinator ./frontend/index.html ./frontend/admin.html ./frontend/auth.html ./frontend/experience-ai.html ./frontend/fit-ai.html
+	npx linkinator ./frontend/index.html ./frontend/admin.html ./frontend/auth.html ./frontend/experience.html ./frontend/fit.html
 
 unit-test:
 	@echo "Running top-level tests"

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Experience-related AI endpoints and helpers.
+ * @module api/experience/index.js
+ */
+
 const { Client } = require("../db");
 const crypto = require("crypto");
 const {
@@ -135,7 +140,7 @@ function coerceToArray(val) {
       if (Array.isArray(parsed)) return parsed;
       if (parsed && typeof parsed === "object")
         return Object.values(parsed).map(String);
-    } catch (e) {
+    } catch {
       // fallthrough
     }
     // Comma separated or newline separated
@@ -245,7 +250,7 @@ async function callAnthropicForContexts(
   if (!text && process.env.DEBUG_ANTHROPIC) {
     try {
       console.warn('Anthropic raw response:', JSON.stringify(data).slice(0, 2000));
-    } catch (_) {
+    } catch {
       void 0;
     }
   }
@@ -388,7 +393,13 @@ module.exports = async function (context) {
 
       // Build a deterministic cache key that includes the profile, experiences,
       // certifications and model so cached AI responses are specific to inputs.
-      const cacheKeyData = 'experience-ai-context'
+      const cacheKeyData = JSON.stringify({
+        profile: payload.profile || {},
+        experiences: compactExperiences,
+        certifications: compactCertifications || [],
+        model: AI_MODEL,
+      });
+
       const cacheHash = crypto
         .createHash("sha256")
         .update(cacheKeyData)

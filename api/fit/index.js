@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Fit-related endpoints and helpers.
+ * @module api/fit/index.js
+ */
+
 const { Client } = require('../db');
 const { beginRequest, endRequest, failRequest, withRequestId } = require('../_shared/observability');
 
@@ -80,7 +85,7 @@ module.exports = async function(context, req) {
              ORDER BY display_order ASC, CASE WHEN issue_date IS NULL THEN 1 ELSE 0 END ASC, issue_date DESC`,
             [candidateId]
           )) || { rows: [] };
-        } catch (err) {
+        } catch {
           certificationsResult = { rows: [] };
         }
 
@@ -135,7 +140,7 @@ module.exports = async function(context, req) {
             const backoff = 200 * Math.pow(2, attempt - 1);
             await new Promise((r) => setTimeout(r, backoff));
           } finally {
-            try { timeout.clear(); } catch (_) { void 0; }
+            try { timeout.clear(); } catch { void 0; }
           }
         }
 
@@ -165,7 +170,7 @@ module.exports = async function(context, req) {
         try {
           const firstJson = aiResponse && aiResponse.trim().match(/\{[\s\S]*\}/);
           if (firstJson) parsed = JSON.parse(firstJson[0]); else parsed = JSON.parse(aiResponse);
-        } catch (err) {
+        } catch {
           parsed = { score: 50, verdict: 'MARGINAL', reasons: ['AI response could not be parsed; fallback used'], mismatches: [], suggestedMessage: "I'd like to learn more about this role to confirm fit." };
         }
 

@@ -1,4 +1,9 @@
 const { Client } = require('../../api/db');
+/**
+ * @fileoverview Tests for experience API endpoints.
+ * @module tests/api/experience.test.js
+ */
+
 const experienceHandler = require('../../api/experience/index');
 
 jest.mock('../../api/db', () => ({ Client: jest.fn() }));

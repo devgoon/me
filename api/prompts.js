@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Prompt helpers and formatting utilities used for AI prompts.
+ * @module api/prompts.js
+ */
+
 const textOrNA = (value) => { if (value === null || value === undefined || value === '') return 'N/A'; return String(value); };
 const dateOrPresent = (value) => { if (!value) return 'Present'; return String(value); };
 const { parsePgArray, safeParseJson } = require('./_shared/parse');
@@ -24,7 +29,7 @@ const ensureArray = (items) => {
     return byLine;
   }
   if (typeof items === 'object') {
-    try { return Object.values(items).map(v => String(v)); } catch (e) { return []; }
+    try { return Object.values(items).map(v => String(v)); } catch { return []; }
   }
   return [];
 };
@@ -41,7 +46,7 @@ const listLines = (items, emptyLine) => {
       try {
           const parsed = JSON.parse(trimmed);
           return listLines(parsed, emptyLine);
-      } catch (e) {
+      } catch {
         // fallthrough to line-splitting below
       }
     }
@@ -49,12 +54,12 @@ const listLines = (items, emptyLine) => {
     if (arr.length === 0) return emptyLine;
     return arr.map((item) => `- ${item}`).join('\n');
   }
-  if (typeof items === 'object') {
+    if (typeof items === 'object') {
     try {
       const vals = Object.values(items).map(v => String(v)).filter(Boolean);
       if (vals.length === 0) return emptyLine;
       return vals.map((item) => `- ${item}`).join('\n');
-    } catch (e) {
+    } catch {
       return emptyLine;
     }
   }

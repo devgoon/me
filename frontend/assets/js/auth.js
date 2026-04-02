@@ -1,4 +1,8 @@
 // @ts-nocheck
+/**
+ * @fileoverview Authentication UI script used on the login page.
+ * @module frontend/assets/js/auth.js
+ */
 (function () {
     const loginButton = document.getElementById("microsoft-login");
     const messageEl = document.getElementById("auth-message");

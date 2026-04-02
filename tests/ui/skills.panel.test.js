@@ -1,4 +1,8 @@
 /** @jest-environment jsdom */
+/**
+ * @fileoverview UI panel tests for skills.
+ * @module tests/ui/skills.panel.test.js
+ */
 const { baseDom, mockFetchForPanel, waitForMessageContains } = require('../helpers');
 
 test('skills panel handles adding and removing skills', async () => {

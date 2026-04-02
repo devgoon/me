@@ -1,4 +1,9 @@
 const { Client } = require('../../api/db');
+/**
+ * @fileoverview Tests for skills API.
+ * @module tests/api/skills.test.js
+ */
+
 const skillsHandler = require('../../api/skills/index');
 
 jest.mock('../../api/db', () => ({ Client: jest.fn() }));

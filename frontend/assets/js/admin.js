@@ -1,4 +1,8 @@
 // @ts-nocheck
+/**
+ * @fileoverview Admin UI client script (handles admin panel interactions).
+ * @module frontend/assets/js/admin.js
+ */
 (function () {
     // Draft autosave removed to avoid state overwrite issues
     const LOGOUT_URL = "/.auth/logout?post_logout_redirect_uri=/auth";

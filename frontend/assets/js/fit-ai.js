@@ -1,4 +1,9 @@
 // Lightweight Fit UI (no React) — uses window.fitAnalyzer when available
+/**
+ * @fileoverview Fit AI UI interactions and DOM helpers.
+ * @module frontend/assets/js/fit-ai.js
+ */
+
 (function () {
   "use strict";
   function qs(sel) {

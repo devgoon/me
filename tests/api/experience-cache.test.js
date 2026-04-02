@@ -1,4 +1,9 @@
 const { Client } = require('../../api/db');
+/**
+ * @fileoverview Tests for experience cache-related behavior.
+ * @module tests/api/experience-cache.test.js
+ */
+
 const experienceHandler = require('../../api/experience/index');
 
 jest.mock('../../api/db', () => ({ Client: jest.fn() }));

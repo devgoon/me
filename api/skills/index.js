@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Skills endpoint handler.
+ * @module api/skills/index.js
+ */
+
 const { Client } = require('../db');
 const { beginRequest, endRequest, failRequest, withRequestId } = require('../_shared/observability');
 

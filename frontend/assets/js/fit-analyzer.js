@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Analyzer utilities used by the Fit UI and tests.
+ * @module frontend/assets/js/fit-analyzer.js
+ */
+
 // Lightweight analyzer exported for use in tests and optional integration.
 // Designed to be CommonJS-friendly so tests can require() it.
 function escapeForRegex(s) {

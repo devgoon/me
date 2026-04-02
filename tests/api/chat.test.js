@@ -1,4 +1,8 @@
 const { Client } = require("../../api/db");
+/**
+ * @fileoverview Tests for chat API endpoints.
+ * @module tests/api/chat.test.js
+ */
 const chatHandler = require("../../api/chat/index");
 
 jest.mock("../../api/db", () => ({

@@ -1,4 +1,8 @@
 /** @jest-environment jsdom */
+/**
+ * @fileoverview UI panel tests for profile.
+ * @module tests/ui/profile.panel.test.js
+ */
 const { baseDom, mockFetchForPanel, waitForMessageContains } = require('../helpers');
 
 test('profile panel loads and updates profile fields', async () => {

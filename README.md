@@ -82,8 +82,8 @@ make stop
 Open these pages in your browser once the emulator is running:
 
 - Admin UI: http://127.0.0.1:4280/admin.html (source: frontend/admin.html)
-- Experience UI: http://127.0.0.1:4280/experience-ai.html (source: frontend/experience-ai.html)
-- Fit / Analyzer: http://127.0.0.1:4280/fit-ai.html (source: frontend/fit-ai.html)
+- Experience UI: http://127.0.0.1:4280/experience.html (source: frontend/experience.html)
+- Fit / Analyzer: http://127.0.0.1:4280/fit.html (source: frontend/fit.html)
 
 Development notes
 - Frontend is served as static files; `assets/js` contains the client code (no frontend build step required).

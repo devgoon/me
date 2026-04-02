@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Skills tag rendering and API loader for the frontend.
+ * @module frontend/assets/js/skills.js
+ */
+
 (function(){
   function createTag(text) {
     var span = document.createElement('span');

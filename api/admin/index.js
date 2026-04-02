@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Admin API handlers.
+ * @module api/admin/index.js
+ */
+
 const { Client } = require("../db");
 const { getClientPrincipal } = require("../_shared/auth");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
@@ -467,7 +472,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
       if (rawImpact) {
         try {
           impactJson = JSON.parse(rawImpact);
-        } catch (error) {
+        } catch {
           impactJson = { note: rawImpact };
         }
       }

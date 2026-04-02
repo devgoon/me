@@ -1,4 +1,9 @@
 const { Client } = require('../../api/db');
+/**
+ * @fileoverview Tests for fit-related API behavior.
+ * @module tests/api/fit-check.test.js
+ */
+
 const fitHandler = require('../../api/fit/index');
 
 jest.mock('../../api/db', () => ({ Client: jest.fn() }));
