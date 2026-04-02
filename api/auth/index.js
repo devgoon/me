@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Authentication-related endpoints for user/session info.
+ * @module api/auth/index.js
+ */
+
 const { getClientPrincipal } = require("../_shared/auth");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 

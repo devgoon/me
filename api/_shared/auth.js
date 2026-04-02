@@ -1,3 +1,8 @@
+/**
+ * @fileoverview TODO: Describe this file's purpose.
+ * @module api/_shared/auth.js
+ */
+
 const crypto = require("crypto");
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
@@ -85,7 +90,7 @@ function verifyToken(token, secret) {
   let payload;
   try {
     payload = JSON.parse(base64UrlDecode(encodedBody));
-  } catch (error) {
+  } catch {
     return null;
   }
 
@@ -114,7 +119,7 @@ function getClientPrincipal(req) {
   let decoded;
   try {
     decoded = JSON.parse(Buffer.from(String(encoded), "base64").toString("utf8"));
-  } catch (error) {
+  } catch {
     return null;
   }
 

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Tests for auth API endpoints.
+ * @module tests/api/auth.test.js
+ */
+
 const { getClientPrincipal } = require("../../api/_shared/auth");
 
 jest.mock("../../api/_shared/auth", () => ({

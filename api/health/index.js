@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Health check endpoint for the service.
+ * @module api/health/index.js
+ */
+
 const { Client } = require("../db");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
 
@@ -116,7 +121,7 @@ module.exports = async function(context, req) {
           baseBody.ok = false;
           try {
             baseBody.anthropicBody = await res.text();
-          } catch (_) { void 0; }
+          } catch { void 0; }
         }
     } catch (error) {
       baseBody.checks.anthropic = "error";

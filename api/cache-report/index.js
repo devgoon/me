@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Cache reporting endpoints.
+ * @module api/cache-report/index.js
+ */
+
 const { Client } = require("../db");
 const { getClientPrincipal } = require("../_shared/auth");
 const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");

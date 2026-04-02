@@ -1,4 +1,8 @@
 // @ts-nocheck
+/**
+ * @fileoverview Experience AI UI utilities for rendering AI-generated experience summaries.
+ * @module frontend/assets/js/experience-ai.js
+ */
 (() => {
   const experienceList = document.getElementById("experience-list");
   const skillsList = document.getElementById("skills-list");

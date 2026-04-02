@@ -1,5 +1,9 @@
-const { buildFitPrompt, buildChatPrompt } = require('../../api/prompts');
+/**
+ * @fileoverview Unit tests for prompt helpers.
+ * @module tests/api/prompts.unit.test.js
+ */
 
+const { buildFitPrompt, buildChatPrompt } = require('../../api/prompts');
 describe('prompt builders - unit tests', () => {
   test('buildFitPrompt includes deduped equivalents (up to limit) and excludes base name from equivalents', () => {
     const payload = {

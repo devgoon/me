@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Observability helpers (request tracing, logging helpers).
+ * @module api/_shared/observability.js
+ */
+
 const { randomUUID } = require("crypto");
 
 function getRequestId(req) {
@@ -10,7 +15,7 @@ function getRequestId(req) {
   }
   try {
     return randomUUID();
-  } catch (error) {
+  } catch {
     return `req-${Date.now()}`;
   }
 }

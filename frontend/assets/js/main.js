@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Minimal main script for homepage interactions and chat toggle.
+ * @module frontend/assets/js/main.js
+ */
+
 // Minimal main script to ensure homepage removes preloader and chat toggles
 (function(){
   'use strict';

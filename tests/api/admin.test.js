@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Tests for admin API endpoints.
+ * @module tests/api/admin.test.js
+ */
 const { Client } = require("../../api/db");
 const { getClientPrincipal } = require("../../api/_shared/auth");
 

@@ -1,6 +1,11 @@
 /** @jest-environment jsdom */
 const { baseDom, mockFetchForPanel, waitForMessageContains } = require('../helpers');
 
+/**
+ * @fileoverview UI panel tests for AI rules.
+ * @module tests/ui/ai_rules.panel.test.js
+ */
+
 test('ai rules panel toggles and saves', async () => {
   jest.resetModules();
   baseDom();
