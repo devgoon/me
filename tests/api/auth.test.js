@@ -3,11 +3,11 @@
  * @module tests/api/auth.test.js
  */
 
+jest.mock('../../api/_shared/auth', () => {
+  const actual = jest.requireActual('../../api/_shared/auth');
+  return { ...actual, getClientPrincipal: jest.fn() };
+});
 const { getClientPrincipal } = require('../../api/_shared/auth');
-
-jest.mock('../../api/_shared/auth', () => ({
-  getClientPrincipal: jest.fn(),
-}));
 
 const authHandler = require('../../api/auth/index');
 
@@ -63,5 +63,44 @@ describe('auth API', () => {
         provider: 'aad',
       },
     });
+  });
+});
+
+// Consolidated shared auth helper tests (use actual implementations)
+const actualAuth = jest.requireActual('../../api/_shared/auth');
+
+describe('auth helpers', () => {
+  test('hash/verify password', () => {
+    const pw = 's3cret!';
+    const stored = actualAuth.hashPassword(pw);
+    expect(typeof stored).toBe('string');
+    expect(actualAuth.verifyPassword(pw, stored)).toBe(true);
+    expect(actualAuth.verifyPassword('wrong', stored)).toBe(false);
+  });
+
+  test('sign and verify token', () => {
+    const secret = 'shh';
+    const token = actualAuth.signToken({ foo: 'bar' }, secret, 2);
+    const payload = actualAuth.verifyToken(token, secret);
+    expect(payload).toBeTruthy();
+    expect(payload.foo).toBe('bar');
+  });
+
+  test('verifyToken returns null for invalid tokens', () => {
+    expect(actualAuth.verifyToken('bad.token.parts', 'x')).toBeNull();
+  });
+
+  test('getBearerToken extracts token', () => {
+    expect(actualAuth.getBearerToken({ headers: { authorization: 'Bearer abc' } })).toBe('abc');
+    expect(actualAuth.getBearerToken({ headers: { Authorization: 'Bearer xyz' } })).toBe('xyz');
+    expect(actualAuth.getBearerToken({ headers: {} })).toBeNull();
+  });
+
+  test('getClientPrincipal decodes header', () => {
+    const obj = { userDetails: 'me@example.com', userId: 'u1', userRoles: ['admin'] };
+    const enc = Buffer.from(JSON.stringify(obj)).toString('base64');
+    const principal = actualAuth.getClientPrincipal({ headers: { 'x-ms-client-principal': enc } });
+    expect(principal).toBeTruthy();
+    expect(principal.email).toBe('me@example.com');
   });
 });

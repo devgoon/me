@@ -246,4 +246,76 @@ describe('admin API', () => {
     );
     expect(invalidationCalled).toBeTruthy();
   });
+  // Additional admin tests consolidated from separate files
+  const { hideCacheRecords } = require('../../api/admin/index');
+
+  test('hideCacheRecords calls client.query to hide cache records', async () => {
+    const c = { query: jest.fn().mockResolvedValue({}), end: jest.fn() };
+    await hideCacheRecords(c);
+    expect(c.query).toHaveBeenCalled();
+    expect(c.query.mock.calls[0][0].toLowerCase()).toContain('update ai_response_cache');
+  });
+
+  test('parses honesty level and quantified impact mapping', async () => {
+    // Prepare client and principal
+    getClientPrincipal.mockReturnValue({ email: 'admin@example.com' });
+    client.query
+      .mockResolvedValueOnce({ rows: [{ id: 42 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 42, name: 'Tester', title: 'Engineer' }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 101,
+            company_name: 'Acme',
+            title: 'Dev',
+            start_date: '2020-01-01',
+            end_date: null,
+            is_current: true,
+            bullet_points: ['a', 'b'],
+            quantified_impact: JSON.stringify({ revenue: 1000 }),
+            display_order: 0,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        rows: [{ skill_name: 'Node.js', category: 'strong', self_rating: 5 }],
+      })
+      .mockResolvedValueOnce({ rows: [{ description: 'iOS', interest_in_learning: true }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{}] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [{ instruction: 'HONESTY_LEVEL:9', instruction_type: 'honesty', priority: 0 }],
+      });
+
+    const context = { req: {}, res: null, log: { warn: jest.fn() } };
+    await adminHandler(context, { method: 'GET', headers: {} });
+
+    expect(context.res.status).toBe(200);
+    const body = context.res.body;
+    expect(body.aiInstructions.honestyLevel).toBe(9);
+    expect(Array.isArray(body.experiences)).toBe(true);
+    expect(body.experiences[0].quantifiedImpact).toContain('revenue');
+  });
+
+  test('rolls back transaction on failure and returns 500', async () => {
+    getClientPrincipal.mockReturnValue({ email: 'admin@example.com' });
+    client.query.mockResolvedValueOnce({ rows: [{ id: 123 }] });
+    client.query.mockRejectedValueOnce(new Error('db-failure'));
+
+    // Ensure transaction helpers exist on client
+    client.beginTransaction = jest.fn().mockResolvedValue(undefined);
+    client.rollbackTransaction = jest.fn().mockResolvedValue(undefined);
+
+    const context = { res: null, log: { error: jest.fn() } };
+    await adminHandler(context, {
+      method: 'POST',
+      headers: {},
+      body: { profile: { email: 'admin@example.com' } },
+    });
+
+    expect(context.res.status).toBe(500);
+    expect(client.rollbackTransaction).toHaveBeenCalled();
+  });
 });
