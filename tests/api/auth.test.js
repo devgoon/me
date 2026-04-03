@@ -104,3 +104,68 @@ describe('auth helpers', () => {
     expect(principal.email).toBe('me@example.com');
   });
 });
+
+// Observability helpers tests (beginRequest, endRequest, failRequest, withRequestId)
+const {
+  beginRequest,
+  endRequest,
+  failRequest,
+  withRequestId,
+} = require('../../api/_shared/observability');
+
+describe('observability helpers', () => {
+  test('beginRequest writes start event using context.log.info', () => {
+    const log = { info: jest.fn() };
+    const context = { log };
+    const req = { method: 'post', url: '/admin', headers: { 'x-request-id': 'rid-123' } };
+    const meta = beginRequest(context, req, 'op.test');
+    expect(meta.requestId).toBe('rid-123');
+    expect(meta.operationName).toBe('op.test');
+    expect(log.info).toHaveBeenCalled();
+    const msg = log.info.mock.calls[0][0];
+    expect(msg).toMatch(/request.start/);
+    expect(msg).toMatch(/op.test/);
+  });
+
+  test('endRequest writes end event and includes statusCode', () => {
+    const log = { info: jest.fn() };
+    const context = { log };
+    const meta = {
+      requestId: 'x',
+      startedAt: Date.now() - 5,
+      method: 'GET',
+      path: '/x',
+      operationName: 'o',
+    };
+    endRequest(context, meta, 200, { extra: 'v' });
+    expect(log.info).toHaveBeenCalled();
+    const msg = log.info.mock.calls[0][0];
+    expect(msg).toMatch(/request.end/);
+    expect(msg).toMatch(/"statusCode":200/);
+    expect(msg).toMatch(/"extra":"v"/);
+  });
+
+  test('failRequest writes error event using context.log.error', () => {
+    const log = { error: jest.fn() };
+    const context = { log };
+    const meta = {
+      requestId: 'e',
+      startedAt: Date.now() - 10,
+      method: 'POST',
+      path: '/err',
+      operationName: 'errOp',
+    };
+    failRequest(context, meta, new Error('boom'), 500);
+    expect(log.error).toHaveBeenCalled();
+    const msg = log.error.mock.calls[0][0];
+    expect(msg).toMatch(/request.error/);
+    expect(msg).toMatch(/boom/);
+  });
+
+  test('withRequestId merges headers and sets x-request-id', () => {
+    const hdrs = { 'content-type': 'application/json' };
+    const out = withRequestId(hdrs, 'r1');
+    expect(out['x-request-id']).toBe('r1');
+    expect(out['content-type']).toBe('application/json');
+  });
+});
