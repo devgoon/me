@@ -695,6 +695,16 @@ async function saveAll(client, candidateId, payload, authEmail) {
     }
 
     await client.commitTransaction();
+
+    // Invalidate AI response cache after successful save.
+    // Use a best-effort update so save failures are not masked by cache update errors.
+    try {
+      await client.query(
+        `UPDATE ai_response_cache SET is_cached = 0, invalidated_at = GETUTCDATE() WHERE is_cached = 1`
+      );
+    } catch (cacheErr) {
+      console.error('[admin.saveAll] failed to invalidate AI cache', cacheErr && cacheErr.stack ? cacheErr.stack : cacheErr);
+    }
   } catch (error) {
     console.error('[admin.saveAll] error', error && error.stack ? error.stack : error);
     try {
