@@ -3,7 +3,7 @@
  * @module api/_shared/parse.js
  */
 
-function parsePgArray(raw) {
+function parseArray(raw) {
   if (raw === null || raw === undefined) return null;
   if (Array.isArray(raw)) return raw;
   if (typeof raw !== 'string') return null;
@@ -46,6 +46,6 @@ function safeParseJson(raw) {
 }
 
 module.exports = {
-  parsePgArray,
+  parseArray,
   safeParseJson,
 };

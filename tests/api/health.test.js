@@ -24,7 +24,7 @@ describe('health endpoint', () => {
   });
 
   test('db ok and anthropic not configured', async () => {
-    process.env.AZURE_DATABASE_URL = 'sqlserver://host:1433;database=test;user=u;password=p';
+    process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     const mockClient = {
       connect: jest.fn().mockResolvedValue(undefined),
       query: jest.fn().mockResolvedValue({}),
@@ -39,7 +39,7 @@ describe('health endpoint', () => {
   });
 
   test('anthropic model not found sets error', async () => {
-    process.env.AZURE_DATABASE_URL = 'sqlserver://host;database=test';
+    process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     process.env.ANTHROPIC_API_KEY = 'k';
     process.env.AI_MODEL = 'not-exist';
     const mockClient = {

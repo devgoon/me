@@ -3,7 +3,7 @@
  * @module api/db.js
  */
 
-const sql = require('mssql');
+// Require `mssql` lazily inside methods so tests can mock the module before it's loaded.
 
 class Client {
   constructor(options) {
@@ -12,65 +12,31 @@ class Client {
   }
 
   async connect() {
-    // Prefer an explicit option, then AZURE_DATABASE_URL.
+    // Prefer explicit option, then AZURE_DATABASE_URL. Use the string as-is
+    // (trim surrounding quotes) — we only support Azure SQL connection strings.
     const raw = this._connectionString || process.env.AZURE_DATABASE_URL || '';
-    let connStr = '';
-    if (raw !== null && raw !== undefined) {
-      connStr = String(raw).trim();
-      // tolerate surrounding single or double quotes from .env files
-      if (
-        (connStr.startsWith('"') && connStr.endsWith('"')) ||
-        (connStr.startsWith("'") && connStr.endsWith("'"))
-      ) {
-        connStr = connStr.slice(1, -1);
-      }
-      // Support AZURE_DATABASE_URL values emitted by some tools, e.g.:
-      // sqlserver://host:1433;database=NAME;user=USER;password=PW;encrypt=true;...
-      if (/^\s*sqlserver:\/\//i.test(connStr)) {
-        // split on semicolons
-        const parts = connStr
-          .split(/;/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-        const first = parts.shift(); // sqlserver://host:port
-        const hostPort = first.replace(/^sqlserver:\/\//i, '');
-        let host = hostPort;
-        let port = '';
-        if (hostPort.includes(':')) {
-          const idx = hostPort.lastIndexOf(':');
-          host = hostPort.slice(0, idx);
-          port = hostPort.slice(idx + 1);
-        }
-        const kv = {};
-        parts.forEach((p) => {
-          const m = p.match(/^([^=]+)=(.*)$/);
-          if (m) kv[m[1].toLowerCase()] = m[2];
-        });
-        const dataSource = port ? `${host},${port}` : host;
-        const initialCatalog = kv.database || kv.db || '';
-        const user = kv.user || kv.username || kv.uid || kv.u || '';
-        const password = kv.password || kv.pw || kv.pass || '';
-        const encrypt = kv.encrypt || '';
-        // Build a driver-friendly connection string
-        let built = `Data Source=${dataSource};`;
-        if (initialCatalog) built += `Initial Catalog=${initialCatalog};`;
-        if (user) built += `User ID=${user};`;
-        if (password) built += `Password=${password};`;
-        if (encrypt) built += `Encrypt=${encrypt};`;
-        connStr = built;
-      }
+    let connStr = String(raw || '').trim();
+    if (
+      (connStr.startsWith('"') && connStr.endsWith('"')) ||
+      (connStr.startsWith("'") && connStr.endsWith("'"))
+    ) {
+      connStr = connStr.slice(1, -1);
     }
+
     if (!connStr) {
       throw new Error(
         'Azure SQL connection string not provided. Set AZURE_DATABASE_URL or pass connectionString option.'
       );
     }
+
+    const sql = require('mssql');
     this._pool = new sql.ConnectionPool(String(connStr));
     await this._pool.connect();
   }
 
   async beginTransaction() {
     if (!this._pool) throw new Error('Client not connected');
+    const sql = require('mssql');
     this._transaction = new sql.Transaction(this._pool);
     await this._transaction.begin();
   }
@@ -95,6 +61,7 @@ class Client {
     // Convert Postgres-style $1/$2 placeholders to T-SQL @p1/@p2 to match
     // how we bind parameters below (we call `req.input('p1', value)`).
     const transformedText = String(text).replace(/\$(\d+)/g, '@p$1');
+    const sql = require('mssql');
     const req = this._transaction ? new sql.Request(this._transaction) : this._pool.request();
     const values = Array.isArray(params) ? params : [];
 
@@ -131,4 +98,13 @@ class Client {
   }
 }
 
-module.exports = { Client, sql };
+module.exports = {
+  Client,
+  get sql() {
+    try {
+      return require('mssql');
+    } catch (e) {
+      return undefined;
+    }
+  },
+};

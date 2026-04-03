@@ -22,7 +22,7 @@ describe('cache-report', () => {
 
   test('returns mapped rows when authenticated', async () => {
     getClientPrincipal.mockReturnValue({ email: 'a@b.c' });
-    process.env.AZURE_DATABASE_URL = 'sqlserver://localhost;database=test';
+    process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     client.connect.mockResolvedValue(undefined);
     client.query.mockResolvedValue({
       rows: [
