@@ -20,14 +20,14 @@ adminHandler.cacheReport = async function (context, req) {
       rows: [
         {
           question: 'What is AI?',
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-haiku-4-5-20251001',
           cache_hit_count: 5,
           last_accessed: '2026-03-09T12:00:00Z',
           is_cached: true,
         },
         {
           question: 'What is ML?',
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-haiku-4-5-20251001',
           cache_hit_count: 2,
           last_accessed: '2026-03-09T11:00:00Z',
           is_cached: false,
@@ -41,14 +41,14 @@ adminHandler.cacheReport = async function (context, req) {
     body: [
       {
         question: 'What is AI?',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5-20251001',
         cache_hit_count: 5,
         last_accessed: '2026-03-09T12:00:00Z',
         is_cached: true,
       },
       {
         question: 'What is ML?',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5-20251001',
         cache_hit_count: 2,
         last_accessed: '2026-03-09T11:00:00Z',
         is_cached: false,
@@ -163,14 +163,14 @@ describe('admin API', () => {
           rows: [
             {
               question: 'What is AI?',
-              model: 'claude-sonnet-4-20250514',
+              model: 'claude-haiku-4-5-20251001',
               cache_hit_count: 5,
               last_accessed: '2026-03-09T12:00:00Z',
               is_cached: true,
             },
             {
               question: 'What is ML?',
-              model: 'claude-sonnet-4-20250514',
+              model: 'claude-haiku-4-5-20251001',
               cache_hit_count: 2,
               last_accessed: '2026-03-09T11:00:00Z',
               is_cached: false,
@@ -191,18 +191,59 @@ describe('admin API', () => {
     expect(context.res.body).toEqual([
       {
         question: 'What is AI?',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5-20251001',
         cache_hit_count: 5,
         last_accessed: '2026-03-09T12:00:00Z',
         is_cached: true,
       },
       {
         question: 'What is ML?',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5-20251001',
         cache_hit_count: 2,
         last_accessed: '2026-03-09T11:00:00Z',
         is_cached: false,
       },
     ]);
+  });
+
+  test('POST saveAll invalidates AI cache records', async () => {
+    getClientPrincipal.mockReturnValue({ email: 'admin@example.com' });
+
+    // Provide minimal responses for load/insert flows; many queries will be executed
+    // We'll resolve with simple placeholders and ensure the invalidation query is called.
+    // Sequence: connect/resolveCandidate/select profile/upserts/etc... then commit and cache invalidation
+    // Provide a SELECT miss then an INSERT that returns an id, then generic placeholders
+    client.query.mockResolvedValueOnce({ rows: [] }); // SELECT existing candidate -> none
+    client.query.mockResolvedValueOnce({ rows: [{ id: 123 }] }); // INSERT returns inserted id
+    for (let i = 0; i < 28; i++) client.query.mockResolvedValueOnce({ rows: [] });
+    // Mock transaction helpers used by saveAll
+    client.beginTransaction = jest.fn().mockResolvedValue(undefined);
+    client.commitTransaction = jest.fn().mockResolvedValue(undefined);
+    client.rollbackTransaction = jest.fn().mockResolvedValue(undefined);
+
+    const context = buildContext();
+    await adminHandler(context, {
+      method: 'POST',
+      headers: {},
+      body: { profile: { email: 'admin@example.com' } },
+    });
+
+    if (!context.res || context.res.status !== 200) {
+      // Debug helpers to surface failure details in CI logs
+      // eslint-disable-next-line no-console
+      console.error('DEBUG admin POST response:', JSON.stringify(context.res || {}, null, 2));
+      // eslint-disable-next-line no-console
+      console.error('DEBUG client.query.callCount:', client.query.mock.calls.length);
+      // eslint-disable-next-line no-console
+      console.error('DEBUG first 10 client.query calls:', client.query.mock.calls.slice(0, 10));
+    }
+
+    expect(context.res.status).toBe(200);
+
+    // Assert at least one call updated/hidden cache records
+    const invalidationCalled = client.query.mock.calls.some(
+      (c) => typeof c[0] === 'string' && c[0].toLowerCase().includes('update ai_response_cache')
+    );
+    expect(invalidationCalled).toBeTruthy();
   });
 });

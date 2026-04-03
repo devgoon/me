@@ -13,11 +13,12 @@ const {
 } = require('../_shared/observability');
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-const AI_MODEL = process.env.AI_MODEL || 'claude-sonnet-4-20250514';
+const AI_MODEL = process.env.AI_MODEL || 'claude-haiku-4-5-20251001-blah';
 const DB_CONNECT_TIMEOUT_MS = 10000;
 const DB_QUERY_TIMEOUT_MS = 15000;
 const AI_TIMEOUT_MS = 30000;
 const AI_MAX_TOKENS = 1400;
+const EXPERIENCE_QUESTION_KEY = 'experience_ai_contexts_v1';
 
 function timeoutSignal(ms) {
   const controller = new AbortController();
@@ -177,7 +178,6 @@ async function callAnthropicForContexts(profile, experiences, apiKey, certificat
     experiences: compactExperiences,
     certifications: certifications || [],
   });
-
   const timeout = timeoutSignal(AI_TIMEOUT_MS);
   let response;
   try {
@@ -387,7 +387,7 @@ module.exports = async function (context) {
         const cacheSel = await client.query(
           `SELECT TOP 1 hash, response
            FROM ai_response_cache
-           WHERE model = @p1 AND hash = @p2`,
+           WHERE model = @p1 AND hash = @p2 AND is_cached = 1`,
           [AI_MODEL, cacheHash]
         );
 
@@ -418,17 +418,17 @@ module.exports = async function (context) {
             // Don't store empty objects or trivially small responses
             if (!responseStr || responseStr === '{}' || responseStr.length < 10) {
               console.log(
-                `AI cache miss: empty or small response, not storing for question ${cacheKeyData}`
+                `AI cache miss: empty or small response, not storing for question ${EXPERIENCE_QUESTION_KEY}`
               );
             } else {
               console.log(
-                `AI cache miss for question ${cacheKeyData}, storing response (len=${responseStr.length})`
+                `AI cache miss for question ${EXPERIENCE_QUESTION_KEY}, storing response (len=${responseStr.length})`
               );
               // insert cache record with hash as primary key, so duplicates will be ignored if another request has already cached the same response
               await client.query(
                 `INSERT INTO ai_response_cache (question, model, hash, response, cache_hit_count, last_accessed, updated_at, is_cached)
                  VALUES (@p1, @p2, @p3, @p4, 1, GETUTCDATE(), GETUTCDATE(), 1);`,
-                [cacheKeyData, AI_MODEL, cacheHash, responseStr]
+                [EXPERIENCE_QUESTION_KEY, AI_MODEL, cacheHash, responseStr]
               );
               console.log(`AI cache miss - stored response with hash ${cacheHash}`);
             }

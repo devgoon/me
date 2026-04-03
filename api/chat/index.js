@@ -13,7 +13,7 @@ const {
 const crypto = require('crypto');
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-const AI_MODEL = process.env.AI_MODEL || 'claude-sonnet-4-20250514';
+const AI_MODEL = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
 const MAX_TOKENS = 1024;
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 10000;
@@ -250,6 +250,14 @@ async function setCache(client, model, question, response) {
     .createHash('sha256')
     .update(model + '|' + question)
     .digest('hex');
+  // Ensure stored response is minified: trim strings, stringify objects without spacing
+  const responseToStore =
+    response === null || response === undefined
+      ? ''
+      : typeof response === 'string'
+      ? response.trim()
+      : JSON.stringify(response);
+
   await client.query(
     `MERGE ai_response_cache AS target
        USING (SELECT @p1 AS hash, @p2 AS question, @p3 AS model, @p4 AS response, 1 AS cache_hit_count, GETUTCDATE() AS last_accessed, GETUTCDATE() AS updated_at, 1 AS is_cached) AS src
@@ -259,7 +267,7 @@ async function setCache(client, model, question, response) {
        WHEN NOT MATCHED THEN
          INSERT (hash, question, model, response, cache_hit_count, last_accessed, updated_at, is_cached)
          VALUES (src.hash, src.question, src.model, src.response, src.cache_hit_count, src.last_accessed, src.updated_at, src.is_cached);`,
-    [hash, question, model, response]
+    [hash, question, model, responseToStore]
   );
 }
 

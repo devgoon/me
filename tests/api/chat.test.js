@@ -115,4 +115,40 @@ describe('chat API', () => {
     expect(capturedBody).toBeTruthy();
     expect(capturedBody).toMatch(/JavaScript|JS/);
   });
+
+  test('stores trimmed cached response (minify string)', async () => {
+    client.connect.mockResolvedValue(undefined);
+    // Simulate a cache miss for getCache
+    client.query
+      .mockResolvedValueOnce({ rows: [] }) // getCache miss
+      .mockResolvedValueOnce({ rows: [{ id: 3, name: 'Lodovico', email: 'a@b.c', title: 'Eng' }] }) // profile
+      .mockResolvedValueOnce({ rows: [] }) // experiences
+      .mockResolvedValueOnce({ rows: [] }) // skills
+      .mockResolvedValueOnce({ rows: [] }) // gaps
+      .mockResolvedValueOnce({ rows: [] }) // values
+      .mockResolvedValueOnce({ rows: [] }) // faq
+      .mockResolvedValueOnce({ rows: [] }) // ai_instructions
+      .mockResolvedValueOnce({ rows: [] }) // education
+      .mockResolvedValueOnce({}); // setCache insert
+
+    // Make the AI return a string with extra whitespace
+    global.fetch = jest
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve({ ok: true, json: async () => ({ text: '   Trim me   ' }) })
+      );
+
+    const context = { res: null };
+    await chatHandler(context, { method: 'POST', body: { message: 'Trim test' } });
+    expect(context.res.status).toBe(200);
+
+    // Find the MERGE call for ai_response_cache and inspect params
+    const mergeCall = client.query.mock.calls.find(
+      (c) => typeof c[0] === 'string' && c[0].includes('MERGE ai_response_cache')
+    );
+    expect(mergeCall).toBeTruthy();
+    const params = mergeCall[1];
+    // params: [hash, question, model, responseToStore]
+    expect(params[3]).toBe('Trim me');
+  });
 });
