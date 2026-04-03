@@ -187,7 +187,7 @@ gh-sync-env:
 			echo "Specify REPO=owner/repo"; exit 1; \
 		fi; \
 	fi; \
-	echo "About to sync env vars from $$ENV_FILE to $$REPO. This will create/update Secrets/Variables."; \
+	printf "About to sync env vars from %s to %s. This will create/update Secrets/Variables.\n" "$$ENV_FILE" "$$REPO"; \
 	printf "Proceed? Type 'yes' to continue: "; read ans; \
 	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
 	./scripts/gh-sync-env-to-gh.sh --env-file "$$ENV_FILE" --repo "$$REPO"
