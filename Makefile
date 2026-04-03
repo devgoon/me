@@ -42,8 +42,6 @@ check:
 	@$(MAKE) coverage
 	@echo "==> Quality checks complete"
 
-
- 
 start:
 	@mkdir -p .azurite
 	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
@@ -143,8 +141,13 @@ backup-db: install-sqlcmd
 	./scripts/backup-db.sh "$(TARGET_DB)" || (echo "backup script failed"; exit 1)
 
 run-sql-file:
-	@echo "Running SQL file: $(file)"
-	@bash scripts/run-sql-file.sh $(file)
+	@# Usage: make run-sql-file file=path/to/sql
+	@if [ -z "$(file)" ]; then echo "Usage: make run-sql-file file=path/to/sql"; exit 1; fi; \
+	printf "About to run SQL file: %s\n" "$(file)"; \
+	printf "Proceed? Type 'yes' to continue: "; read ans; \
+	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
+	@echo "Running SQL file: $(file)"; \
+	bash scripts/run-sql-file.sh "$(file)"
 
 install-sqlcmd:
 	@echo "Running sqlcmd installer script scripts/install-sqlcmd.sh"
@@ -161,9 +164,12 @@ restore-db: install-sqlcmd
 	@# Usage: make restore-db BACPAC=path/to/file.bacpac TARGET_DB=target_db_name
 	@if [ -z "$(BACPAC)" ] || [ -z "$(TARGET_DB)" ]; then \
 		echo "Usage: make restore-db BACPAC=path/to/file.bacpac TARGET_DB=target_db_name"; exit 1; \
-	fi
-	@echo "Restoring BACPAC '$(BACPAC)' into database '$(TARGET_DB)' (server from .env.local DATABASE_ADO)"
-	@./scripts/restore-db.sh "$(BACPAC)" "$(TARGET_DB)"
+	fi; \
+	printf "About to restore BACPAC '%s' into database '%s'\n" "$(BACPAC)" "$(TARGET_DB)"; \
+	printf "This is destructive. Proceed? Type 'yes' to continue: "; read ans; \
+	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
+	@echo "Restoring BACPAC '$(BACPAC)' into database '$(TARGET_DB)' (server from .env.local DATABASE_ADO)"; \
+	./scripts/restore-db.sh "$(BACPAC)" "$(TARGET_DB)"
 
 gh-sync-env:
 	@# Usage: make gh-sync-env REPO=owner/repo ENV_FILE=.env.local
