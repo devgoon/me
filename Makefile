@@ -11,6 +11,8 @@ install-ci:
 	cd api && npm ci --omit=dev
 
 lint:
+	@# Auto-format with Prettier, then run ESLint autofix
+	@npx prettier --write "**/*.{js,json,md,css,html}"
 	@npx eslint "api/**/*.js" "frontend/assets/js/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
 
 spellcheck:

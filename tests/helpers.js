@@ -37,12 +37,19 @@ function baseDom() {
 function mockFetchForPanel(sampleData) {
   const fetchMock = jest.spyOn(global, 'fetch').mockImplementation((url, opts) => {
     if (String(url).endsWith('/api/auth/me')) {
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({ user: { email: 'dev@lodovi.co' } }) });
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ user: { email: 'dev@lodovi.co' } }),
+      });
     }
     if (String(url).endsWith('/api/panel-data') && (!opts || opts.method === 'GET')) {
       return Promise.resolve({ ok: true, json: () => Promise.resolve(sampleData) });
     }
-    if (String(url).endsWith('/api/panel-data') && opts && String(opts.method).toUpperCase() === 'POST') {
+    if (
+      String(url).endsWith('/api/panel-data') &&
+      opts &&
+      String(opts.method).toUpperCase() === 'POST'
+    ) {
       return Promise.resolve({ ok: true, json: () => Promise.resolve({ ok: true }) });
     }
     return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
@@ -55,7 +62,7 @@ async function waitForMessageContains(text, timeout = 2000) {
   while (Date.now() - start < timeout) {
     const el = document.getElementById('admin-message');
     if (el && el.textContent && el.textContent.includes(text)) return;
-    await new Promise(r => setTimeout(r, 20));
+    await new Promise((r) => setTimeout(r, 20));
   }
   throw new Error('timeout waiting for message: ' + text);
 }

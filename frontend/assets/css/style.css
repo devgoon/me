@@ -9,7 +9,7 @@
 # General
 --------------------------------------------------------------*/
 body {
-  font-family: "Open Sans", sans-serif;
+  font-family: 'Open Sans', sans-serif;
   color: #e6edf3;
   background-color: #0d1117;
 }
@@ -30,7 +30,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
 }
 
 .mode-switch {
@@ -58,7 +58,7 @@ h6 {
   transition: 0.2s ease;
 }
 
-.mode-switch-btn[aria-pressed="true"] {
+.mode-switch-btn[aria-pressed='true'] {
   background: #1f6feb;
   color: #fff;
 }
@@ -115,7 +115,7 @@ h6 {
 }
 
 #preloader:before {
-  content: "";
+  content: '';
   position: fixed;
   top: calc(50% - 30px);
   left: calc(50% - 30px);
@@ -204,7 +204,7 @@ h6 {
   list-style: none;
 }
 
-.nav-menu>ul>li {
+.nav-menu > ul > li {
   position: relative;
   white-space: nowrap;
 }
@@ -238,7 +238,6 @@ h6 {
 }
 
 @media (min-width: 992px) {
-
   .nav-menu a,
   .nav-menu a:focus {
     width: 56px;
@@ -254,7 +253,7 @@ h6 {
 .nav-menu a:hover,
 .nav-menu .active,
 .nav-menu .active:focus,
-.nav-menu li:hover>a {
+.nav-menu li:hover > a {
   color: #fff;
   background: #1f6feb;
 }
@@ -262,18 +261,18 @@ h6 {
 .nav-menu a:hover span,
 .nav-menu .active span,
 .nav-menu .active:focus span,
-.nav-menu li:hover>a span {
+.nav-menu li:hover > a span {
   color: #fff;
 }
 
 .nav-menu a:hover,
-.nav-menu li:hover>a {
+.nav-menu li:hover > a {
   width: 100%;
   color: #fff;
 }
 
 .nav-menu a:hover span,
-.nav-menu li:hover>a span {
+.nav-menu li:hover > a span {
   display: block;
 }
 
@@ -319,7 +318,7 @@ h6 {
 #hero {
   width: 100%;
   height: 100vh;
-  background: url("../img/hero-bg-3.jpg") top right no-repeat;
+  background: url('../img/hero-bg-3.jpg') top right no-repeat;
   background-size: cover;
   position: relative;
   justify-content: flex-start !important;
@@ -333,7 +332,7 @@ h6 {
 }
 
 #hero:before {
-  content: "";
+  content: '';
   background: rgba(13, 17, 23, 0.82);
   position: absolute;
   bottom: 0;
@@ -355,7 +354,7 @@ h6 {
   color: #8b949e;
   margin: 15px 0 0 0;
   font-size: 26px;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 #hero p span {
@@ -399,15 +398,14 @@ h6 {
     line-height: 1.1;
   }
 
-
-/* Current job star styling */
-.current-star {
-  color: #ffd700; /* gold */
-  font-size: 1.25rem; /* slightly larger than surrounding text */
-  margin-left: 0.25rem;
-  vertical-align: middle;
-  opacity: 1;
-}
+  /* Current job star styling */
+  .current-star {
+    color: #ffd700; /* gold */
+    font-size: 1.25rem; /* slightly larger than surrounding text */
+    margin-left: 0.25rem;
+    vertical-align: middle;
+    opacity: 1;
+  }
   #hero p {
     margin-top: 10px;
     font-size: 20px;
@@ -436,7 +434,7 @@ h6 {
   color: #8b949e !important;
   line-height: 1.7 !important;
   margin-top: 14px !important;
-  font-family: "Open Sans", sans-serif !important;
+  font-family: 'Open Sans', sans-serif !important;
   white-space: nowrap;
 }
 
@@ -495,7 +493,7 @@ h6 {
   font-size: 22px;
   font-weight: 700;
   color: #58a6ff;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
   line-height: 1.1;
 }
 
@@ -534,8 +532,13 @@ h6 {
 }
 
 @keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 4px #3fb950; }
-  50% { box-shadow: 0 0 12px #3fb950, 0 0 24px rgba(63, 185, 80, 0.35); }
+  0%,
+  100% {
+    box-shadow: 0 0 4px #3fb950;
+  }
+  50% {
+    box-shadow: 0 0 12px #3fb950, 0 0 24px rgba(63, 185, 80, 0.35);
+  }
 }
 
 /* Hero CTA buttons */
@@ -585,7 +588,7 @@ body.ai-mode .mobile-nav-toggle {
   border-radius: 50px;
   text-decoration: none;
   transition: all 0.3s;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 .btn-hero-primary:hover {
@@ -609,7 +612,7 @@ body.ai-mode .mobile-nav-toggle {
   border: 1px solid #30363d;
   text-decoration: none;
   transition: all 0.3s;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 /* Increase icon size specifically for hero action buttons */
@@ -673,7 +676,7 @@ body.ai-chat-open .ai-chat-panel {
 .ai-chat-header h3 {
   margin: 0;
   font-size: 1rem;
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
 }
 
 .ai-chat-close {
@@ -818,7 +821,7 @@ section {
 }
 
 .section-title h2::before {
-  content: "";
+  content: '';
   position: absolute;
   display: block;
   width: 120px;
@@ -829,7 +832,7 @@ section {
 }
 
 .section-title h2::after {
-  content: "";
+  content: '';
   position: absolute;
   display: block;
   width: 40px;
@@ -985,7 +988,7 @@ section {
 .facts .count-box p {
   padding: 0;
   margin: 0;
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
   font-size: 14px;
 }
 
@@ -1005,7 +1008,7 @@ section {
   text-transform: uppercase;
   display: block;
   font-weight: 600;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
   color: #c9d1d9;
 }
 
@@ -1031,7 +1034,7 @@ section {
   border-radius: 20px;
   font-size: 13px;
   font-weight: 500;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
   letter-spacing: 0.3px;
 }
 
@@ -1097,7 +1100,7 @@ section {
   font-size: 18px;
   font-weight: 600;
   text-transform: uppercase;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
   color: #58a6ff;
   margin-bottom: 10px;
 }
@@ -1125,7 +1128,7 @@ section {
 }
 
 .resume .resume-item::before {
-  content: "";
+  content: '';
   position: absolute;
   width: 16px;
   height: 16px;
@@ -1184,7 +1187,7 @@ section {
 }
 
 .portfolio .portfolio-wrap::before {
-  content: "";
+  content: '';
   background: rgba(22, 27, 34, 0.85);
   position: absolute;
   left: 30px;
@@ -1214,7 +1217,7 @@ section {
 
 .portfolio .portfolio-wrap .portfolio-info::before {
   display: block;
-  content: "";
+  content: '';
   width: 48px;
   height: 48px;
   position: absolute;
@@ -1228,7 +1231,7 @@ section {
 
 .portfolio .portfolio-wrap .portfolio-info::after {
   display: block;
-  content: "";
+  content: '';
   width: 48px;
   height: 48px;
   position: absolute;
@@ -1340,7 +1343,7 @@ section {
   font-size: 15px;
 }
 
-.portfolio-details .portfolio-info ul li+li {
+.portfolio-details .portfolio-info ul li + li {
   margin-top: 10px;
 }
 
@@ -1641,7 +1644,7 @@ section {
   font-weight: 600;
 }
 
-.contact .php-email-form .error-message br+br {
+.contact .php-email-form .error-message br + br {
   margin-top: 25px;
 }
 
@@ -1662,7 +1665,7 @@ section {
 }
 
 .contact .php-email-form .loading:before {
-  content: "";
+  content: '';
   display: inline-block;
   border-radius: 50%;
   width: 24px;
@@ -1685,7 +1688,7 @@ section {
 }
 
 .loading:before {
-  content: "";
+  content: '';
   display: inline-block;
   border-radius: 50%;
   width: 20px;
@@ -1712,7 +1715,7 @@ section {
   padding: 10px 12px;
 }
 
-.contact .php-email-form button[type=submit] {
+.contact .php-email-form button[type='submit'] {
   background: #1f6feb;
   border: 0;
   padding: 10px 35px;
@@ -1721,7 +1724,7 @@ section {
   border-radius: 50px;
 }
 
-.contact .php-email-form button[type=submit]:hover {
+.contact .php-email-form button[type='submit']:hover {
   background: #58a6ff;
 }
 
@@ -1761,7 +1764,7 @@ section {
   font-size: 36px;
   font-weight: 700;
   position: relative;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
   padding: 0;
   margin: 0 0 15px 0;
 }
@@ -1812,7 +1815,7 @@ section {
   flex-wrap: wrap;
   gap: 1rem;
 }
-.certifications .row > div[class*="col-"] {
+.certifications .row > div[class*='col-'] {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1839,7 +1842,12 @@ p {
   color: #c9d1d9;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: #e6edf3;
 }
 
@@ -1988,7 +1996,7 @@ h1, h2, h3, h4, h5, h6 {
 .resume .resume-item--current h4::after,
 #experience .resume-item:first-child h4::after,
 #experience .resume-item--current h4::after {
-  content: "Current";
+  content: 'Current';
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;

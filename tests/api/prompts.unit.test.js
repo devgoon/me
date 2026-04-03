@@ -16,14 +16,14 @@ describe('prompt builders - unit tests', () => {
           honest_notes: 'Used daily',
           years_experience: 3,
           last_used: null,
-          category: 'strong'
-        }
+          category: 'strong',
+        },
       ],
       aiInstructions: [],
       gaps: [],
       values: null,
       faq: [],
-      education: []
+      education: [],
     };
 
     const out = buildFitPrompt(payload);
@@ -41,14 +41,14 @@ describe('prompt builders - unit tests', () => {
           skill_name: 'Node',
           equivalents: ['Node', 'Node.js'],
           honest_notes: 'Backend work',
-          category: 'strong'
-        }
+          category: 'strong',
+        },
       ],
       aiInstructions: [],
       gaps: [],
       values: null,
       faq: [],
-      education: []
+      education: [],
     };
 
     const out = buildChatPrompt(payload);
@@ -66,14 +66,14 @@ describe('prompt builders - unit tests', () => {
           skill_name: 'Python',
           equivalents: ['Py', 'Python3'],
           honest_notes: 'Scripting',
-          category: 'strong'
-        }
+          category: 'strong',
+        },
       ],
       aiInstructions: [],
       gaps: [],
       values: null,
       faq: [],
-      education: []
+      education: [],
     };
 
     const out = buildFitPrompt(payload);
@@ -94,8 +94,8 @@ describe('prompt builders - unit tests', () => {
       faq: [],
       education: [],
       certifications: [
-        { name: 'Certified Kubernetes Administrator', issuer: 'CNCF', issue_date: '2020-05-01' }
-      ]
+        { name: 'Certified Kubernetes Administrator', issuer: 'CNCF', issue_date: '2020-05-01' },
+      ],
     };
     const out = buildFitPrompt(payload);
     expect(out).toMatch(/## CERTIFICATIONS/);
@@ -114,8 +114,8 @@ describe('prompt builders - unit tests', () => {
       faq: [],
       education: [],
       certifications: [
-        { name: 'AWS Certified Solutions Architect', issuer: 'AWS', issue_date: '2021-01-15' }
-      ]
+        { name: 'AWS Certified Solutions Architect', issuer: 'AWS', issue_date: '2021-01-15' },
+      ],
     };
     const out = buildChatPrompt(payload);
     expect(out).toMatch(/## CERTIFICATIONS/);

@@ -3,11 +3,16 @@
  * @module api/auth/index.js
  */
 
-const { getClientPrincipal } = require("../_shared/auth");
-const { beginRequest, endRequest, failRequest, withRequestId } = require("../_shared/observability");
+const { getClientPrincipal } = require('../_shared/auth');
+const {
+  beginRequest,
+  endRequest,
+  failRequest,
+  withRequestId,
+} = require('../_shared/observability');
 
 function text(value) {
-  return value === null || value === undefined ? "" : String(value).trim();
+  return value === null || value === undefined ? '' : String(value).trim();
 }
 
 async function handleMe(req) {
@@ -19,10 +24,10 @@ async function handleMe(req) {
         user: {
           id: principal.userId || principal.email,
           email: principal.email,
-          fullName: principal.name || "",
-          provider: principal.identityProvider || "aad"
-        }
-      }
+          fullName: principal.name || '',
+          provider: principal.identityProvider || 'aad',
+        },
+      },
     };
   }
 
@@ -34,34 +39,34 @@ async function handleMe(req) {
     // ignore logging errors
   }
 
-  return { status: 401, body: { error: "Unauthorized" } };
+  return { status: 401, body: { error: 'Unauthorized' } };
 }
 
-module.exports = async function(context, req) {
-  const obs = beginRequest(context, req, "auth.me");
-  const action = text(req && req.params && req.params.action).toLowerCase() || "";
+module.exports = async function (context, req) {
+  const obs = beginRequest(context, req, 'auth.me');
+  const action = text(req && req.params && req.params.action).toLowerCase() || '';
   const method = text(req && req.method).toUpperCase();
 
   try {
     let response;
-    if (method === "GET" && action === "me") {
+    if (method === 'GET' && action === 'me') {
       response = await handleMe(req);
     } else {
-      response = { status: 405, body: { error: "Method not allowed" } };
+      response = { status: 405, body: { error: 'Method not allowed' } };
     }
 
     context.res = {
       status: response.status,
-      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
-      body: response.body
+      headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+      body: response.body,
     };
     endRequest(context, obs, response.status);
   } catch {
     failRequest(context, obs, error, 500);
     context.res = {
       status: 500,
-      headers: withRequestId({ "Content-Type": "application/json" }, obs.requestId),
-      body: { error: error.message || "Authentication error" }
+      headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+      body: { error: error.message || 'Authentication error' },
     };
   }
 };

@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  font-family: "Open Sans", sans-serif;
+  font-family: 'Open Sans', sans-serif;
   color: #e6edf3;
   background: radial-gradient(circle at top, #1b2330 0%, #0d1117 45%, #0b0f14 100%);
 }
@@ -30,7 +30,7 @@ body {
 .experience-ai-header h1 {
   margin: 0;
   font-size: clamp(2rem, 5vw, 3rem);
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
   letter-spacing: -0.5px;
 }
 
@@ -76,7 +76,7 @@ body {
 .role-meta h2 {
   margin: 0;
   font-size: 1.15rem;
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
 }
 
 .role-meta span {
@@ -147,7 +147,7 @@ body {
   color: #79b8ff;
   font-size: 0.82rem;
   letter-spacing: 1px;
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
 }
 
 .ai-context-panel p {

@@ -4,7 +4,12 @@
  */
 
 const { Client } = require('../db');
-const { beginRequest, endRequest, failRequest, withRequestId } = require('../_shared/observability');
+const {
+  beginRequest,
+  endRequest,
+  failRequest,
+  withRequestId,
+} = require('../_shared/observability');
 
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 10000;
@@ -13,7 +18,7 @@ function normalizeSkillRow(row) {
   return {
     id: row.id,
     skillName: row.skill_name,
-    category: row.category
+    category: row.category,
   };
 }
 
@@ -25,7 +30,7 @@ module.exports = async function (context, req) {
     context.res = {
       status: 500,
       headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
-      body: { error: 'AZURE_DATABASE_URL is not configured' }
+      body: { error: 'AZURE_DATABASE_URL is not configured' },
     };
     endRequest(context, obs, 500);
     return;
@@ -36,7 +41,7 @@ module.exports = async function (context, req) {
     ssl: { rejectUnauthorized: false },
     connectionTimeoutMillis: DB_CONNECT_TIMEOUT_MS,
     query_timeout: DB_QUERY_TIMEOUT_MS,
-    statement_timeout: DB_QUERY_TIMEOUT_MS
+    statement_timeout: DB_QUERY_TIMEOUT_MS,
   });
 
   try {
@@ -50,7 +55,7 @@ module.exports = async function (context, req) {
       context.res = {
         status: 404,
         headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
-        body: { error: 'No candidate profile found' }
+        body: { error: 'No candidate profile found' },
       };
       endRequest(context, obs, 404);
       return;
@@ -76,7 +81,7 @@ module.exports = async function (context, req) {
     context.res = {
       status: 200,
       headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
-      body: { skills: { strong, moderate } }
+      body: { skills: { strong, moderate } },
     };
     endRequest(context, obs, 200);
   } catch (err) {
@@ -84,7 +89,7 @@ module.exports = async function (context, req) {
     context.res = {
       status: 500,
       headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
-      body: { error: err && err.message ? err.message : 'Failed to load skills' }
+      body: { error: err && err.message ? err.message : 'Failed to load skills' },
     };
   } finally {
     await client.end().catch(() => {});

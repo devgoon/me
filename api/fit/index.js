@@ -4,7 +4,12 @@
  */
 
 const { Client } = require('../db');
-const { beginRequest, endRequest, failRequest, withRequestId } = require('../_shared/observability');
+const {
+  beginRequest,
+  endRequest,
+  failRequest,
+  withRequestId,
+} = require('../_shared/observability');
 
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 10000;
@@ -17,7 +22,7 @@ function getDbClient() {
     ssl: { rejectUnauthorized: false },
     connectionTimeoutMillis: DB_CONNECT_TIMEOUT_MS,
     query_timeout: DB_QUERY_TIMEOUT_MS,
-    statement_timeout: DB_QUERY_TIMEOUT_MS
+    statement_timeout: DB_QUERY_TIMEOUT_MS,
   });
 }
 
@@ -31,7 +36,7 @@ function toCamel(obj) {
   return out;
 }
 
-module.exports = async function(context, req) {
+module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'fit.public');
   let client;
   try {
@@ -54,13 +59,19 @@ module.exports = async function(context, req) {
       const { buildFitPrompt } = require('../prompts');
 
       const loadCandidateContext = async (client) => {
-        const profileResult = await client.query(`SELECT TOP 1 * FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`);
+        const profileResult = await client.query(
+          `SELECT TOP 1 * FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`
+        );
         if (profileResult.rows.length === 0) throw new Error('No candidate profile found');
         const profile = profileResult.rows[0];
         const candidateId = profile.id;
-        const experiencesResult = await client.query(`SELECT * FROM experiences WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`, [candidateId]);
+        const experiencesResult = await client.query(
+          `SELECT * FROM experiences WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
+          [candidateId]
+        );
         // Load skills and their equivalents (text-based)
-        const skillsResult = await client.query(`
+        const skillsResult = await client.query(
+          `
           SELECT s.id, s.candidate_id, s.skill_name, s.category, s.self_rating, s.evidence, s.honest_notes, s.years_experience, s.last_used,
                  STRING_AGG(eq.equivalent_name, ',') AS equivalents
           FROM skills s
@@ -68,12 +79,29 @@ module.exports = async function(context, req) {
           WHERE s.candidate_id = @p1
           GROUP BY s.id, s.candidate_id, s.skill_name, s.category, s.self_rating, s.evidence, s.honest_notes, s.years_experience, s.last_used
           ORDER BY s.category ASC, CASE WHEN s.self_rating IS NULL THEN 1 ELSE 0 END ASC, s.self_rating DESC, s.skill_name ASC
-        `, [candidateId]);
-        const gapsResult = await client.query(`SELECT * FROM gaps_weaknesses WHERE candidate_id = @p1 ORDER BY id ASC`, [candidateId]);
-        const valuesResult = await client.query(`SELECT TOP 1 * FROM values_culture WHERE candidate_id = @p1 ORDER BY created_at DESC`, [candidateId]);
-        const faqResult = await client.query(`SELECT * FROM faq_responses WHERE candidate_id = @p1 ORDER BY is_common_question DESC, id ASC`, [candidateId]);
-        const aiInstructionsResult = await client.query(`SELECT * FROM ai_instructions WHERE candidate_id = @p1 ORDER BY priority ASC, id ASC`, [candidateId]);
-        const educationResult = await client.query(`SELECT * FROM education WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`, [candidateId]);
+        `,
+          [candidateId]
+        );
+        const gapsResult = await client.query(
+          `SELECT * FROM gaps_weaknesses WHERE candidate_id = @p1 ORDER BY id ASC`,
+          [candidateId]
+        );
+        const valuesResult = await client.query(
+          `SELECT TOP 1 * FROM values_culture WHERE candidate_id = @p1 ORDER BY created_at DESC`,
+          [candidateId]
+        );
+        const faqResult = await client.query(
+          `SELECT * FROM faq_responses WHERE candidate_id = @p1 ORDER BY is_common_question DESC, id ASC`,
+          [candidateId]
+        );
+        const aiInstructionsResult = await client.query(
+          `SELECT * FROM ai_instructions WHERE candidate_id = @p1 ORDER BY priority ASC, id ASC`,
+          [candidateId]
+        );
+        const educationResult = await client.query(
+          `SELECT * FROM education WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
+          [candidateId]
+        );
 
         // Attempt to load certifications if the table exists
         let certificationsResult = { rows: [] };
@@ -98,9 +126,9 @@ module.exports = async function(context, req) {
           certifications: certificationsResult.rows,
           values: valuesResult.rows[0] || null,
           faq: faqResult.rows,
-          aiInstructions: aiInstructionsResult.rows
+          aiInstructions: aiInstructionsResult.rows,
         };
-      }
+      };
 
       const callAnthropic = async (systemPrompt, userMessage, apiKey) => {
         const maxAttempts = 3;
@@ -113,9 +141,18 @@ module.exports = async function(context, req) {
           try {
             const response = await fetch(ANTHROPIC_API_URL, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-              body: JSON.stringify({ model: AI_MODEL, max_tokens: MAX_TOKENS, system: systemPrompt, messages: [{ role: 'user', content: userMessage }] }),
-              signal: timeout.signal
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+              },
+              body: JSON.stringify({
+                model: AI_MODEL,
+                max_tokens: MAX_TOKENS,
+                system: systemPrompt,
+                messages: [{ role: 'user', content: userMessage }],
+              }),
+              signal: timeout.signal,
             });
 
             if (!response.ok) {
@@ -131,30 +168,67 @@ module.exports = async function(context, req) {
             }
 
             const data = await response.json().catch(() => null);
-            const textBlock = (data && (data.content || data.data || [])) ? (Array.isArray(data.content) ? data.content.find((item) => item.type === 'text') : null) : null;
+            const textBlock =
+              data && (data.content || data.data || [])
+                ? Array.isArray(data.content)
+                  ? data.content.find((item) => item.type === 'text')
+                  : null
+                : null;
             if (textBlock && textBlock.text) return textBlock.text;
             if (data && typeof data.text === 'string') return data.text;
             return '';
           } catch (error) {
-            if (error && error.name === 'AbortError') lastErr = new Error('Anthropic API timeout'); else lastErr = error;
+            if (error && error.name === 'AbortError') lastErr = new Error('Anthropic API timeout');
+            else lastErr = error;
             const backoff = 200 * Math.pow(2, attempt - 1);
             await new Promise((r) => setTimeout(r, backoff));
           } finally {
-            try { timeout.clear(); } catch { void 0; }
+            try {
+              timeout.clear();
+            } catch {
+              void 0;
+            }
           }
         }
 
         throw lastErr || new Error('Anthropic API failure');
-      }
+      };
 
       // Validate inputs
       const apiKey = process.env.ANTHROPIC_API_KEY;
       const databaseUrl = process.env.AZURE_DATABASE_URL;
-      if (!apiKey) { context.res = { status: 500, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: 'ANTHROPIC_API_KEY is not configured' } }; endRequest(context, obs, 500); return; }
-      if (!databaseUrl) { context.res = { status: 500, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: 'AZURE_DATABASE_URL is not configured' } }; endRequest(context, obs, 500); return; }
+      if (!apiKey) {
+        context.res = {
+          status: 500,
+          headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+          body: { error: 'ANTHROPIC_API_KEY is not configured' },
+        };
+        endRequest(context, obs, 500);
+        return;
+      }
+      if (!databaseUrl) {
+        context.res = {
+          status: 500,
+          headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+          body: { error: 'AZURE_DATABASE_URL is not configured' },
+        };
+        endRequest(context, obs, 500);
+        return;
+      }
 
-      const jobDescription = req && req.body && typeof req.body.jobDescription === 'string' ? req.body.jobDescription.trim() : '';
-      if (!jobDescription) { context.res = { status: 400, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: "Request body must include a non-empty 'jobDescription' string" } }; endRequest(context, obs, 400); return; }
+      const jobDescription =
+        req && req.body && typeof req.body.jobDescription === 'string'
+          ? req.body.jobDescription.trim()
+          : '';
+      if (!jobDescription) {
+        context.res = {
+          status: 400,
+          headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+          body: { error: "Request body must include a non-empty 'jobDescription' string" },
+        };
+        endRequest(context, obs, 400);
+        return;
+      }
 
       client = getDbClient();
       await client.connect();
@@ -169,12 +243,23 @@ module.exports = async function(context, req) {
         let parsed = null;
         try {
           const firstJson = aiResponse && aiResponse.trim().match(/\{[\s\S]*\}/);
-          if (firstJson) parsed = JSON.parse(firstJson[0]); else parsed = JSON.parse(aiResponse);
+          if (firstJson) parsed = JSON.parse(firstJson[0]);
+          else parsed = JSON.parse(aiResponse);
         } catch {
-          parsed = { score: 50, verdict: 'MARGINAL', reasons: ['AI response could not be parsed; fallback used'], mismatches: [], suggestedMessage: "I'd like to learn more about this role to confirm fit." };
+          parsed = {
+            score: 50,
+            verdict: 'MARGINAL',
+            reasons: ['AI response could not be parsed; fallback used'],
+            mismatches: [],
+            suggestedMessage: "I'd like to learn more about this role to confirm fit.",
+          };
         }
 
-        context.res = { status: 200, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: parsed };
+        context.res = {
+          status: 200,
+          headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+          body: parsed,
+        };
         endRequest(context, obs, 200);
         return;
       } finally {
@@ -187,27 +272,67 @@ module.exports = async function(context, req) {
     await client.connect();
 
     // load latest candidate profile
-    const profileRes = await client.query(`SELECT TOP 1 id, name, title, elevator_pitch FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`);
+    const profileRes = await client.query(
+      `SELECT TOP 1 id, name, title, elevator_pitch FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`
+    );
     if (!profileRes.rows.length) {
-      context.res = { status: 404, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: 'No profile available' } };
+      context.res = {
+        status: 404,
+        headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+        body: { error: 'No profile available' },
+      };
       endRequest(context, obs, 404);
       return;
     }
     const profile = toCamel(profileRes.rows[0]);
 
-    const skillsRes = await client.query(`SELECT skill_name, category, honest_notes, evidence FROM skills WHERE candidate_id = @p1 ORDER BY category ASC, CASE WHEN self_rating IS NULL THEN 1 ELSE 0 END ASC, self_rating DESC, skill_name ASC`, [profileRes.rows[0].id]);
-    const gapsRes = await client.query(`SELECT description, why_its_a_gap FROM gaps_weaknesses WHERE candidate_id = @p1 ORDER BY id ASC`, [profileRes.rows[0].id]);
-    const educationRes = await client.query(`SELECT institution, degree, field_of_study, start_date, end_date, is_current, grade, notes FROM education WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`, [profileRes.rows[0].id]);
+    const skillsRes = await client.query(
+      `SELECT skill_name, category, honest_notes, evidence FROM skills WHERE candidate_id = @p1 ORDER BY category ASC, CASE WHEN self_rating IS NULL THEN 1 ELSE 0 END ASC, self_rating DESC, skill_name ASC`,
+      [profileRes.rows[0].id]
+    );
+    const gapsRes = await client.query(
+      `SELECT description, why_its_a_gap FROM gaps_weaknesses WHERE candidate_id = @p1 ORDER BY id ASC`,
+      [profileRes.rows[0].id]
+    );
+    const educationRes = await client.query(
+      `SELECT institution, degree, field_of_study, start_date, end_date, is_current, grade, notes FROM education WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
+      [profileRes.rows[0].id]
+    );
 
-    const skills = skillsRes.rows.map(r => ({ skillName: r.skill_name || '', category: r.category || '', honestNotes: r.honest_notes || '', evidence: r.evidence || '' }));
-    const gaps = gapsRes.rows.map(r => ({ description: r.description || '', whyItsAGap: r.why_its_a_gap || '' }));
-    const education = educationRes.rows.map(r => ({ institution: r.institution || '', degree: r.degree || '', fieldOfStudy: r.field_of_study || '', startDate: r.start_date || null, endDate: r.end_date || null, current: Boolean(r.is_current), grade: r.grade || '', notes: r.notes || '' }));
+    const skills = skillsRes.rows.map((r) => ({
+      skillName: r.skill_name || '',
+      category: r.category || '',
+      honestNotes: r.honest_notes || '',
+      evidence: r.evidence || '',
+    }));
+    const gaps = gapsRes.rows.map((r) => ({
+      description: r.description || '',
+      whyItsAGap: r.why_its_a_gap || '',
+    }));
+    const education = educationRes.rows.map((r) => ({
+      institution: r.institution || '',
+      degree: r.degree || '',
+      fieldOfStudy: r.field_of_study || '',
+      startDate: r.start_date || null,
+      endDate: r.end_date || null,
+      current: Boolean(r.is_current),
+      grade: r.grade || '',
+      notes: r.notes || '',
+    }));
 
-    context.res = { status: 200, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { profile, skills, gaps, education } };
+    context.res = {
+      status: 200,
+      headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+      body: { profile, skills, gaps, education },
+    };
     endRequest(context, obs, 200);
   } catch (error) {
     failRequest(context, obs, error, 500);
-    context.res = { status: 500, headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId), body: { error: error.message || 'Failed to load fit data' } };
+    context.res = {
+      status: 500,
+      headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+      body: { error: error.message || 'Failed to load fit data' },
+    };
   } finally {
     if (client) await client.end().catch(() => {});
   }

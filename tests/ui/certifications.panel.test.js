@@ -29,7 +29,9 @@ test('certifications panel renders and round-trips save payload', async () => {
 
   const sample = {
     profile: { fullName: 'L', email: 'dev@lodovi.co' },
-    certifications: [{ name: 'Cert One', issuer: 'Issuer A', issueDate: '2021-01-01', credentialId: 'ABC' }]
+    certifications: [
+      { name: 'Cert One', issuer: 'Issuer A', issueDate: '2021-01-01', credentialId: 'ABC' },
+    ],
   };
 
   const fetchMock = mockFetchForPanel(sample);
@@ -50,9 +52,9 @@ test('certifications panel renders and round-trips save payload', async () => {
   // modify the name and save
   setElementValue(nameInput, 'Cert One Updated');
   document.getElementById('save-all').click();
-  await new Promise(r => setTimeout(r, 20));
+  await new Promise((r) => setTimeout(r, 20));
 
-  const calls = fetchMock.mock.calls.filter(c => String(c[0]).endsWith('/api/panel-data'));
+  const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
   expect(calls.length).toBeGreaterThan(0);
   const payload = JSON.parse(calls[calls.length - 1][1].body);
   expect(Array.isArray(payload.certifications)).toBe(true);
@@ -70,7 +72,7 @@ test('certifications panel remove then save results in empty certifications arra
 
   const sample = {
     profile: { fullName: 'L', email: 'dev@lodovi.co' },
-    certifications: [{ name: 'ToRemove', issuer: 'X' }]
+    certifications: [{ name: 'ToRemove', issuer: 'X' }],
   };
 
   const fetchMock = mockFetchForPanel(sample);
@@ -83,9 +85,9 @@ test('certifications panel remove then save results in empty certifications arra
   removeBtn.click();
 
   document.getElementById('save-all').click();
-  await new Promise(r => setTimeout(r, 20));
+  await new Promise((r) => setTimeout(r, 20));
 
-  const calls = fetchMock.mock.calls.filter(c => String(c[0]).endsWith('/api/panel-data'));
+  const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
   expect(calls.length).toBeGreaterThan(0);
   const payload = JSON.parse(calls[calls.length - 1][1].body);
   // after removal, certifications should be empty array

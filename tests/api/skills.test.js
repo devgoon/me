@@ -15,21 +15,28 @@ describe('skills API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
-    client = { connect: jest.fn().mockResolvedValue(undefined), query: jest.fn(), end: jest.fn().mockResolvedValue(undefined) };
+    client = {
+      connect: jest.fn().mockResolvedValue(undefined),
+      query: jest.fn(),
+      end: jest.fn().mockResolvedValue(undefined),
+    };
     Client.mockImplementation(() => client);
   });
 
   afterAll(() => {
-    if (originalDatabaseUrl === undefined) delete process.env.AZURE_DATABASE_URL; else process.env.AZURE_DATABASE_URL = originalDatabaseUrl;
+    if (originalDatabaseUrl === undefined) delete process.env.AZURE_DATABASE_URL;
+    else process.env.AZURE_DATABASE_URL = originalDatabaseUrl;
   });
 
   test('returns strong and moderate skills grouped correctly', async () => {
     client.query
       .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // profile
-      .mockResolvedValueOnce({ rows: [
-        { id: 10, skill_name: 'JavaScript', category: 'strong' },
-        { id: 11, skill_name: 'React', category: 'moderate' }
-      ] }); // skills
+      .mockResolvedValueOnce({
+        rows: [
+          { id: 10, skill_name: 'JavaScript', category: 'strong' },
+          { id: 11, skill_name: 'React', category: 'moderate' },
+        ],
+      }); // skills
 
     const context = { req: {}, res: null, log: { warn: jest.fn() } };
     await skillsHandler(context);

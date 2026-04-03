@@ -15,7 +15,7 @@
 .skills-section-intro h2 {
   margin: 0;
   font-size: clamp(2rem, 5vw, 3rem);
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
   letter-spacing: -0.5px;
 }
 
@@ -30,7 +30,7 @@
   margin: 0 0 12px;
   font-size: 1.05rem;
   letter-spacing: 0.3px;
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
 }
 
 .skills-card--strong {
@@ -44,10 +44,10 @@
 /* Visual progression cues */
 .skills-card--strong {
   border-left: 6px solid #3fb950;
-  background: linear-gradient(90deg, rgba(63,185,80,0.03), transparent);
+  background: linear-gradient(90deg, rgba(63, 185, 80, 0.03), transparent);
 }
 .skills-card--strong h2::before {
-  content: "✓";
+  content: '✓';
   display: inline-block;
   margin-right: 8px;
   font-weight: 700;
@@ -57,7 +57,7 @@
 .skills-card--moderate {
   border-color: #484f58;
   border-left: 4px solid #9ea7b3;
-  background: linear-gradient(90deg, rgba(158,167,179,0.03), transparent);
+  background: linear-gradient(90deg, rgba(158, 167, 179, 0.03), transparent);
 }
 
 .skills-card--moderate h2 {
@@ -65,16 +65,16 @@
 }
 
 .skills-card--moderate h2::before {
-  content: "○";
+  content: '○';
   display: inline-block;
   margin-right: 8px;
   color: #9ea7b3;
 }
 
 .skills-card---interested {
-  border-color: rgba(210,153,34,0.45);
+  border-color: rgba(210, 153, 34, 0.45);
   border-left: 4px solid #d29922;
-  background: linear-gradient(90deg, rgba(210,153,34,0.03), transparent);
+  background: linear-gradient(90deg, rgba(210, 153, 34, 0.03), transparent);
 }
 
 .skills-card---interested h2 {
@@ -82,16 +82,16 @@
 }
 
 .skills-card---interested h2::before {
-  content: "☆";
+  content: '☆';
   display: inline-block;
   margin-right: 8px;
   color: #d29922;
 }
 
 .skills-card---not-interested {
-  border-color: rgba(194,61,61,0.45);
+  border-color: rgba(194, 61, 61, 0.45);
   border-left: 4px solid #c23d3d;
-  background: linear-gradient(90deg, rgba(194,61,61,0.02), transparent);
+  background: linear-gradient(90deg, rgba(194, 61, 61, 0.02), transparent);
 }
 
 .skills-card---not-interested h2 {
@@ -99,7 +99,7 @@
 }
 
 .skills-card---not-interested h2::before {
-  content: "✗";
+  content: '✗';
   display: inline-block;
   margin-right: 8px;
   color: #c23d3d;

@@ -145,7 +145,7 @@
   color: #79b8ff;
   font-size: 0.86rem;
   letter-spacing: 1px;
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
 }
 
 .fit-verdict-row {
@@ -158,7 +158,7 @@
 
 .fit-verdict-row h2 {
   margin: 0;
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
 }
 
 .verdict-badge {
@@ -201,13 +201,13 @@
 }
 
 .copy-btn:hover {
-  background: rgba(88,166,255,0.06);
+  background: rgba(88, 166, 255, 0.06);
   color: #58a6ff;
 }
 
 .copy-btn.copied {
-  background: rgba(63,185,80,0.12);
-  border-color: rgba(63,185,80,0.25);
+  background: rgba(63, 185, 80, 0.12);
+  border-color: rgba(63, 185, 80, 0.25);
   color: #3fb950;
 }
 

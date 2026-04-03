@@ -1,6 +1,6 @@
 body.admin-page {
   margin: 0;
-  font-family: "Open Sans", sans-serif;
+  font-family: 'Open Sans', sans-serif;
   color: #e6edf3;
   background: #0d1117;
 }
@@ -22,7 +22,7 @@ body.admin-page {
 
 .admin-topbar h1 {
   margin: 0;
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
 }
 
 .subtle {
@@ -92,7 +92,7 @@ body.admin-page {
 
 .panel h2 {
   margin-top: 0;
-  font-family: "Raleway", sans-serif;
+  font-family: 'Raleway', sans-serif;
 }
 
 .form-grid {
@@ -305,7 +305,7 @@ select:focus {
   padding: 8px 10px;
 }
 #cache-table thead th {
-  background: rgba(48,54,61,0.6);
+  background: rgba(48, 54, 61, 0.6);
   font-weight: 700;
   text-align: left;
 }

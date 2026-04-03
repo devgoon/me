@@ -1,40 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
 
-<head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Experience AI Context | Lodovi.co</title>
+    <meta
+      content="Queryable AI context for Lodovico Minnocci's professional experience."
+      name="description"
+    />
 
-  <title>Experience AI Context | Lodovi.co</title>
-  <meta content="Queryable AI context for Lodovico Minnocci's professional experience." name="description">
+    <link href="assets/img/favicon.png" rel="icon" />
+    <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+    <link href="assets/css/experience-ai.css" rel="stylesheet" />
+    <link href="assets/css/skills-ai.css" rel="stylesheet" />
+  </head>
 
-  <link href="assets/img/favicon.png" rel="icon">
-  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-  <link href="assets/css/experience-ai.css" rel="stylesheet">
-  <link href="assets/css/skills-ai.css" rel="stylesheet">
-</head>
-
-<body>
-  <main class="experience-ai-page">
-    <header class="experience-ai-header">
-      <a class="back-link" href="/">Back to home</a>
-      <h1>Experience</h1>
-      <p>Each role is loaded from the database and enriched with AI-generated context.</p>
-    </header>
-
-    <div id="experience-error" class="ask-status" hidden></div>
-    <section id="experience-list" class="role-grid" aria-label="Experience role cards"></section>
-
-    <section aria-label="Skills section">
-      <header class="skills-section-intro">
-        <h2>Skills</h2>
-        <p>A practical snapshot of where I am strongest, where I am solid, and where I have clear gaps.</p>
+  <body>
+    <main class="experience-ai-page">
+      <header class="experience-ai-header">
+        <a class="back-link" href="/">Back to home</a>
+        <h1>Experience</h1>
+        <p>Each role is loaded from the database and enriched with AI-generated context.</p>
       </header>
-      <div id="skills-list" class="skills-grid" aria-label="Skills strength cards"></div>
-    </section>
-  </main>
 
-  <script src="assets/js/experience-ai.js"></script>
-</body>
+      <div id="experience-error" class="ask-status" hidden></div>
+      <section id="experience-list" class="role-grid" aria-label="Experience role cards"></section>
 
+      <section aria-label="Skills section">
+        <header class="skills-section-intro">
+          <h2>Skills</h2>
+          <p>
+            A practical snapshot of where I am strongest, where I am solid, and where I have clear
+            gaps.
+          </p>
+        </header>
+        <div id="skills-list" class="skills-grid" aria-label="Skills strength cards"></div>
+      </section>
+    </main>
+
+    <script src="assets/js/experience-ai.js"></script>
+  </body>
 </html>
