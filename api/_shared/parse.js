@@ -47,5 +47,5 @@ function safeParseJson(raw) {
 
 module.exports = {
   parsePgArray,
-  safeParseJson
+  safeParseJson,
 };

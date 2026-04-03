@@ -17,9 +17,9 @@ test('gaps panel removes gap and saves empty array', async () => {
   expect(remove).toBeTruthy();
   remove.click();
   document.getElementById('save-all').click();
-  await new Promise(r => setTimeout(r, 20));
+  await new Promise((r) => setTimeout(r, 20));
 
-  const calls = fetchMock.mock.calls.filter(c => String(c[0]).endsWith('/api/panel-data'));
+  const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
   const payload = JSON.parse(calls[calls.length - 1][1].body);
   expect(payload.gaps.length).toBe(0);
   fetchMock.mockRestore();

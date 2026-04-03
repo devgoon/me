@@ -10,15 +10,21 @@
     { "route": "/api/panel-data", "allowedRoles": ["authenticated"] },
     { "route": "/api/admin/cache-report", "allowedRoles": ["authenticated"] },
     { "route": "/api/cache-report", "allowedRoles": ["authenticated"] },
-    { "route": "/favicon.ico", "headers": { "Cache-Control": "public, max-age=604800, immutable" } },
-    { "route": "/*", "headers": {
-      "Content-Security-Policy": "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self'; connect-src 'self'; font-src 'self' data: https://fonts.gstatic.com;",
-      "Referrer-Policy": "strict-origin-when-cross-origin",
-      "X-Content-Type-Options": "nosniff",
-      "X-Frame-Options": "DENY",
-      "X-XSS-Protection": "0",
-      "Permissions-Policy": "geolocation=(), microphone=(), camera=()"
-    }}
+    {
+      "route": "/favicon.ico",
+      "headers": { "Cache-Control": "public, max-age=604800, immutable" }
+    },
+    {
+      "route": "/*",
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self'; connect-src 'self'; font-src 'self' data: https://fonts.gstatic.com;",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "0",
+        "Permissions-Policy": "geolocation=(), microphone=(), camera=()"
+      }
+    }
   ],
   "responseOverrides": {
     "401": {
@@ -28,7 +34,15 @@
   },
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/frontend/assets/*", "/images/*", "/favicon.ico", "/auth", "/auth/*", "/admin", "/admin/*"]
+    "exclude": [
+      "/frontend/assets/*",
+      "/images/*",
+      "/favicon.ico",
+      "/auth",
+      "/auth/*",
+      "/admin",
+      "/admin/*"
+    ]
   },
   "mimeTypes": {
     ".webmanifest": "application/manifest+json"

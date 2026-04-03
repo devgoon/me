@@ -4,36 +4,36 @@
  * @module frontend/assets/js/experience-ai.js
  */
 (() => {
-  const experienceList = document.getElementById("experience-list");
-  const skillsList = document.getElementById("skills-list");
-  const errorNode = document.getElementById("experience-error");
+  const experienceList = document.getElementById('experience-list');
+  const skillsList = document.getElementById('skills-list');
+  const errorNode = document.getElementById('experience-error');
   if (!experienceList || !skillsList) {
     return;
   }
   // Caching moved to server-side `ai_response_cache`; always fetch live payload
   function escapeHtml(value) {
     return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
   function formatDateRange(startDate, endDate, isCurrent) {
     const fmt = (dateValue) => {
       if (!dateValue) {
-        return "Present";
+        return 'Present';
       }
       const date = new Date(dateValue);
       if (Number.isNaN(date.getTime())) {
         return dateValue;
       }
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        year: "numeric",
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        year: 'numeric',
       });
     };
     const start = fmt(startDate);
-    const end = isCurrent ? "Present" : fmt(endDate);
+    const end = isCurrent ? 'Present' : fmt(endDate);
     return `${start} - ${end}`;
   }
   function normalizeList(items) {
@@ -43,7 +43,7 @@
       const t = items.trim();
       if (!t) return [];
       try {
-        if ((t.startsWith('[') || t.startsWith('{'))) {
+        if (t.startsWith('[') || t.startsWith('{')) {
           const parsed = JSON.parse(t);
           if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
           return Object.values(parsed).map(String).filter(Boolean);
@@ -52,12 +52,22 @@
         // fallthrough to splitting
       }
       // split by newlines or commas
-      const byComma = t.split(/,\s*/).map(s => s.trim()).filter(Boolean);
+      const byComma = t
+        .split(/,\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean);
       if (byComma.length > 1) return byComma;
-      return t.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      return t
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
     }
     if (typeof items === 'object') {
-      try { return Object.values(items).map(String).filter(Boolean); } catch (e) { return []; }
+      try {
+        return Object.values(items).map(String).filter(Boolean);
+      } catch (e) {
+        return [];
+      }
     }
     return [];
   }
@@ -73,15 +83,25 @@
         const contextId = `context-${exp.id}`;
         const bullets = normalizeList(exp.bulletPoints)
           .map((item) => `<li>${escapeHtml(item)}</li>`)
-          .join("");
+          .join('');
         return `
           <article class="role-card">
                         <div class="role-meta">
-                              <h2>${escapeHtml(exp.companyName)}${exp.isCurrent ? ' <span class="current-star" aria-hidden="true" style="color:#ffd700;font-size:1.5rem;">★</span>' : ""}</h2>
-                            <span>${escapeHtml(formatDateRange(exp.startDate, exp.endDate, exp.isCurrent))}</span>
+                              <h2>${escapeHtml(exp.companyName)}${
+          exp.isCurrent
+            ? ' <span class="current-star" aria-hidden="true" style="color:#ffd700;font-size:1.5rem;">★</span>'
+            : ''
+        }</h2>
+                            <span>${escapeHtml(
+                              formatDateRange(exp.startDate, exp.endDate, exp.isCurrent)
+                            )}</span>
                         </div>
-            <p class="role-title">${escapeHtml(exp.title || "")}</p>
-            ${bullets ? `<ul class="achievement-list">${bullets}</ul>` : `<p class="no-achievements">No public achievements provided.</p>`}
+            <p class="role-title">${escapeHtml(exp.title || '')}</p>
+            ${
+              bullets
+                ? `<ul class="achievement-list">${bullets}</ul>`
+                : `<p class="no-achievements">No public achievements provided.</p>`
+            }
             <button class="ai-context-toggle" type="button" aria-expanded="false" aria-controls="${contextId}" data-target="${contextId}">✨ Show AI Context</button>
             <div class="ai-context-panel" id="${contextId}" hidden>
               <h3>SITUATION</h3>
@@ -96,13 +116,13 @@
           </article>
         `;
       })
-      .join("");
+      .join('');
   }
   function renderSkillColumn(title, className, items) {
     const list =
       items && items.length
-        ? items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")
-        : "<li>None listed</li>";
+        ? items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')
+        : '<li>None listed</li>';
     return `
       <article class="role-card skills-card ${className}">
         <h2>${title}</h2>
@@ -123,9 +143,7 @@
       if (!g) return;
       // object: prefer description/whyItsAGap
       const text =
-        typeof g === "string"
-          ? g
-          : g.description || g.whyItsAGap || g.text || g.label || "";
+        typeof g === 'string' ? g : g.description || g.whyItsAGap || g.text || g.label || '';
       // Determine explicit interest flags (support camelCase and snake_case)
       const isTrue =
         g &&
@@ -143,28 +161,16 @@
         notInterested.push(text);
       } else {
         // default: treat string gaps or unspecified as not interested
-        if (typeof g === "string") notInterested.push(text);
+        if (typeof g === 'string') notInterested.push(text);
       }
     });
 
     skillsList.innerHTML = [
-      renderSkillColumn("STRONG ✓", "skills-card--strong", strong),
-      renderSkillColumn(
-        "BROADER EXPERTISE ○",
-        "skills-card--moderate",
-        moderate,
-      ),
-      renderSkillColumn(
-        "INTERESTED IN",
-        "skills-card---interested",
-        interested,
-      ),
-      renderSkillColumn(
-        "NOT INTERESTED IN",
-        "skills-card---not-interested",
-        notInterested,
-      ),
-    ].join("");
+      renderSkillColumn('STRONG ✓', 'skills-card--strong', strong),
+      renderSkillColumn('BROADER EXPERTISE ○', 'skills-card--moderate', moderate),
+      renderSkillColumn('INTERESTED IN', 'skills-card---interested', interested),
+      renderSkillColumn('NOT INTERESTED IN', 'skills-card---not-interested', notInterested),
+    ].join('');
   }
   async function loadData() {
     const spinnerHtml = `
@@ -177,7 +183,7 @@
     try {
       // Always request server-side cached payload (server stores in ai_response_cache)
 
-      const response = await fetch("/api/experience", { method: "GET" });
+      const response = await fetch('/api/experience', { method: 'GET' });
       if (!response.ok) {
         throw new Error(`Request failed (${response.status})`);
       }
@@ -188,19 +194,18 @@
     } catch (error) {
       if (errorNode) {
         errorNode.hidden = false;
-        errorNode.textContent =
-          "Unable to load AI/DB experience data right now.";
+        errorNode.textContent = 'Unable to load AI/DB experience data right now.';
       }
-      experienceList.innerHTML = "";
-      skillsList.innerHTML = "";
+      experienceList.innerHTML = '';
+      skillsList.innerHTML = '';
     }
   }
-  document.addEventListener("click", (event) => {
-    const button = event.target.closest(".ai-context-toggle");
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('.ai-context-toggle');
     if (!button) {
       return;
     }
-    const targetId = button.getAttribute("data-target");
+    const targetId = button.getAttribute('data-target');
     if (!targetId) {
       return;
     }
@@ -208,11 +213,9 @@
     if (!panel) {
       return;
     }
-    const isExpanded = button.getAttribute("aria-expanded") === "true";
-    button.setAttribute("aria-expanded", String(!isExpanded));
-    button.textContent = isExpanded
-      ? "✨ Show AI Context"
-      : "✨ Hide AI Context";
+    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+    button.setAttribute('aria-expanded', String(!isExpanded));
+    button.textContent = isExpanded ? '✨ Show AI Context' : '✨ Hide AI Context';
     panel.hidden = isExpanded;
   });
   loadData();

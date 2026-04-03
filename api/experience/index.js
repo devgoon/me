@@ -3,17 +3,17 @@
  * @module api/experience/index.js
  */
 
-const { Client } = require("../db");
-const crypto = require("crypto");
+const { Client } = require('../db');
+const crypto = require('crypto');
 const {
   beginRequest,
   endRequest,
   failRequest,
   withRequestId,
-} = require("../_shared/observability");
+} = require('../_shared/observability');
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-20250514";
+const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+const AI_MODEL = process.env.AI_MODEL || 'claude-sonnet-4-20250514';
 const DB_CONNECT_TIMEOUT_MS = 10000;
 const DB_QUERY_TIMEOUT_MS = 15000;
 const AI_TIMEOUT_MS = 30000;
@@ -39,7 +39,7 @@ function toIsoDate(value) {
 }
 
 function textOrFallback(value, fallback) {
-  if (value === null || value === undefined || value === "") {
+  if (value === null || value === undefined || value === '') {
     return fallback;
   }
   return String(value);
@@ -49,19 +49,19 @@ function buildFallbackContext(exp) {
   return {
     situation: textOrFallback(
       exp.why_joined,
-      "Joined to take on higher-impact technical ownership in a complex environment.",
+      'Joined to take on higher-impact technical ownership in a complex environment.'
     ),
     approach: textOrFallback(
       exp.actual_contributions,
-      "Focused on clear architecture, reliable delivery, and practical collaboration across teams.",
+      'Focused on clear architecture, reliable delivery, and practical collaboration across teams.'
     ),
     technicalWork: textOrFallback(
       exp.proudest_achievement,
-      "Delivered production systems with strong emphasis on operability and measurable outcomes.",
+      'Delivered production systems with strong emphasis on operability and measurable outcomes.'
     ),
     lessonsLearned: textOrFallback(
       exp.lessons_learned,
-      "Strong contracts and observability improve long-term delivery speed and reliability.",
+      'Strong contracts and observability improve long-term delivery speed and reliability.'
     ),
   };
 }
@@ -84,22 +84,10 @@ function sanitizeAiContexts(raw, experiences) {
     const { originalId, exp } = idMap.get(idStr);
 
     byId[originalId] = {
-      situation: textOrFallback(
-        item.situation,
-        buildFallbackContext(exp).situation,
-      ),
-      approach: textOrFallback(
-        item.approach,
-        buildFallbackContext(exp).approach,
-      ),
-      technicalWork: textOrFallback(
-        item.technicalWork,
-        buildFallbackContext(exp).technicalWork,
-      ),
-      lessonsLearned: textOrFallback(
-        item.lessonsLearned,
-        buildFallbackContext(exp).lessonsLearned,
-      ),
+      situation: textOrFallback(item.situation, buildFallbackContext(exp).situation),
+      approach: textOrFallback(item.approach, buildFallbackContext(exp).approach),
+      technicalWork: textOrFallback(item.technicalWork, buildFallbackContext(exp).technicalWork),
+      lessonsLearned: textOrFallback(item.lessonsLearned, buildFallbackContext(exp).lessonsLearned),
     };
   }
 
@@ -114,8 +102,8 @@ function extractJsonObject(text) {
   const fencedMatch = text.match(/```json\s*([\s\S]*?)```/i);
   const candidate = fencedMatch ? fencedMatch[1] : text;
 
-  const start = candidate.indexOf("{");
-  const end = candidate.lastIndexOf("}");
+  const start = candidate.indexOf('{');
+  const end = candidate.lastIndexOf('}');
   if (start < 0 || end < 0 || end <= start) {
     return null;
   }
@@ -131,15 +119,14 @@ function extractJsonObject(text) {
 function coerceToArray(val) {
   if (!val) return [];
   if (Array.isArray(val)) return val;
-  if (typeof val === "string") {
+  if (typeof val === 'string') {
     const s = val.trim();
     if (!s) return [];
     // Try JSON array/object
     try {
       const parsed = JSON.parse(s);
       if (Array.isArray(parsed)) return parsed;
-      if (parsed && typeof parsed === "object")
-        return Object.values(parsed).map(String);
+      if (parsed && typeof parsed === 'object') return Object.values(parsed).map(String);
     } catch {
       // fallthrough
     }
@@ -154,7 +141,7 @@ function coerceToArray(val) {
       .map((x) => x.trim())
       .filter(Boolean);
   }
-  if (typeof val === "object") {
+  if (typeof val === 'object') {
     try {
       return Object.values(val).map(String);
     } catch {
@@ -164,12 +151,7 @@ function coerceToArray(val) {
   return [];
 }
 
-async function callAnthropicForContexts(
-  profile,
-  experiences,
-  apiKey,
-  certifications,
-) {
+async function callAnthropicForContexts(profile, experiences, apiKey, certifications) {
   if (!apiKey || experiences.length === 0) {
     return {};
   }
@@ -188,10 +170,7 @@ async function callAnthropicForContexts(
     challenges_faced: exp.challenges_faced,
   }));
 
-  const {
-    buildExperienceSystemPrompt,
-    buildExperienceUserPrompt,
-  } = require("../prompts");
+  const { buildExperienceSystemPrompt, buildExperienceUserPrompt } = require('../prompts');
   const systemPrompt = buildExperienceSystemPrompt(profile);
   // Pass certifications through to the experience user prompt if provided
   const userPrompt = buildExperienceUserPrompt({
@@ -203,23 +182,23 @@ async function callAnthropicForContexts(
   let response;
   try {
     response = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
         model: AI_MODEL,
         max_tokens: AI_MAX_TOKENS,
         system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }],
+        messages: [{ role: 'user', content: userPrompt }],
       }),
       signal: timeout.signal,
     });
   } catch (error) {
-    if (error && error.name === "AbortError") {
-      throw new Error("Anthropic API timeout");
+    if (error && error.name === 'AbortError') {
+      throw new Error('Anthropic API timeout');
     }
     throw error;
   } finally {
@@ -235,16 +214,20 @@ async function callAnthropicForContexts(
   let text = null;
   // common Anthropic response shapes: data.content (array of {type,text}), top-level text, data.output
   if (Array.isArray(data.content)) {
-    const tb = data.content.find((item) => item && item.type === "text" && typeof item.text === "string");
+    const tb = data.content.find(
+      (item) => item && item.type === 'text' && typeof item.text === 'string'
+    );
     if (tb) text = tb.text;
   }
-  if (!text && typeof data.text === "string") text = data.text;
-  if (!text && typeof data.content === "string") text = data.content;
+  if (!text && typeof data.text === 'string') text = data.text;
+  if (!text && typeof data.content === 'string') text = data.content;
   if (!text && Array.isArray(data.data)) {
-    const tb = data.data.find((item) => item && item.type === "text" && typeof item.text === "string");
+    const tb = data.data.find(
+      (item) => item && item.type === 'text' && typeof item.text === 'string'
+    );
     if (tb) text = tb.text;
   }
-  if (!text && data && typeof data.output === "string") text = data.output;
+  if (!text && data && typeof data.output === 'string') text = data.output;
 
   // Optional debug: dump a truncated raw response when enabled to help diagnose empty responses
   if (!text && process.env.DEBUG_ANTHROPIC) {
@@ -255,7 +238,7 @@ async function callAnthropicForContexts(
     }
   }
 
-  const parsed = extractJsonObject(text || "");
+  const parsed = extractJsonObject(text || '');
   return sanitizeAiContexts(parsed, experiences);
 }
 
@@ -263,11 +246,11 @@ async function loadCandidateData(client) {
   const profileResult = await client.query(
     `SELECT TOP 1 id, name, title
      FROM candidate_profile
-     ORDER BY updated_at DESC, created_at DESC`,
+     ORDER BY updated_at DESC, created_at DESC`
   );
 
   if (profileResult.rows.length === 0) {
-    throw new Error("No candidate profile found");
+    throw new Error('No candidate profile found');
   }
 
   const profile = profileResult.rows[0];
@@ -280,7 +263,7 @@ async function loadCandidateData(client) {
      FROM experiences
     WHERE candidate_id = @p1
      ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
-    [candidateId],
+    [candidateId]
   );
 
   // Normalize bullet_points to arrays to handle JSON/text DB representations
@@ -297,7 +280,7 @@ async function loadCandidateData(client) {
     WHERE s.candidate_id = @p1
      GROUP BY s.id, s.candidate_id, s.skill_name, s.category, s.self_rating, s.evidence, s.honest_notes, s.years_experience, s.last_used
      ORDER BY s.category ASC, CASE WHEN s.self_rating IS NULL THEN 1 ELSE 0 END ASC, s.self_rating DESC, s.skill_name ASC`,
-    [candidateId],
+    [candidateId]
   );
 
   const gapsResult = await client.query(
@@ -305,7 +288,7 @@ async function loadCandidateData(client) {
      FROM gaps_weaknesses
     WHERE candidate_id = @p1
      ORDER BY id ASC`,
-    [candidateId],
+    [candidateId]
   );
 
   return {
@@ -321,18 +304,15 @@ async function loadCandidateData(client) {
 
 module.exports = async function (context) {
   const req = context.req || null;
-  const obs = beginRequest(context, req, "experience.get");
+  const obs = beginRequest(context, req, 'experience.get');
   const databaseUrl = process.env.AZURE_DATABASE_URL;
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
   if (!databaseUrl) {
     context.res = {
       status: 500,
-      headers: withRequestId(
-        { "Content-Type": "application/json" },
-        obs.requestId,
-      ),
-      body: { error: "AZURE_DATABASE_URL is not configured" },
+      headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+      body: { error: 'AZURE_DATABASE_URL is not configured' },
     };
     endRequest(context, obs, 500);
     return;
@@ -375,7 +355,7 @@ module.exports = async function (context) {
            FROM certifications
           WHERE candidate_id = @p1
            ORDER BY display_order ASC, CASE WHEN issue_date IS NULL THEN 1 ELSE 0 END ASC, issue_date DESC`,
-          [payload.profile.id],
+          [payload.profile.id]
         );
         compactCertifications = certRes.rows.map((r) => ({
           id: r.id,
@@ -400,10 +380,7 @@ module.exports = async function (context) {
         model: AI_MODEL,
       });
 
-      const cacheHash = crypto
-        .createHash("sha256")
-        .update(cacheKeyData)
-        .digest("hex");
+      const cacheHash = crypto.createHash('sha256').update(cacheKeyData).digest('hex');
 
       // Try to read from cache table if it exists. Failures here should not block the response.
       try {
@@ -411,7 +388,7 @@ module.exports = async function (context) {
           `SELECT TOP 1 hash, response
            FROM ai_response_cache
            WHERE model = @p1 AND hash = @p2`,
-          [AI_MODEL, cacheHash],
+          [AI_MODEL, cacheHash]
         );
 
         if (cacheSel.rows && cacheSel.rows.length > 0) {
@@ -425,7 +402,7 @@ module.exports = async function (context) {
           // update hit count and last_accessed (use hash as primary key)
           await client.query(
             `UPDATE ai_response_cache SET cache_hit_count = COALESCE(cache_hit_count,0) + 1, last_accessed = GETUTCDATE() WHERE hash = @p1`,
-            [row.hash],
+            [row.hash]
           );
           console.log(`AI cache hit for hash ${row.hash}`);
         } else {
@@ -434,57 +411,61 @@ module.exports = async function (context) {
             payload.profile,
             payload.experiences,
             apiKey,
-            compactCertifications,
+            compactCertifications
           );
           try {
             const responseStr = JSON.stringify(aiContexts || {});
             // Don't store empty objects or trivially small responses
-            if (!responseStr || responseStr === "{}" || responseStr.length < 10) {
-              console.log(`AI cache miss: empty or small response, not storing for question ${cacheKeyData}`);
+            if (!responseStr || responseStr === '{}' || responseStr.length < 10) {
+              console.log(
+                `AI cache miss: empty or small response, not storing for question ${cacheKeyData}`
+              );
             } else {
-              console.log(`AI cache miss for question ${cacheKeyData}, storing response (len=${responseStr.length})`);
+              console.log(
+                `AI cache miss for question ${cacheKeyData}, storing response (len=${responseStr.length})`
+              );
               // insert cache record with hash as primary key, so duplicates will be ignored if another request has already cached the same response
               await client.query(
                 `INSERT INTO ai_response_cache (question, model, hash, response, cache_hit_count, last_accessed, updated_at, is_cached)
                  VALUES (@p1, @p2, @p3, @p4, 1, GETUTCDATE(), GETUTCDATE(), 1);`,
-                [cacheKeyData, AI_MODEL, cacheHash, responseStr],
+                [cacheKeyData, AI_MODEL, cacheHash, responseStr]
               );
               console.log(`AI cache miss - stored response with hash ${cacheHash}`);
             }
           } catch (err) {
-            console.error("Failed to write AI cache", err);
+            console.error('Failed to write AI cache', err);
             context.log &&
               context.log.warn &&
-              context.log.warn("Failed to write AI cache", err.message || err);
+              context.log.warn('Failed to write AI cache', err.message || err);
           }
         }
       } catch (err) {
-        console.error("AI cache lookup failed, calling Anthropic", err);
+        console.error('AI cache lookup failed, calling Anthropic', err);
         // If cache table doesn't exist or query fails, fall back to calling Anthropic
         context.log &&
           context.log.debug &&
-          context.log.debug(
-            "AI cache lookup failed, calling Anthropic",
-            err.message || err,
-          );
+          context.log.debug('AI cache lookup failed, calling Anthropic', err.message || err);
         aiContexts = await callAnthropicForContexts(
           payload.profile,
           payload.experiences,
           apiKey,
-          compactCertifications,
+          compactCertifications
         );
       }
     } catch (error) {
-      console.error("Experience AI context generation failed, using fallback", error);
+      console.error('Experience AI context generation failed, using fallback', error);
       context.log &&
         context.log.warn &&
-        context.log.warn("Experience AI context generation failed, using fallback", error.message || error);
+        context.log.warn(
+          'Experience AI context generation failed, using fallback',
+          error.message || error
+        );
     }
 
     const experiences = payload.experiences.map((exp) => ({
       id: exp.id,
       companyName: exp.company_name,
-      title: exp.title || exp.title_progression || "",
+      title: exp.title || exp.title_progression || '',
       startDate: toIsoDate(exp.start_date),
       endDate: exp.is_current ? null : toIsoDate(exp.end_date),
       isCurrent: Boolean(exp.is_current),
@@ -493,14 +474,10 @@ module.exports = async function (context) {
     }));
 
     const skills = {
-      strong: payload.skills
-        .filter((s) => s.category === "strong")
-        .map((s) => s.skill_name),
-      moderate: payload.skills
-        .filter((s) => s.category === "moderate")
-        .map((s) => s.skill_name),
+      strong: payload.skills.filter((s) => s.category === 'strong').map((s) => s.skill_name),
+      moderate: payload.skills.filter((s) => s.category === 'moderate').map((s) => s.skill_name),
       gap: payload.skills
-        .filter((s) => s.category === "gap")
+        .filter((s) => s.category === 'gap')
         .map((s) => s.skill_name)
         .concat(
           (payload.gaps || [])
@@ -508,16 +485,13 @@ module.exports = async function (context) {
               description: g.description,
               interestedInLearning: Boolean(g.interestedInLearning),
             }))
-            .filter(Boolean),
+            .filter(Boolean)
         ),
     };
 
     context.res = {
       status: 200,
-      headers: withRequestId(
-        { "Content-Type": "application/json" },
-        obs.requestId,
-      ),
+      headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
       body: {
         profile: {
           name: payload.profile.name,
@@ -529,17 +503,13 @@ module.exports = async function (context) {
     };
     endRequest(context, obs, 200);
   } catch (error) {
-    const message =
-      error && error.message ? error.message : "Unable to load experience data";
+    const message = error && error.message ? error.message : 'Unable to load experience data';
     const isTimeout = /timeout/i.test(message);
     const status = isTimeout ? 504 : 500;
     failRequest(context, obs, error, status);
     context.res = {
       status,
-      headers: withRequestId(
-        { "Content-Type": "application/json" },
-        obs.requestId,
-      ),
+      headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
       body: { error: message },
     };
   } finally {

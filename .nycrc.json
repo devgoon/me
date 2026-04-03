@@ -1,11 +1,6 @@
 {
   "all": false,
-  "include": [
-    "api/**/*.js",
-    "assets/js/**/*.js",
-    "scripts/**/*.js",
-    "*.js"
-  ],
+  "include": ["api/**/*.js", "assets/js/**/*.js", "scripts/**/*.js", "*.js"],
   "exclude": [
     "**/__tests__/**",
     "**/*.test.js",

@@ -13,14 +13,12 @@
   "rules": {
     "no-console": "off",
     "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
-  }
-  ,
+  },
   "overrides": [
     {
       "files": ["**/__tests__/**", "**/*.test.js", "**/*.spec.js"],
       "env": { "jest": true }
-    }
-    ,
+    },
     {
       "files": ["assets/js/**"],
       "env": { "browser": true },

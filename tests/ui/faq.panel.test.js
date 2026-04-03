@@ -23,9 +23,9 @@ test('faq panel can add and save questions', async () => {
   a.dispatchEvent(new Event('input', { bubbles: true }));
 
   document.getElementById('save-all').click();
-  await new Promise(r => setTimeout(r, 20));
+  await new Promise((r) => setTimeout(r, 20));
 
-  const calls = fetchMock.mock.calls.filter(c => String(c[0]).endsWith('/api/panel-data'));
+  const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
   const payload = JSON.parse(calls[calls.length - 1][1].body);
   expect(payload.faq.length).toBe(2);
   expect(payload.faq[1].question).toBe('New Q');
@@ -35,7 +35,10 @@ test('faq panel can add and save questions', async () => {
 test('faq panel renders items and saves changes', async () => {
   jest.resetModules();
   baseDom();
-  const sample = { faq: [{ question: 'Q1', answer: 'A1', isCommonQuestion: true }], profile: { email: 'dev@lodovi.co' } };
+  const sample = {
+    faq: [{ question: 'Q1', answer: 'A1', isCommonQuestion: true }],
+    profile: { email: 'dev@lodovi.co' },
+  };
   const fetchMock = mockFetchForPanel(sample);
 
   require('../../frontend/assets/js/admin');
@@ -44,12 +47,13 @@ test('faq panel renders items and saves changes', async () => {
   const q = document.querySelector('[data-faq="0"][data-field="question"]');
   const a = document.querySelector('[data-faq="0"][data-field="answer"]');
   expect(q.value).toBe('Q1');
-  a.value = 'Updated A1'; a.dispatchEvent(new Event('input', { bubbles: true }));
+  a.value = 'Updated A1';
+  a.dispatchEvent(new Event('input', { bubbles: true }));
 
   document.getElementById('save-all').click();
-  await new Promise(r => setTimeout(r, 10));
+  await new Promise((r) => setTimeout(r, 10));
 
-  const calls = fetchMock.mock.calls.filter(c => String(c[0]).endsWith('/api/panel-data'));
+  const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
   const payload = JSON.parse(calls[calls.length - 1][1].body);
   expect(payload.faq[0].answer).toBe('Updated A1');
   fetchMock.mockRestore();

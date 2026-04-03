@@ -1,8 +1,7 @@
-DEVELOPER NOTES
-================
+# DEVELOPER NOTES
 
-Prerequisites / external binaries
---------------------------------
+## Prerequisites / external binaries
+
 - `sqlcmd` — SQL execution helper (used by some scripts for applying SQL)
 - `sqlpackage` — Microsoft tooling to Export/Import bacpac and Extract/Script databases
 - `node` and `npm` — Node.js runtime and package manager
@@ -14,8 +13,8 @@ If you don't already have `sqlcmd` / `sqlpackage` on macOS or Linux, the reposit
 
 Run those scripts to install the matching platform binaries (they download the official Microsoft packages).
 
-Recommended Node version
-------------------------
+## Recommended Node version
+
 - Use Node 18+ (LTS). If you use `nvm`, run:
 
 ```bash
@@ -23,8 +22,8 @@ nvm install --lts
 nvm use --lts
 ```
 
-Getting started (project setup)
---------------------------------
+## Getting started (project setup)
+
 1. Install Node dependencies:
 
 ```bash
@@ -50,22 +49,22 @@ make check     # spellcheck, lint, unit tests, link check, coverage
 make start
 ```
 
-DB helpers and Make targets
----------------------------
+## DB helpers and Make targets
+
 Scripts that work with Azure SQL live in the `scripts/` folder and produce artifacts under `db/`:
 
 - `scripts/dump-schema.sh` → `db/schema.sql` (Make target: `make dump-schema`)
 - `scripts/backup-db.sh` → `db/backup-<timestamp>.bacpac` (Make target: `make backup-db TARGET_DB=<name>`)
 - `scripts/restore-db.sh` (Make target: `make restore-db BACPAC=<file> TARGET_DB=<name>`)
 
-How the scripts read credentials
---------------------------------
+## How the scripts read credentials
+
 - Primary source: the `.env.local` file's `DATABASE_ADO` value (ADO-style: `Data Source=...;Initial Catalog=...;User ID=...;Password=...`).
 - For non-interactive runs you can export `SOURCE_USER` and `SOURCE_PASS` in your shell; the scripts will prefer those if present.
 - The tools prefer SQL authentication (username/password). Integrated/Kerberos authentication can fail on macOS and in CI environments ("Cannot generate SSPI context"). When in doubt, use SQL auth.
 
-Common commands
----------------
+## Common commands
+
 Dump current schema to `db/schema.sql`:
 
 ```bash
@@ -84,25 +83,25 @@ Restore a bacpac into `lodovico-test` (will prompt for confirmation and may prom
 make restore-db BACPAC=db/backup-20260329200807.bacpac TARGET_DB=lodovico-test
 ```
 
-Notes and safety
-----------------
+## Notes and safety
+
 - These operations are potentially destructive — restores can overwrite objects. Always take a bacpac backup before restoring to an existing database.
 - If you need non-interactive CI usage, set `SOURCE_USER` and `SOURCE_PASS` and pass the `BACPAC`/`TARGET_DB` arguments; the scripts will run without interactive prompts where possible. If you want a `FORCE` flag added to skip confirmations, ask and I'll add it.
 - If `dump-schema` generates a `:setvar DatabaseName` with a different name, inspect `db/schema.sql` before applying; during local testing the file may be patched to target `lodovico-test`.
 
-Troubleshooting
----------------
+## Troubleshooting
+
 - Authentication errors: prefer SQL auth (username/password). Integrated auth often fails outside Windows domain environments.
 - Network/connectivity: ensure your client IP is allowed on the Azure SQL server firewall and port 1433 is reachable.
 - `sqlpackage` incompatibilities: if a command fails, update to the latest `sqlpackage` (see `scripts/install-sqlpackage.sh`) or run the Extract→.dacpac→Script fallback used by `scripts/dump-schema.sh`.
 
-Where outputs appear
---------------------
+## Where outputs appear
+
 - Schema script: `db/schema.sql`
 - Bacpac exports: `db/backup-<timestamp>.bacpac`
 
-GitHub secrets sync
--------------------
+## GitHub secrets sync
+
 You can synchronize local environment keys into GitHub repository Secrets and Variables using the helper script `scripts/gh-sync-env-to-gh.sh`.
 
 - Purpose: read a dotenv-style file (default: `.env.local`) and create/update GitHub Secrets or Repository Variables for the current repo.
@@ -126,11 +125,11 @@ You can synchronize local environment keys into GitHub repository Secrets and Va
 ```
 
 - Notes:
-	- The script requires the `gh` CLI to be installed and authenticated with permissions to modify repository Secrets/Variables.
-	- Always run with `--dry-run` first to verify which keys will become Secrets vs Variables.
+  - The script requires the `gh` CLI to be installed and authenticated with permissions to modify repository Secrets/Variables.
+  - Always run with `--dry-run` first to verify which keys will become Secrets vs Variables.
 
-Make target
------------
+## Make target
+
 - `make gh-sync-env REPO=owner/repo ENV_FILE=.env.local` — interactive wrapper that prompts before running the sync script.
   - Example:
 
@@ -138,5 +137,4 @@ Make target
 make gh-sync-env REPO=devgoon/me ENV_FILE=.env.local
 ```
 
-  - The Make target will attempt to detect the repo if `REPO=` is not supplied, and it requires you to type `yes` to proceed.
-
+- The Make target will attempt to detect the repo if `REPO=` is not supplied, and it requires you to type `yes` to proceed.

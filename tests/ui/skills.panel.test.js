@@ -18,11 +18,11 @@ test('skills panel handles adding and removing skills', async () => {
   input.value = 'NewSkill';
   input.dispatchEvent(new Event('input', { bubbles: true }));
   document.getElementById('save-all').click();
-  await new Promise(r => setTimeout(r, 20));
+  await new Promise((r) => setTimeout(r, 20));
 
-  const calls = fetchMock.mock.calls.filter(c => String(c[0]).endsWith('/api/panel-data'));
+  const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
   const payload = JSON.parse(calls[calls.length - 1][1].body);
-  const skillNames = (payload.skills || []).map(s => s.skillName || s);
+  const skillNames = (payload.skills || []).map((s) => s.skillName || s);
   expect(skillNames).toContain('NewSkill');
   fetchMock.mockRestore();
 });

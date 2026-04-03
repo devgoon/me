@@ -5,7 +5,6 @@
 
 const sql = require('mssql');
 
-
 class Client {
   constructor(options) {
     this._connectionString = (options && options.connectionString) || null;
@@ -19,14 +18,20 @@ class Client {
     if (raw !== null && raw !== undefined) {
       connStr = String(raw).trim();
       // tolerate surrounding single or double quotes from .env files
-      if ((connStr.startsWith('"') && connStr.endsWith('"')) || (connStr.startsWith("'") && connStr.endsWith("'"))) {
+      if (
+        (connStr.startsWith('"') && connStr.endsWith('"')) ||
+        (connStr.startsWith("'") && connStr.endsWith("'"))
+      ) {
         connStr = connStr.slice(1, -1);
       }
       // Support AZURE_DATABASE_URL values emitted by some tools, e.g.:
       // sqlserver://host:1433;database=NAME;user=USER;password=PW;encrypt=true;...
       if (/^\s*sqlserver:\/\//i.test(connStr)) {
         // split on semicolons
-        const parts = connStr.split(/;/).map((s) => s.trim()).filter(Boolean);
+        const parts = connStr
+          .split(/;/)
+          .map((s) => s.trim())
+          .filter(Boolean);
         const first = parts.shift(); // sqlserver://host:port
         const hostPort = first.replace(/^sqlserver:\/\//i, '');
         let host = hostPort;
@@ -56,7 +61,9 @@ class Client {
       }
     }
     if (!connStr) {
-      throw new Error('Azure SQL connection string not provided. Set AZURE_DATABASE_URL or pass connectionString option.');
+      throw new Error(
+        'Azure SQL connection string not provided. Set AZURE_DATABASE_URL or pass connectionString option.'
+      );
     }
     this._pool = new sql.ConnectionPool(String(connStr));
     await this._pool.connect();
@@ -93,7 +100,13 @@ class Client {
 
     for (let i = 0; i < values.length; i++) {
       let v = values[i];
-      if (v !== null && v !== undefined && typeof v === 'object' && !(v instanceof Buffer) && !(v instanceof Date)) {
+      if (
+        v !== null &&
+        v !== undefined &&
+        typeof v === 'object' &&
+        !(v instanceof Buffer) &&
+        !(v instanceof Date)
+      ) {
         try {
           v = JSON.stringify(v);
         } catch {

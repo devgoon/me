@@ -1,0 +1,13 @@
+node_modules
+coverage
+dist
+build
+.env.local
+.env
+.cache
+coverage
+**/*.min.js
+**/vendor/
+public/
+frontend/assets/vendor/
+api/node_modules

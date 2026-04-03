@@ -3,7 +3,7 @@
  * @module frontend/assets/js/skills.js
  */
 
-(function(){
+(function () {
   function createTag(text) {
     var span = document.createElement('span');
     span.textContent = text;
@@ -12,9 +12,9 @@
 
   function render(containerId, items) {
     var container = document.getElementById(containerId);
-    if(!container) return;
+    if (!container) return;
     container.innerHTML = '';
-    items.forEach(function(item){
+    items.forEach(function (item) {
       container.appendChild(createTag(item));
     });
   }
@@ -22,8 +22,9 @@
   function fetchWithTimeout(url, opts, timeoutMs) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeoutMs || 8000);
-    return fetch(url, Object.assign({}, opts || {}, { signal: controller.signal }))
-      .finally(() => clearTimeout(id));
+    return fetch(url, Object.assign({}, opts || {}, { signal: controller.signal })).finally(() =>
+      clearTimeout(id)
+    );
   }
 
   let __skillsApiError = null;
@@ -40,7 +41,11 @@
       try {
         console.info(`[skills] API attempt ${attempt}/${__SKILLS_API_MAX_ATTEMPTS}`);
         // use the lightweight skills endpoint (reads DB directly, no AI)
-        const res = await fetchWithTimeout('/api/skills', { method: 'GET', headers: { 'Accept': 'application/json' } }, 8000);
+        const res = await fetchWithTimeout(
+          '/api/skills',
+          { method: 'GET', headers: { Accept: 'application/json' } },
+          8000
+        );
         if (!res.ok) throw new Error('Non-OK response ' + res.status);
         const data = await res.json();
         const skills = data && data.skills ? data.skills : null;
@@ -61,13 +66,15 @@
     return null;
   }
 
-  document.addEventListener('DOMContentLoaded', async function(){
+  document.addEventListener('DOMContentLoaded', async function () {
     // Insert loading spinners into the skills columns
     var spinnerHtml = `<div class="loading" aria-busy="true" aria-live="polite">Loading…</div>`;
     var cur = document.getElementById('skill-tags-current');
     var bro = document.getElementById('skill-tags-broader');
-    if (cur) cur.innerHTML = `<article class="role-card" style="text-align:center;padding:12px">${spinnerHtml}</article>`;
-    if (bro) bro.innerHTML = `<article class="role-card" style="text-align:center;padding:12px">${spinnerHtml}</article>`;
+    if (cur)
+      cur.innerHTML = `<article class="role-card" style="text-align:center;padding:12px">${spinnerHtml}</article>`;
+    if (bro)
+      bro.innerHTML = `<article class="role-card" style="text-align:center;padding:12px">${spinnerHtml}</article>`;
 
     // Try DB-backed API first, then fall back to static window.SKILLS_DATA
     var data = await loadSkillsFromApi();
@@ -76,7 +83,14 @@
       data = window.SKILLS_DATA || { strong: [], moderate: [] };
       source = 'fallback';
     }
-    console.info('[skills] rendering from', source, 'strong=', (data.strong||[]).length, 'moderate=', (data.moderate||[]).length);
+    console.info(
+      '[skills] rendering from',
+      source,
+      'strong=',
+      (data.strong || []).length,
+      'moderate=',
+      (data.moderate || []).length
+    );
 
     if (source === 'fallback') {
       console.error('[skills] API load failed', __skillsApiError);

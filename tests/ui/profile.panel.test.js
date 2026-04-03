@@ -21,9 +21,9 @@ test('profile panel loads and updates profile fields', async () => {
   fullName.value = 'Updated';
   fullName.dispatchEvent(new Event('input', { bubbles: true }));
   document.getElementById('save-all').click();
-  await new Promise(r => setTimeout(r, 20));
+  await new Promise((r) => setTimeout(r, 20));
 
-  const calls = fetchMock.mock.calls.filter(c => String(c[0]).endsWith('/api/panel-data'));
+  const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
   const payload = JSON.parse(calls[calls.length - 1][1].body);
   expect(payload.profile.fullName).toBe('Updated');
   fetchMock.mockRestore();
@@ -44,9 +44,9 @@ test('profile panel renders and saves profile changes (title)', async () => {
   title.dispatchEvent(new Event('input', { bubbles: true }));
 
   document.getElementById('save-all').click();
-  await new Promise(r => setTimeout(r, 10));
+  await new Promise((r) => setTimeout(r, 10));
 
-  const calls = fetchMock.mock.calls.filter(c => String(c[0]).endsWith('/api/panel-data'));
+  const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
   expect(calls.length).toBeGreaterThanOrEqual(1);
   const last = calls[calls.length - 1];
   const opts = last[1];
