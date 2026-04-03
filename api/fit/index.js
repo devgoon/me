@@ -44,7 +44,7 @@ module.exports = async function (context, req) {
     if (String(req.method || '').toUpperCase() === 'POST') {
       // inline minimal fit-check handler
       const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-      const AI_MODEL = process.env.AI_MODEL || 'claude-sonnet-4-20250514';
+      const AI_MODEL = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
       const MAX_TOKENS = 1024;
       const AI_TIMEOUT_MS = 20000;
 
