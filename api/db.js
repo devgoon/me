@@ -103,7 +103,7 @@ module.exports = {
   get sql() {
     try {
       return require('mssql');
-    } catch (e) {
+    } catch {
       return undefined;
     }
   },

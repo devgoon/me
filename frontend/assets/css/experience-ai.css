@@ -177,3 +177,44 @@ body {
     padding: 14px;
   }
 }
+
+/* Loading spinner (matching site-wide skills spinner) */
+.loading {
+  display: inline-block;
+  background: #161b22;
+  text-align: center;
+  padding: 12px 16px;
+  color: inherit;
+  border-radius: 6px;
+}
+
+.loading:before {
+  content: '';
+  display: inline-block;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  margin: 0 10px -5px 0;
+  border: 3px solid #0078d4;
+  border-top-color: #e6edf3;
+  -webkit-animation: experience-animate-loading 1s linear infinite;
+  animation: experience-animate-loading 1s linear infinite;
+}
+
+@-webkit-keyframes experience-animate-loading {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes experience-animate-loading {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

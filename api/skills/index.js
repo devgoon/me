@@ -89,7 +89,12 @@ module.exports = async function (context, req) {
     context.res = {
       status: 500,
       headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
-      body: { error: err && err.message ? err.message : 'Failed to load skills' },
+      body: {
+        error:
+          err && err.message
+            ? err.message
+            : 'The API is a bit cold. Please try refreshing the page in a few moments.',
+      },
     };
   } finally {
     await client.end().catch(() => {});

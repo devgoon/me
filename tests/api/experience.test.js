@@ -326,12 +326,10 @@ describe('experience callAnthropicForContexts', () => {
 
   test('parses content array shape', async () => {
     const jsonText = JSON.stringify({ experiences: [{ id: 1, situation: 'T' }] });
-    global.fetch = jest
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({ content: [{ type: 'text', text: jsonText }] }),
-      });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ content: [{ type: 'text', text: jsonText }] }),
+    });
     const res = await helpers.callAnthropicForContexts({}, [{ id: 1 }], 'key', []);
     expect(res[1]).toBeDefined();
     expect(res[1].situation).toContain('T');

@@ -173,13 +173,18 @@
     ].join('');
   }
   async function loadData() {
-    const spinnerHtml = `
+    const spinnerExperienceHtml = `
                     <div class="loading" aria-busy="true" aria-live="polite">
-                        Loading…
+                        Enriching work experience with AI generated context …
                     </div>
                 `;
-    experienceList.innerHTML = `<article class="role-card" style="text-align:center;padding:24px">${spinnerHtml}</article>`;
-    skillsList.innerHTML = `<article class="role-card" style="text-align:center;padding:24px">${spinnerHtml}</article>`;
+    const spinnerSkillsHtml = `
+                  <div class="loading" aria-busy="true" aria-live="polite">
+                      Analyzing skills and interests with AI …
+                  </div>
+              `;
+    experienceList.innerHTML = `<article class="role-card" style="text-align:left;padding:24px">${spinnerExperienceHtml}</article>`;
+    skillsList.innerHTML = `<article class="role-card" style="text-align:left;padding:24px">${spinnerSkillsHtml}</article>`;
     try {
       // Always request server-side cached payload (server stores in ai_response_cache)
 
