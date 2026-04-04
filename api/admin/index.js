@@ -846,3 +846,20 @@ module.exports.hideCacheRecords = async function (client) {
     `UPDATE ai_response_cache SET is_cached = FALSE, invalidated_at = GETUTCDATE() WHERE is_cached = TRUE`
   );
 };
+
+// Export internal helpers for unit testing.
+module.exports._helpers = {
+  asText,
+  asArray,
+  coerceToNewlineString,
+  coerceToArray,
+  formatDateToYMD,
+  formatDateToMDY,
+  formatMDYToYMD,
+  asNumber,
+  getDbClient,
+  requireAuth,
+  mapGapType,
+  mapInstructionType,
+  mapSkillCategory,
+};

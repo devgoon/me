@@ -516,3 +516,16 @@ module.exports = async function (context) {
     await client.end().catch(() => {});
   }
 };
+
+// Export helpers for unit testing
+module.exports._helpers = {
+  timeoutSignal,
+  toIsoDate,
+  textOrFallback,
+  buildFallbackContext,
+  sanitizeAiContexts,
+  extractJsonObject,
+  coerceToArray,
+  callAnthropicForContexts,
+  loadCandidateData,
+};

@@ -217,3 +217,59 @@ describe('chat API additional tests', () => {
     expect(context.res.status).toBe(400);
   });
 });
+
+// Chat helper unit tests (merged from chat.unit.test.js and chat.cache_miss.test.js)
+describe('chat helpers additional', () => {
+  const chat = require('../../api/chat');
+  const helpers = chat._helpers;
+
+  test('timeoutSignal returns signal and clear', () => {
+    const t = helpers.timeoutSignal(1000);
+    expect(t.signal).toBeDefined();
+    expect(typeof t.clear).toBe('function');
+    t.clear();
+  });
+
+  test('getCache returns response and updates hit count', async () => {
+    const client = { query: jest.fn() };
+    client.query
+      .mockResolvedValueOnce({ rows: [{ response: '  answer  ', cache_hit_count: 1 }] })
+      .mockResolvedValueOnce({});
+
+    const res = await helpers.getCache(client, 'm', 'q');
+    expect(res).toBe('  answer  ');
+    expect(client.query).toHaveBeenCalledTimes(2);
+    expect(client.query.mock.calls[1][0].toLowerCase()).toContain('update ai_response_cache');
+  });
+
+  test('setCache stores trimmed string and JSON for object', async () => {
+    const client = { query: jest.fn() };
+    await helpers.setCache(client, 'm', 'q', '  hello  ');
+    expect(client.query).toHaveBeenCalled();
+    const callArgs = client.query.mock.calls[0][1];
+    expect(callArgs[3]).toBe('hello');
+
+    client.query.mockClear();
+    await helpers.setCache(client, 'm', 'q', { a: 1 });
+    expect(client.query).toHaveBeenCalled();
+    const callArgs2 = client.query.mock.calls[0][1];
+    expect(callArgs2[3]).toBe(JSON.stringify({ a: 1 }));
+  });
+
+  test('callAnthropic returns text from various response shapes', async () => {
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ text: 'hello' }),
+    });
+    const text = await helpers.callAnthropic('sys', 'user', 'key');
+    expect(text).toBe('hello');
+    delete global.fetch;
+  });
+
+  test('getCache returns null when no rows', async () => {
+    const client = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+    const res = await helpers.getCache(client, 'm', 'q');
+    expect(res).toBeNull();
+    expect(client.query).toHaveBeenCalledTimes(1);
+  });
+});

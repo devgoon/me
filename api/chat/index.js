@@ -364,3 +364,12 @@ module.exports = async function (context, req) {
     };
   }
 };
+
+// Export helpers for unit testing
+module.exports._helpers = {
+  timeoutSignal,
+  callAnthropic,
+  getCache,
+  setCache,
+  loadCandidateContext,
+};

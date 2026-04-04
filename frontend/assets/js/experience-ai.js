@@ -194,7 +194,8 @@
     } catch (error) {
       if (errorNode) {
         errorNode.hidden = false;
-        errorNode.textContent = 'Unable to load AI/DB experience data right now.';
+        errorNode.textContent =
+          'The API is a bit cold. Please try refreshing the page in a few moments.';
       }
       experienceList.innerHTML = '';
       skillsList.innerHTML = '';

@@ -247,3 +247,105 @@ describe('experience API', () => {
     );
   });
 });
+
+// Experience helper unit tests (merged from experience.unit.test.js)
+describe('experience helpers', () => {
+  const expModule = require('../../api/experience');
+  const helpers = expModule._helpers;
+
+  test('toIsoDate returns null or ISO date', () => {
+    expect(helpers.toIsoDate(null)).toBeNull();
+    expect(helpers.toIsoDate(new Date('2020-05-06T12:00:00Z'))).toBe('2020-05-06');
+    expect(helpers.toIsoDate('2021-07-08T00:00:00Z')).toBe('2021-07-08');
+  });
+
+  test('textOrFallback uses fallback for empty values', () => {
+    expect(helpers.textOrFallback('', 'fallback')).toBe('fallback');
+    expect(helpers.textOrFallback(null, 'fb')).toBe('fb');
+    expect(helpers.textOrFallback('value', 'fb')).toBe('value');
+  });
+
+  test('buildFallbackContext returns expected keys', () => {
+    const exp = {};
+    const fb = helpers.buildFallbackContext(exp);
+    expect(fb).toHaveProperty('situation');
+    expect(fb).toHaveProperty('approach');
+    expect(fb).toHaveProperty('technicalWork');
+    expect(fb).toHaveProperty('lessonsLearned');
+  });
+
+  test('sanitizeAiContexts maps only known experience ids', () => {
+    const raw = { experiences: [{ id: '1', situation: 's' }, { id: '99' }] };
+    const experiences = [{ id: 1, why_joined: 'x' }];
+    const out = helpers.sanitizeAiContexts(raw, experiences);
+    expect(Object.keys(out)).toContain('1');
+    expect(out[1].situation).toBe('s');
+  });
+
+  test('extractJsonObject pulls JSON from fenced blocks or inline', () => {
+    const t1 = '```json\n{ "a": 1 }\n```';
+    expect(helpers.extractJsonObject(t1)).toEqual({ a: 1 });
+    const t2 = 'some text {"b":2} trailing';
+    expect(helpers.extractJsonObject(t2)).toEqual({ b: 2 });
+    expect(helpers.extractJsonObject('no json here')).toBeNull();
+  });
+
+  test('coerceToArray handles strings, arrays, and objects', () => {
+    expect(helpers.coerceToArray(null)).toEqual([]);
+    expect(helpers.coerceToArray(['a', 'b'])).toEqual(['a', 'b']);
+    expect(helpers.coerceToArray('["x","y"]')).toEqual(['x', 'y']);
+    expect(helpers.coerceToArray('one, two')).toEqual(['one', 'two']);
+    expect(helpers.coerceToArray({ a: 'x', b: null })).toEqual(['x', 'null']);
+  });
+
+  test('timeoutSignal returns object with signal and clear function', () => {
+    const t = helpers.timeoutSignal(1000);
+    expect(t).toHaveProperty('signal');
+    expect(typeof t.clear).toBe('function');
+    t.clear();
+  });
+});
+
+// callAnthropicForContexts tests (merged from experience.callAnthropic.test.js)
+describe('experience callAnthropicForContexts', () => {
+  const helpers = require('../../api/experience')._helpers;
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  test('parses top-level text field', async () => {
+    const jsonText = JSON.stringify({ experiences: [{ id: 1, situation: 'S' }] });
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ text: jsonText }) });
+    const res = await helpers.callAnthropicForContexts({}, [{ id: 1 }], 'key', []);
+    expect(res[1]).toBeDefined();
+    expect(res[1].situation).toContain('S');
+  });
+
+  test('parses content array shape', async () => {
+    const jsonText = JSON.stringify({ experiences: [{ id: 1, situation: 'T' }] });
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({
+        ok: true,
+        json: async () => ({ content: [{ type: 'text', text: jsonText }] }),
+      });
+    const res = await helpers.callAnthropicForContexts({}, [{ id: 1 }], 'key', []);
+    expect(res[1]).toBeDefined();
+    expect(res[1].situation).toContain('T');
+  });
+
+  test('throws on non-ok response', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500, text: async () => 'err' });
+    await expect(helpers.callAnthropicForContexts({}, [{ id: 1 }], 'key', [])).rejects.toThrow(
+      /Anthropic API error/
+    );
+  });
+
+  test('loadCandidateData throws when no profile found', async () => {
+    const client = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+    await expect(helpers.loadCandidateData(client)).rejects.toThrow(/No candidate profile found/);
+  });
+});
