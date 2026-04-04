@@ -381,9 +381,28 @@ document.addEventListener('DOMContentLoaded', function () {
       chatHistory.appendChild(bubble);
       chatHistory.scrollTop = chatHistory.scrollHeight;
     };
+    // Typing indicator helper (shows animated dots while awaiting AI response)
+    let _typingIndicatorEl = null;
+    const showTypingIndicator = () => {
+      if (!chatHistory || _typingIndicatorEl) return;
+      const bubble = document.createElement('div');
+      bubble.classList.add('ai-msg', 'ai-msg-assistant', 'ai-msg-typing');
+      bubble.setAttribute('aria-hidden', 'true');
+      bubble.innerHTML =
+        '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+      chatHistory.appendChild(bubble);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+      _typingIndicatorEl = bubble;
+    };
+    const hideTypingIndicator = () => {
+      if (_typingIndicatorEl && _typingIndicatorEl.parentNode) {
+        _typingIndicatorEl.parentNode.removeChild(_typingIndicatorEl);
+      }
+      _typingIndicatorEl = null;
+    };
     const callChatApi = async (prompt) => {
       const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+      const timeoutId = window.setTimeout(() => controller.abort(), 20000);
       let response;
       try {
         response = await fetch('/api/chat', {
@@ -418,10 +437,14 @@ document.addEventListener('DOMContentLoaded', function () {
       if (chatSend) {
         chatSend.disabled = true;
       }
+      // show typing indicator while waiting for the AI response
+      showTypingIndicator();
       try {
         const answer = await callChatApi(prompt);
+        hideTypingIndicator();
         appendMessage(answer, 'assistant');
       } catch (error) {
+        hideTypingIndicator();
         const msg =
           error && error.name === 'AbortError'
             ? 'The AI service timed out. Please try again in a moment.'

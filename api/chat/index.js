@@ -15,8 +15,8 @@ const crypto = require('crypto');
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const AI_MODEL = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
 const MAX_TOKENS = 1024;
-const DB_CONNECT_TIMEOUT_MS = 5000;
-const DB_QUERY_TIMEOUT_MS = 10000;
+const DB_CONNECT_TIMEOUT_MS = 10000;
+const DB_QUERY_TIMEOUT_MS = 15000;
 const AI_TIMEOUT_MS = 60000;
 
 function timeoutSignal(ms) {

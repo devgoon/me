@@ -81,7 +81,7 @@
         const res = await fetchWithTimeout(
           '/api/skills',
           { method: 'GET', headers: { Accept: 'application/json' } },
-          8000
+          20000
         );
         if (!res.ok) throw new Error('Non-OK response ' + res.status);
         const data = await res.json();
