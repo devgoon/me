@@ -16,8 +16,10 @@ module.exports = async function (context, req) {
     };
   } catch (err) {
     if (context && context.log) {
-      if (typeof context.log === 'function') context.log('[warmup] error', err && err.message ? err.message : String(err));
-      else if (typeof context.log.error === 'function') context.log.error('[warmup] error', err && err.message ? err.message : String(err));
+      if (typeof context.log === 'function')
+        context.log('[warmup] error', err && err.message ? err.message : String(err));
+      else if (typeof context.log.error === 'function')
+        context.log.error('[warmup] error', err && err.message ? err.message : String(err));
     }
     context.res = { status: 500, body: { ok: false, error: String(err) } };
   }
