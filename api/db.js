@@ -4,6 +4,13 @@
  */
 
 // Require `mssql` lazily inside methods so tests can mock the module before it's loaded.
+// Testing hook: tests may inject a fake mssql implementation via
+// `require('./db').__setMssqlMock(mock)`. This avoids brittle jest mocking.
+let __mssqlMock = undefined;
+function __getMssql() {
+  if (__mssqlMock) return __mssqlMock;
+  return require('mssql');
+}
 
 class Client {
   constructor(options) {
@@ -29,14 +36,14 @@ class Client {
       );
     }
 
-    const sql = require('mssql');
+    const sql = __getMssql();
     this._pool = new sql.ConnectionPool(String(connStr));
     await this._pool.connect();
   }
 
   async beginTransaction() {
     if (!this._pool) throw new Error('Client not connected');
-    const sql = require('mssql');
+    const sql = __getMssql();
     this._transaction = new sql.Transaction(this._pool);
     await this._transaction.begin();
   }
@@ -61,7 +68,7 @@ class Client {
     // Convert Postgres-style $1/$2 placeholders to T-SQL @p1/@p2 to match
     // how we bind parameters below (we call `req.input('p1', value)`).
     const transformedText = String(text).replace(/\$(\d+)/g, '@p$1');
-    const sql = require('mssql');
+    const sql = __getMssql();
     const req = this._transaction ? new sql.Request(this._transaction) : this._pool.request();
     const values = Array.isArray(params) ? params : [];
 
@@ -100,9 +107,12 @@ class Client {
 
 module.exports = {
   Client,
+  __setMssqlMock(m) {
+    __mssqlMock = m;
+  },
   get sql() {
     try {
-      return require('mssql');
+      return __getMssql();
     } catch {
       return undefined;
     }

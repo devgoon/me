@@ -149,7 +149,7 @@
       ce(
         'div',
         { style: 'margin-top:8px' },
-        ce('button', { id: 'analyze-btn', class: 'analyze-btn' }, 'Analyze Fit')
+        ce('button', { id: 'analyze-btn', class: 'analyze-btn' }, 'Determine Fit')
       ),
       ce(
         'div',
@@ -171,7 +171,7 @@
       const jd = qs('#job-description').value.trim();
       if (!jd) return alert('Paste a job description first');
       let analysis = null;
-      status.innerHTML = `<article class="role-card" style="text-align:center;padding:12px"><div class="loading" aria-busy="true" aria-live="polite">Determining fit…</div></article>`;
+      status.innerHTML = `<article class="role-card" style="text-align:left;padding:12px"><div class="loading" aria-busy="true" aria-live="polite">Determining fit…</div></article>`;
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30000); // 30 seconds

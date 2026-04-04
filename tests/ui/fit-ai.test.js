@@ -50,3 +50,90 @@ test('analyze posts to API and renders result on success', async () => {
   expect(out.textContent).toMatch(/FIT/);
   delete global.fetch;
 });
+
+test('copy button uses navigator.clipboard when available and reverts UI', async () => {
+  document.body.innerHTML = `<div id="fit-app-root"></div>`;
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      verdict: 'FIT',
+      score: 9,
+      suggestedMessage: 'Do X',
+      mismatches: ['gap1'],
+      reasons: ['r1'],
+    }),
+  });
+  // provide clipboard
+  Object.defineProperty(global.navigator, 'clipboard', {
+    value: { writeText: jest.fn().mockResolvedValue() },
+    configurable: true,
+  });
+
+  require('../../frontend/assets/js/fit-ai.js');
+  await new Promise((r) => setTimeout(r, 0));
+  document.querySelector('#job-description').value = 'jd';
+  document.querySelector('#analyze-btn').click();
+  await new Promise((r) => setTimeout(r, 20));
+
+  const btn = document.querySelector('.copy-btn');
+  expect(btn).toBeTruthy();
+  btn.click();
+  // allow promise microtasks to run and UI update
+  await new Promise((r) => setTimeout(r, 0));
+  // showCopied should set class and change innerHTML
+  expect(btn.classList.contains('copied')).toBe(true);
+  expect(btn.innerHTML).toMatch(/Copied/);
+  // wait for revert timeout (1400ms)
+  await new Promise((r) => setTimeout(r, 1500));
+  expect(btn.classList.contains('copied')).toBe(false);
+  delete global.fetch;
+  delete global.navigator.clipboard;
+});
+
+test('copy button fallback uses textarea and document.execCommand', async () => {
+  document.body.innerHTML = `<div id="fit-app-root"></div>`;
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      verdict: 'MARGINAL',
+      score: 5,
+      suggestedMessage: 'Maybe',
+      mismatches: [],
+      reasons: [],
+    }),
+  });
+  // remove navigator.clipboard to force fallback
+  try {
+    delete global.navigator.clipboard;
+  } catch (e) {}
+  document.execCommand = jest.fn().mockReturnValue(true);
+
+  require('../../frontend/assets/js/fit-ai.js');
+  await new Promise((r) => setTimeout(r, 0));
+  document.querySelector('#job-description').value = 'jd2';
+  document.querySelector('#analyze-btn').click();
+  await new Promise((r) => setTimeout(r, 20));
+
+  const btn = document.querySelector('.copy-btn');
+  btn.click();
+  await new Promise((r) => setTimeout(r, 0));
+  expect(document.execCommand).toHaveBeenCalled();
+  expect(btn.classList.contains('copied')).toBe(true);
+  await new Promise((r) => setTimeout(r, 1500));
+  expect(btn.classList.contains('copied')).toBe(false);
+  delete global.fetch;
+  delete document.execCommand;
+});
+
+test('analyze handles API error and renders fallback Error verdict', async () => {
+  document.body.innerHTML = `<div id="fit-app-root"></div>`;
+  global.fetch = jest.fn().mockResolvedValue({ ok: false });
+  require('../../frontend/assets/js/fit-ai.js');
+  await new Promise((r) => setTimeout(r, 0));
+  document.querySelector('#job-description').value = 'jd-error';
+  document.querySelector('#analyze-btn').click();
+  await new Promise((r) => setTimeout(r, 50));
+  const out = document.getElementById('fit-output');
+  expect(out.textContent).toMatch(/Fit API error/);
+  delete global.fetch;
+});

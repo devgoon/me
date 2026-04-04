@@ -6,7 +6,19 @@
 (function () {
   function createTag(text) {
     var span = document.createElement('span');
-    span.textContent = text;
+    span.className = 'skill-tag';
+    try {
+      if (text && typeof text === 'object') {
+        // support objects with common label fields
+        span.textContent = String(
+          text.label || text.description || text.text || JSON.stringify(text)
+        );
+      } else {
+        span.textContent = String(text == null ? '' : text);
+      }
+    } catch (e) {
+      span.textContent = '';
+    }
     return span;
   }
 
@@ -14,22 +26,47 @@
     var container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
-    items.forEach(function (item) {
-      container.appendChild(createTag(item));
-    });
+    try {
+      (items || []).forEach(function (item) {
+        try {
+          container.appendChild(createTag(item));
+        } catch (e) {
+          console.warn('[skills] failed to render tag', e);
+        }
+      });
+    } catch (e) {
+      console.warn('[skills] render failed', e);
+    }
   }
 
   function fetchWithTimeout(url, opts, timeoutMs) {
+    timeoutMs = timeoutMs || 8000;
+    if (typeof AbortController === 'undefined') {
+      // environment without AbortController: race fetch against a timeout
+      return Promise.race([
+        fetch(url, opts),
+        new Promise(function (_, reject) {
+          setTimeout(function () {
+            reject(new Error('Timeout'));
+          }, timeoutMs);
+        }),
+      ]);
+    }
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeoutMs || 8000);
-    return fetch(url, Object.assign({}, opts || {}, { signal: controller.signal })).finally(() =>
-      clearTimeout(id)
+    const id = setTimeout(function () {
+      controller.abort();
+    }, timeoutMs);
+    return fetch(url, Object.assign({}, opts || {}, { signal: controller.signal })).finally(
+      function () {
+        clearTimeout(id);
+      }
     );
   }
 
   let __skillsApiError = null;
   const __SKILLS_API_MAX_ATTEMPTS = 5;
-  const __SKILLS_API_BASE_DELAY_MS = 1000;
+  const __SKILLS_API_BASE_DELAY_MS =
+    typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID ? 5 : 1000;
 
   function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
