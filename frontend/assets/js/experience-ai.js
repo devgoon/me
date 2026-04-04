@@ -206,9 +206,28 @@
       skillsList.innerHTML = '';
     }
   }
-  document.addEventListener('click', (event) => {
-    const button = event.target.closest('.ai-context-toggle');
-    if (!button) {
+  // Ensure we don't attach duplicate handlers if the script is evaluated multiple times (tests)
+  const clickHandler = function (event) {
+    let button = null;
+    try {
+      // event.target can be a Text node in some jsdom cases; normalize to an Element
+      let target = event.target;
+      if (target && typeof target.closest !== 'function') {
+        target = target.parentElement || target;
+      }
+      // debug info for jsdom event targets (removed once stable)
+      try {
+        console.debug('[exp-ai] click target', target && target.nodeName);
+      } catch (e) {}
+      button =
+        target && typeof target.closest === 'function'
+          ? target.closest('.ai-context-toggle')
+          : null;
+      if (!button) {
+        return;
+      }
+    } catch (err) {
+      // If anything goes wrong reading the event, don't break the page
       return;
     }
     const targetId = button.getAttribute('data-target');
@@ -223,6 +242,21 @@
     button.setAttribute('aria-expanded', String(!isExpanded));
     button.textContent = isExpanded ? '✨ Show AI Context' : '✨ Hide AI Context';
     panel.hidden = isExpanded;
-  });
+    try {
+      // debug state after toggle
+
+      console.debug('[exp-ai] toggled', {
+        id: targetId,
+        aria: button.getAttribute('aria-expanded'),
+        text: button.textContent,
+        hidden: panel.hidden,
+      });
+    } catch (e) {}
+  };
+  if (document.__experienceAiClickHandler) {
+    document.removeEventListener('click', document.__experienceAiClickHandler);
+  }
+  document.__experienceAiClickHandler = clickHandler;
+  document.addEventListener('click', clickHandler);
   loadData();
 })();

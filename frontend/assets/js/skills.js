@@ -28,8 +28,8 @@
   }
 
   let __skillsApiError = null;
-  const __SKILLS_API_MAX_ATTEMPTS = 3;
-  const __SKILLS_API_BASE_DELAY_MS = 500;
+  const __SKILLS_API_MAX_ATTEMPTS = 5;
+  const __SKILLS_API_BASE_DELAY_MS = 1000;
 
   function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));

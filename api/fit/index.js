@@ -236,7 +236,7 @@ module.exports = async function (context, req) {
         const ctx = await loadCandidateContext(client);
         const systemPrompt = buildFitPrompt(ctx) + `\n\nJOB DESCRIPTION:\n${jobDescription}`;
 
-        const instruction = `You are an assistant that MUST return a JSON object ONLY. The JSON MUST have these keys: score (integer 0-100), verdict (one of "FIT", "MARGINAL", "NO_FIT"), reasons (array of short strings), mismatches (array of short strings), suggestedMessage (a concise one-paragraph message the candidate could send to a recruiter). Analyze the candidate context and the job description above. Return only valid JSON with those keys.`;
+        const instruction = `You are an assistant that MUST return a JSON object ONLY. The JSON MUST have these keys: score (integer 0-100), verdict (one of "FIT", "MARGINAL", "NO FIT"), reasons (array of short strings), mismatches (array of short strings), suggestedMessage (a concise one-paragraph message the candidate could send to a recruiter). Analyze the candidate context and the job description above. Return only valid JSON with those keys.`;
 
         const aiResponse = await callAnthropic(systemPrompt, instruction, apiKey);
 
