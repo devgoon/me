@@ -36,10 +36,9 @@ check:
 	@$(MAKE) lint
 	@echo "==> [3/5] Running link check"
 	@$(MAKE) link-check
-	@echo "==> [4/5] Running unit tests"
-	@$(MAKE) unit-test
-	@echo "==> [5/5] Running code coverage check"
+	@echo "==> [4/5] Running unit tests + coverage"
 	@$(MAKE) coverage
+	@echo "==> [5/5] Code coverage complete"
 	@echo "==> Quality checks complete"
 
 start:

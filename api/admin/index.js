@@ -703,7 +703,10 @@ async function saveAll(client, candidateId, payload, authEmail) {
         `UPDATE ai_response_cache SET is_cached = 0, invalidated_at = GETUTCDATE() WHERE is_cached = 1`
       );
     } catch (cacheErr) {
-      console.error('[admin.saveAll] failed to invalidate AI cache', cacheErr && cacheErr.stack ? cacheErr.stack : cacheErr);
+      console.error(
+        '[admin.saveAll] failed to invalidate AI cache',
+        cacheErr && cacheErr.stack ? cacheErr.stack : cacheErr
+      );
     }
   } catch (error) {
     console.error('[admin.saveAll] error', error && error.stack ? error.stack : error);
@@ -842,4 +845,21 @@ module.exports.hideCacheRecords = async function (client) {
   await client.query(
     `UPDATE ai_response_cache SET is_cached = FALSE, invalidated_at = GETUTCDATE() WHERE is_cached = TRUE`
   );
+};
+
+// Export internal helpers for unit testing.
+module.exports._helpers = {
+  asText,
+  asArray,
+  coerceToNewlineString,
+  coerceToArray,
+  formatDateToYMD,
+  formatDateToMDY,
+  formatMDYToYMD,
+  asNumber,
+  getDbClient,
+  requireAuth,
+  mapGapType,
+  mapInstructionType,
+  mapSkillCategory,
 };

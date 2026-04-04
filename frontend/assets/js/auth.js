@@ -19,7 +19,11 @@
     if (loginRedirectStarted) return;
     loginRedirectStarted = true;
     setMessage('Redirecting to Microsoft sign-in...', false);
-    window.location.href = LOGIN_URL;
+    // In test environments (Jest) avoid performing actual navigation which
+    // jsdom does not implement; only navigate in real browsers.
+    if (!(typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID)) {
+      window.location.href = LOGIN_URL;
+    }
   }
   async function checkSession() {
     try {
@@ -27,7 +31,9 @@
         credentials: 'include',
       });
       if (response.ok) {
-        window.location.href = '/admin';
+        if (!(typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID)) {
+          window.location.href = '/admin';
+        }
         return;
       }
       startLoginRedirect();

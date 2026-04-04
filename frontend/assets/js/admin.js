@@ -65,6 +65,7 @@
   };
   let isDirty = false;
   let initialLoadComplete = false;
+  let cacheReportData = [];
 
   function markDirty() {
     if (!initialLoadComplete) return;
@@ -218,8 +219,9 @@
       renderCacheReport([]);
       return;
     }
+    cacheReportData = Array.isArray(data) ? data : [];
     setMessage('Cache report loaded.', false);
-    renderCacheReport(data);
+    renderCacheReport(cacheReportData);
   }
 
   function renderCacheReport(report) {
@@ -1382,6 +1384,25 @@
           await loadCacheReport();
         } catch (error) {
           setMessage(error.message || 'Failed to load cache report', true);
+        }
+      });
+    }
+    const cacheSearch = document.getElementById('cache-search');
+    if (cacheSearch) {
+      cacheSearch.addEventListener('input', () => {
+        try {
+          const q = (cacheSearch.value || '').trim().toLowerCase();
+          if (!q) {
+            renderCacheReport(cacheReportData);
+            return;
+          }
+          const filtered = (cacheReportData || []).filter((item) => {
+            const question = (item && item.question) || '';
+            return question.toLowerCase().includes(q);
+          });
+          renderCacheReport(filtered);
+        } catch (e) {
+          renderCacheReport(cacheReportData);
         }
       });
     }

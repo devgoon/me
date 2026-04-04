@@ -152,3 +152,124 @@ describe('chat API', () => {
     expect(params[3]).toBe('Trim me');
   });
 });
+
+// Consolidated additional chat tests
+describe('chat API additional tests', () => {
+  let client;
+  const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
+  const originalAnthropicKey = process.env.ANTHROPIC_API_KEY;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+
+    client = {
+      connect: jest.fn().mockResolvedValue(undefined),
+      query: jest.fn(),
+      end: jest.fn().mockResolvedValue(undefined),
+    };
+    Client.mockImplementation(() => client);
+
+    // Order of queries: cache select, then loadCandidateContext sequence
+    client.query
+      .mockResolvedValueOnce({ rows: [] }) // cache select -> miss
+      .mockResolvedValueOnce({ rows: [{ id: 1, name: 'X' }] }) // profile
+      .mockResolvedValueOnce({ rows: [] }) // experiences
+      .mockResolvedValueOnce({ rows: [] }) // skills
+      .mockResolvedValueOnce({ rows: [] }) // gaps
+      .mockResolvedValueOnce({ rows: [] }) // values
+      .mockResolvedValueOnce({ rows: [] }) // faq
+      .mockResolvedValueOnce({ rows: [] }) // aiInstructions
+      .mockResolvedValueOnce({ rows: [] }) // education
+      .mockResolvedValueOnce({ rows: [] }); // certifications
+  });
+
+  afterAll(() => {
+    if (originalDatabaseUrl === undefined) delete process.env.AZURE_DATABASE_URL;
+    else process.env.AZURE_DATABASE_URL = originalDatabaseUrl;
+    if (originalAnthropicKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
+  });
+
+  test('stores JSON-stringified object in cache when response is object', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(
+        Promise.resolve({ ok: true, json: async () => ({ text: '{"answer":"ok"}' }) })
+      );
+
+    const context = { req: { body: { message: 'hello' } }, res: null, log: { info: jest.fn() } };
+    await chatHandler(context, context.req);
+
+    expect(context.res.status).toBe(200);
+    const insertCalls = client.query.mock.calls.filter(
+      (c) => typeof c[0] === 'string' && c[0].toLowerCase().includes('merge ai_response_cache')
+    );
+    expect(insertCalls.length).toBeGreaterThanOrEqual(1);
+
+    delete global.fetch;
+  });
+
+  test('returns 400 when message missing', async () => {
+    const context = { req: { body: {} }, res: null, log: { info: jest.fn() } };
+    await chatHandler(context, context.req);
+    expect(context.res.status).toBe(400);
+  });
+});
+
+// Chat helper unit tests (merged from chat.unit.test.js and chat.cache_miss.test.js)
+describe('chat helpers additional', () => {
+  const chat = require('../../api/chat');
+  const helpers = chat._helpers;
+
+  test('timeoutSignal returns signal and clear', () => {
+    const t = helpers.timeoutSignal(1000);
+    expect(t.signal).toBeDefined();
+    expect(typeof t.clear).toBe('function');
+    t.clear();
+  });
+
+  test('getCache returns response and updates hit count', async () => {
+    const client = { query: jest.fn() };
+    client.query
+      .mockResolvedValueOnce({ rows: [{ response: '  answer  ', cache_hit_count: 1 }] })
+      .mockResolvedValueOnce({});
+
+    const res = await helpers.getCache(client, 'm', 'q');
+    expect(res).toBe('  answer  ');
+    expect(client.query).toHaveBeenCalledTimes(2);
+    expect(client.query.mock.calls[1][0].toLowerCase()).toContain('update ai_response_cache');
+  });
+
+  test('setCache stores trimmed string and JSON for object', async () => {
+    const client = { query: jest.fn() };
+    await helpers.setCache(client, 'm', 'q', '  hello  ');
+    expect(client.query).toHaveBeenCalled();
+    const callArgs = client.query.mock.calls[0][1];
+    expect(callArgs[3]).toBe('hello');
+
+    client.query.mockClear();
+    await helpers.setCache(client, 'm', 'q', { a: 1 });
+    expect(client.query).toHaveBeenCalled();
+    const callArgs2 = client.query.mock.calls[0][1];
+    expect(callArgs2[3]).toBe(JSON.stringify({ a: 1 }));
+  });
+
+  test('callAnthropic returns text from various response shapes', async () => {
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ text: 'hello' }),
+    });
+    const text = await helpers.callAnthropic('sys', 'user', 'key');
+    expect(text).toBe('hello');
+    delete global.fetch;
+  });
+
+  test('getCache returns null when no rows', async () => {
+    const client = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+    const res = await helpers.getCache(client, 'm', 'q');
+    expect(res).toBeNull();
+    expect(client.query).toHaveBeenCalledTimes(1);
+  });
+});

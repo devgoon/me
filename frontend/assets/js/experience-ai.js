@@ -173,13 +173,18 @@
     ].join('');
   }
   async function loadData() {
-    const spinnerHtml = `
+    const spinnerExperienceHtml = `
                     <div class="loading" aria-busy="true" aria-live="polite">
-                        Loading…
+                        Enriching work experience with AI generated context …
                     </div>
                 `;
-    experienceList.innerHTML = `<article class="role-card" style="text-align:center;padding:24px">${spinnerHtml}</article>`;
-    skillsList.innerHTML = `<article class="role-card" style="text-align:center;padding:24px">${spinnerHtml}</article>`;
+    const spinnerSkillsHtml = `
+                  <div class="loading" aria-busy="true" aria-live="polite">
+                      Analyzing skills and interests with AI …
+                  </div>
+              `;
+    experienceList.innerHTML = `<article class="role-card" style="text-align:left;padding:24px">${spinnerExperienceHtml}</article>`;
+    skillsList.innerHTML = `<article class="role-card" style="text-align:left;padding:24px">${spinnerSkillsHtml}</article>`;
     try {
       // Always request server-side cached payload (server stores in ai_response_cache)
 
@@ -194,15 +199,35 @@
     } catch (error) {
       if (errorNode) {
         errorNode.hidden = false;
-        errorNode.textContent = 'Unable to load AI/DB experience data right now.';
+        errorNode.textContent =
+          'The API is a bit cold. Please try refreshing the page in a few moments.';
       }
       experienceList.innerHTML = '';
       skillsList.innerHTML = '';
     }
   }
-  document.addEventListener('click', (event) => {
-    const button = event.target.closest('.ai-context-toggle');
-    if (!button) {
+  // Ensure we don't attach duplicate handlers if the script is evaluated multiple times (tests)
+  const clickHandler = function (event) {
+    let button = null;
+    try {
+      // event.target can be a Text node in some jsdom cases; normalize to an Element
+      let target = event.target;
+      if (target && typeof target.closest !== 'function') {
+        target = target.parentElement || target;
+      }
+      // debug info for jsdom event targets (removed once stable)
+      try {
+        console.debug('[exp-ai] click target', target && target.nodeName);
+      } catch (e) {}
+      button =
+        target && typeof target.closest === 'function'
+          ? target.closest('.ai-context-toggle')
+          : null;
+      if (!button) {
+        return;
+      }
+    } catch (err) {
+      // If anything goes wrong reading the event, don't break the page
       return;
     }
     const targetId = button.getAttribute('data-target');
@@ -217,6 +242,21 @@
     button.setAttribute('aria-expanded', String(!isExpanded));
     button.textContent = isExpanded ? '✨ Show AI Context' : '✨ Hide AI Context';
     panel.hidden = isExpanded;
-  });
+    try {
+      // debug state after toggle
+
+      console.debug('[exp-ai] toggled', {
+        id: targetId,
+        aria: button.getAttribute('aria-expanded'),
+        text: button.textContent,
+        hidden: panel.hidden,
+      });
+    } catch (e) {}
+  };
+  if (document.__experienceAiClickHandler) {
+    document.removeEventListener('click', document.__experienceAiClickHandler);
+  }
+  document.__experienceAiClickHandler = clickHandler;
+  document.addEventListener('click', clickHandler);
   loadData();
 })();

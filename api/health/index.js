@@ -16,9 +16,44 @@ const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/models';
 const ANTHROPIC_VERSION = '2023-06-01';
 
 function timeoutSignal(ms) {
+  if (typeof AbortController === 'undefined') {
+    // Environment has no AbortController (older Node). Return a noop signal and clear.
+    let timeout = null;
+    return {
+      signal: undefined,
+      clear: () => {
+        if (timeout) clearTimeout(timeout);
+      },
+      // expose setter for environments that want to race manually
+      _setTimeoutHandle: (h) => {
+        timeout = h;
+      },
+    };
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), ms);
   return { signal: controller.signal, clear: () => clearTimeout(timeout) };
+}
+
+async function fetchWithTimeout(url, opts, ms) {
+  // Prefer AbortController-based cancellation when available.
+  if (typeof AbortController !== 'undefined') {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), ms || API_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, Object.assign({}, opts || {}, { signal: controller.signal }));
+      return res;
+    } finally {
+      clearTimeout(id);
+    }
+  }
+  // Fallback: race fetch against a timeout promise.
+  return Promise.race([
+    fetch(url, opts),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout')), ms || API_TIMEOUT_MS)
+    ),
+  ]);
 }
 
 module.exports = async function (context, req) {
@@ -83,17 +118,20 @@ module.exports = async function (context, req) {
 
   // Anthropic check
   if (anthropicKey) {
-    const t = timeoutSignal(API_TIMEOUT_MS);
     try {
-      const res = await fetch(ANTHROPIC_API_URL, {
-        method: 'GET',
-        headers: {
-          'x-api-key': anthropicKey,
-          'anthropic-version': ANTHROPIC_VERSION,
-          'Content-Type': 'application/json',
+      // use local fetchWithTimeout helper to support environments without AbortController
+      const res = await fetchWithTimeout(
+        ANTHROPIC_API_URL,
+        {
+          method: 'GET',
+          headers: {
+            'x-api-key': anthropicKey,
+            'anthropic-version': ANTHROPIC_VERSION,
+            'Content-Type': 'application/json',
+          },
         },
-        signal: t.signal,
-      });
+        API_TIMEOUT_MS
+      );
       if (res.ok) {
         let data = null;
         try {
@@ -145,8 +183,6 @@ module.exports = async function (context, req) {
       baseBody.checks.anthropic = 'error';
       baseBody.ok = false;
       baseBody.anthropicError = error && error.message ? error.message : String(error);
-    } finally {
-      t.clear();
     }
   } else {
     baseBody.checks.anthropic = 'not_configured';
