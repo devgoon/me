@@ -206,6 +206,9 @@ select:focus {
   background: rgba(13, 17, 23, 0.55);
 }
 
+/* highlight animation for newly-added cards */
+/* no transient new-item animation */
+
 .item-card header {
   display: flex;
   justify-content: space-between;

@@ -845,6 +845,7 @@
         );
       })
       .join('');
+    // no animation: keep rendering without transient highlight classes
     list.querySelectorAll('[data-skill]').forEach((input) => {
       input.addEventListener('input', () => {
         const index = Number(input.dataset.skill);
@@ -1124,49 +1125,56 @@
     const addExperience = document.getElementById('add-experience');
     if (addExperience) {
       addExperience.addEventListener('click', () => {
-        state.experiences.push(defaultExperience());
+        // prepend new experience so it appears at the top like skills
+        state.experiences.unshift(defaultExperience());
         renderExperiences();
       });
     }
     const addSkill = document.getElementById('add-skill');
     if (addSkill) {
       addSkill.addEventListener('click', () => {
-        state.skills.push(defaultSkill());
+        // prepend new skills so the newly-added card appears at the top for easy access
+        state.skills.unshift(defaultSkill());
         renderSkills();
       });
     }
     const addEducation = document.getElementById('add-education');
     if (addEducation) {
       addEducation.addEventListener('click', () => {
-        state.education.push(defaultEducation());
+        // prepend new education entry
+        state.education.unshift(defaultEducation());
         renderEducation();
       });
     }
     const addCert = document.getElementById('add-certification');
     if (addCert) {
       addCert.addEventListener('click', () => {
-        state.certifications.push(defaultCertification());
+        // prepend new certification
+        state.certifications.unshift(defaultCertification());
         renderCertifications();
       });
     }
     const addGap = document.getElementById('add-gap');
     if (addGap) {
       addGap.addEventListener('click', () => {
-        state.gaps.push(defaultGap());
+        // prepend new gap
+        state.gaps.unshift(defaultGap());
         renderGaps();
       });
     }
     const addFaq = document.getElementById('add-faq');
     if (addFaq) {
       addFaq.addEventListener('click', () => {
-        state.faq.push(defaultFaq());
+        // prepend new FAQ
+        state.faq.unshift(defaultFaq());
         renderFaq();
       });
     }
     const addRule = document.getElementById('add-ai-rule');
     if (addRule) {
       addRule.addEventListener('click', () => {
-        state.aiInstructions.rules.push(defaultRule());
+        // prepend new AI instruction rule
+        state.aiInstructions.rules.unshift(defaultRule());
         renderAiRules();
       });
     }

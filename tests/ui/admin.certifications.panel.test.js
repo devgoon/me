@@ -27,6 +27,11 @@ test('certifications panel renders and round-trips save payload', async () => {
   certContainer.id = 'certifications-list';
   document.body.appendChild(certContainer);
 
+  // ensure add button is present for tests
+  const addCertBtn = document.createElement('button');
+  addCertBtn.id = 'add-certification';
+  document.body.appendChild(addCertBtn);
+
   const sample = {
     profile: { fullName: 'L', email: 'dev@lodovi.co' },
     certifications: [
@@ -60,6 +65,38 @@ test('certifications panel renders and round-trips save payload', async () => {
   expect(Array.isArray(payload.certifications)).toBe(true);
   expect(payload.certifications[0].name).toBe('Cert One Updated');
 
+  fetchMock.mockRestore();
+});
+
+test('certifications panel can add and save a new certification', async () => {
+  jest.resetModules();
+  baseDom();
+  const certContainer = document.createElement('div');
+  certContainer.id = 'certifications-list';
+  document.body.appendChild(certContainer);
+  const addCertBtn = document.createElement('button');
+  addCertBtn.id = 'add-certification';
+  document.body.appendChild(addCertBtn);
+
+  const sample = { profile: {}, certifications: [{ name: 'Cert One' }] };
+  const fetchMock = mockFetchForPanel(sample);
+  require('../../frontend/assets/js/admin');
+  await waitForMessageContains('Admin data loaded.');
+
+  document.getElementById('add-certification').click();
+  const nameInput = document.querySelector('[data-cert="0"][data-field="name"]');
+  expect(nameInput).toBeTruthy();
+  nameInput.value = 'New Cert';
+  nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+  document.getElementById('save-all').click();
+  await new Promise((r) => setTimeout(r, 20));
+
+  const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
+  const payload = JSON.parse(calls[calls.length - 1][1].body);
+  expect(Array.isArray(payload.certifications)).toBe(true);
+  expect(payload.certifications.length).toBe(2);
+  expect(payload.certifications[0].name).toBe('New Cert');
   fetchMock.mockRestore();
 });
 

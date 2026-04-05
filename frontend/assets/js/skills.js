@@ -104,14 +104,19 @@
   }
 
   document.addEventListener('DOMContentLoaded', async function () {
-    // Insert loading spinners into the skills columns
-    var spinnerHtml = `<div class="loading" aria-busy="true" aria-live="polite">Loading…</div>`;
+    // Insert a compact typing-dots indicator into the skills columns
+    var typingHtml = '<div class="typing-dots" role="status" aria-live="polite" aria-busy="true'> +
+      '<span class="dot" aria-hidden="true"></span>' +
+      '<span class="dot" aria-hidden="true"></span>' +
+      '<span class="dot" aria-hidden="true"></span>' +
+      '<span class="visually-hidden">Loading…</span>' +
+      '</div>';
     var cur = document.getElementById('skill-tags-current');
     var bro = document.getElementById('skill-tags-broader');
     if (cur)
-      cur.innerHTML = `<article class="role-card" style="text-align:center;padding:12px">${spinnerHtml}</article>`;
+      cur.innerHTML = `<article class="role-card" style="text-align:center;padding:12px">${typingHtml}</article>`;
     if (bro)
-      bro.innerHTML = `<article class="role-card" style="text-align:center;padding:12px">${spinnerHtml}</article>`;
+      bro.innerHTML = `<article class="role-card" style="text-align:center;padding:12px">${typingHtml}</article>`;
 
     // Try DB-backed API first, then fall back to static window.SKILLS_DATA
     var data = await loadSkillsFromApi();
