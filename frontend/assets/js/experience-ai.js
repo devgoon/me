@@ -174,15 +174,21 @@
   }
   async function loadData() {
     const spinnerExperienceHtml = `
-                    <div class="loading" aria-busy="true" aria-live="polite">
-                        Enriching work experience with AI generated context …
-                    </div>
-                `;
+            <div class="typing-dots" role="status" aria-live="polite" aria-busy="true">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="dot" aria-hidden="true"></span>
+              <span class="dot" aria-hidden="true"></span>
+              <span class="visually-hidden">Enriching work experience…</span>
+            </div>
+          `;
     const spinnerSkillsHtml = `
-                  <div class="loading" aria-busy="true" aria-live="polite">
-                      Analyzing skills and interests with AI …
-                  </div>
-              `;
+            <div class="typing-dots" role="status" aria-live="polite" aria-busy="true">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="dot" aria-hidden="true"></span>
+              <span class="dot" aria-hidden="true"></span>
+              <span class="visually-hidden">Analyzing skills and interests…</span>
+            </div>
+          `;
     experienceList.innerHTML = `<article class="role-card" style="text-align:left;padding:24px">${spinnerExperienceHtml}</article>`;
     skillsList.innerHTML = `<article class="role-card" style="text-align:left;padding:24px">${spinnerSkillsHtml}</article>`;
     try {

@@ -15,7 +15,8 @@ test('education panel renders items and allows adding a new entry', async () => 
 
   expect(document.querySelector('[data-edu="0"][data-field="institution"]').value).toBe('Uni');
   document.getElementById('add-education').click();
-  const newSchool = document.querySelector('[data-edu="1"][data-field="institution"]');
+  // new education entry is prepended, so it appears at index 0
+  const newSchool = document.querySelector('[data-edu="0"][data-field="institution"]');
   expect(newSchool).toBeTruthy();
   newSchool.value = 'New Uni';
 
@@ -25,7 +26,8 @@ test('education panel renders items and allows adding a new entry', async () => 
   const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
   const payload = JSON.parse(calls[calls.length - 1][1].body);
   expect(payload.education.length).toBe(2);
-  expect(payload.education[1].school).toBe('New Uni');
+  // new entry is first in the array
+  expect(payload.education[0].school).toBe('New Uni');
   fetchMock.mockRestore();
 });
 

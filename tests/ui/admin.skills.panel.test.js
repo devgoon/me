@@ -14,7 +14,7 @@ test('skills panel handles adding and removing skills', async () => {
   await waitForMessageContains('Admin data loaded.');
 
   document.getElementById('add-skill').click();
-  const input = document.querySelector('[data-skill="1"][data-field="skillName"]');
+  const input = document.querySelector('[data-skill="0"][data-field="skillName"]');
   input.value = 'NewSkill';
   input.dispatchEvent(new Event('input', { bubbles: true }));
   document.getElementById('save-all').click();

@@ -14,8 +14,9 @@ test('faq panel can add and save questions', async () => {
   await waitForMessageContains('Admin data loaded.');
 
   document.getElementById('add-faq').click();
-  const q = document.querySelector('[data-faq="1"][data-field="question"]');
-  const a = document.querySelector('[data-faq="1"][data-field="answer"]');
+  // new FAQ is prepended, so it appears at index 0
+  const q = document.querySelector('[data-faq="0"][data-field="question"]');
+  const a = document.querySelector('[data-faq="0"][data-field="answer"]');
   expect(q).toBeTruthy();
   q.value = 'New Q';
   a.value = 'New A';
@@ -28,7 +29,8 @@ test('faq panel can add and save questions', async () => {
   const calls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/panel-data'));
   const payload = JSON.parse(calls[calls.length - 1][1].body);
   expect(payload.faq.length).toBe(2);
-  expect(payload.faq[1].question).toBe('New Q');
+  // new question is first (prepended)
+  expect(payload.faq[0].question).toBe('New Q');
   fetchMock.mockRestore();
 });
 

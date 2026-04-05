@@ -218,3 +218,65 @@ body {
     transform: rotate(360deg);
   }
 }
+
+/* Typing-dots indicator (compact, accessible) */
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #0b0f15;
+}
+.typing-dots .dot {
+  width: 8px;
+  height: 8px;
+  background: #79b8ff;
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 0.2;
+  transform: translateY(0);
+  -webkit-animation: typing-dot 1s infinite ease-in-out;
+  animation: typing-dot 1s infinite ease-in-out;
+}
+.typing-dots .dot:nth-child(1) {
+  -webkit-animation-delay: 0s;
+  animation-delay: 0s;
+}
+.typing-dots .dot:nth-child(2) {
+  -webkit-animation-delay: 0.12s;
+  animation-delay: 0.12s;
+}
+.typing-dots .dot:nth-child(3) {
+  -webkit-animation-delay: 0.24s;
+  animation-delay: 0.24s;
+}
+
+@-webkit-keyframes typing-dot {
+  0% { opacity: 0.25; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-4px); }
+  100% { opacity: 0.25; transform: translateY(0); }
+}
+@keyframes typing-dot {
+  0% { opacity: 0.25; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-4px); }
+  100% { opacity: 0.25; transform: translateY(0); }
+}
+
+/* Respect reduced-motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .typing-dots .dot {
+    -webkit-animation: none;
+    animation: none;
+    opacity: 0.6;
+    transform: translateY(0);
+  }
+}
+
+/* Visually-hidden utility for screen readers */
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden; clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap; border: 0; padding: 0; margin: -1px;
+}
