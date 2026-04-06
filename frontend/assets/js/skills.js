@@ -105,12 +105,13 @@
 
   document.addEventListener('DOMContentLoaded', async function () {
     // Insert a compact typing-dots indicator into the skills columns
-    var typingHtml = '<div class="typing-dots" role="status" aria-live="polite" aria-busy="true'> +
-      '<span class="dot" aria-hidden="true"></span>' +
-      '<span class="dot" aria-hidden="true"></span>' +
-      '<span class="dot" aria-hidden="true"></span>' +
-      '<span class="visually-hidden">Loading…</span>' +
-      '</div>';
+    var typingHtml =
+      '<div class="typing-dots" role="status" aria-live="polite" aria-busy="true' >
+      +'<span class="dot" aria-hidden="true"></span>' +
+        '<span class="dot" aria-hidden="true"></span>' +
+        '<span class="dot" aria-hidden="true"></span>' +
+        '<span class="visually-hidden">Loading…</span>' +
+        '</div>';
     var cur = document.getElementById('skill-tags-current');
     var bro = document.getElementById('skill-tags-broader');
     if (cur)

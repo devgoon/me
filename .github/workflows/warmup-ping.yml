@@ -17,7 +17,7 @@ jobs:
           echo "Pinging $url"
           # Try a few times before failing to smooth transient network errors
           for i in 1 2 3; do
-            if curl -fsS -m 10 "$url" -o /dev/null; then
+            if curl -fsS -m 30 "$url" -o /dev/null; then
               echo "Ping succeeded"
               exit 0
             fi
