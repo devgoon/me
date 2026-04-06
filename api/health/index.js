@@ -14,26 +14,7 @@ const {
 const API_TIMEOUT_MS = 3000;
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/models';
 const ANTHROPIC_VERSION = '2023-06-01';
-
-function timeoutSignal(ms) {
-  if (typeof AbortController === 'undefined') {
-    // Environment has no AbortController (older Node). Return a noop signal and clear.
-    let timeout = null;
-    return {
-      signal: undefined,
-      clear: () => {
-        if (timeout) clearTimeout(timeout);
-      },
-      // expose setter for environments that want to race manually
-      _setTimeoutHandle: (h) => {
-        timeout = h;
-      },
-    };
-  }
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), ms);
-  return { signal: controller.signal, clear: () => clearTimeout(timeout) };
-}
+const ANTHROPIC_CHAT_URL = 'https://api.anthropic.com/v1/messages';
 
 async function fetchWithTimeout(url, opts, ms) {
   // Prefer AbortController-based cancellation when available.
@@ -114,6 +95,76 @@ module.exports = async function (context, req) {
     }
   } else {
     baseBody.checks.database = 'not_configured';
+  }
+
+  // Query skills and ask Anthropic to summarize strongest skills
+  if (baseBody.checks.database === 'ok' && anthropicKey) {
+    const client2 = new Client({ connectionString: databaseUrl });
+    try {
+      await client2.connect();
+      const skillsRes = await client2.query(
+        `SELECT TOP 10 skill_name, self_rating FROM skills ORDER BY self_rating DESC, last_used DESC`
+      );
+      const skills = Array.isArray(skillsRes.rows)
+        ? skillsRes.rows.map((r) => (r && r.skill_name ? String(r.skill_name) : '')).filter(Boolean)
+        : [];
+      const skillsText = skills.length > 0 ? skills.join(', ') : 'no skills found';
+
+      const question = `What are your strongest skills? Candidate skills: ${skillsText}`;
+
+      const aiResp = await fetchWithTimeout(
+        ANTHROPIC_CHAT_URL,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': ANTHROPIC_VERSION,
+          },
+          body: JSON.stringify({
+            model: aiModel || 'claude-instant-1',
+            max_tokens: 200,
+            system: "You are a concise assistant that summarizes a candidate's strongest skills.",
+            messages: [
+              {
+                role: 'user',
+                content: question,
+              },
+            ],
+          }),
+        },
+        API_TIMEOUT_MS * 2
+      );
+
+      if (aiResp && aiResp.ok) {
+        let data = null;
+        try {
+          data = await aiResp.json();
+        } catch (e) {
+          data = null;
+        }
+        // Extract text from common Anthropic response shapes
+        let summary = null;
+        if (data) {
+          if (typeof data.text === 'string') summary = data.text;
+          else if (Array.isArray(data.content)) {
+            const tb = data.content.find((c) => c && c.type === 'text');
+            if (tb && typeof tb.text === 'string') summary = tb.text;
+          } else if (data.data && Array.isArray(data.data)) {
+            const tb = data.data.find((c) => c && c.type === 'text');
+            if (tb && typeof tb.text === 'string') summary = tb.text;
+          }
+        }
+        baseBody.aiSummary = summary || 'no summary returned';
+      } else {
+        baseBody.aiSummaryError = aiResp ? `status:${aiResp.status}` : 'no response';
+      }
+    } catch (err) {
+      baseBody.aiSummaryError = err && err.message ? err.message : String(err);
+      baseBody.ok = false;
+    } finally {
+      await client2.end().catch(() => {});
+    }
   }
 
   // Anthropic check

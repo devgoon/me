@@ -15,8 +15,8 @@ const crypto = require('crypto');
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const AI_MODEL = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
 const MAX_TOKENS = 1024;
-const DB_CONNECT_TIMEOUT_MS = 10000;
-const DB_QUERY_TIMEOUT_MS = 15000;
+const DB_CONNECT_TIMEOUT_MS = 30000;
+const DB_QUERY_TIMEOUT_MS = 30000;
 const AI_TIMEOUT_MS = 60000;
 
 function timeoutSignal(ms) {
@@ -231,10 +231,19 @@ async function getCache(client, model, question) {
     .createHash('sha256')
     .update(model + '|' + question)
     .digest('hex');
+  const start = Date.now();
   const result = await client.query(
     `SELECT TOP 1 response, cache_hit_count FROM ai_response_cache WHERE hash = @p1 AND is_cached = 1`,
     [hash]
   );
+  const duration = Date.now() - start;
+  try {
+    console.info(
+      `chat.getCache: lookup hash=${hash} duration=${duration}ms rows=${result.rows.length}`
+    );
+  } catch (e) {
+    /* ignore logging errors */
+  }
   if (result.rows.length > 0) {
     await client.query(
       `UPDATE ai_response_cache SET cache_hit_count = cache_hit_count + 1, last_accessed = GETUTCDATE() WHERE hash = @p1`,
@@ -328,7 +337,43 @@ module.exports = async function (context, req) {
       query_timeout: DB_QUERY_TIMEOUT_MS,
       statement_timeout: DB_QUERY_TIMEOUT_MS,
     });
-    await client.connect();
+
+    // Connect with retries to survive cold-start / transient DB connection failures
+    async function connectWithRetry(c, maxAttempts = 3, baseDelay = 200) {
+      let attempt = 0;
+      while (attempt < maxAttempts) {
+        attempt++;
+        const start = Date.now();
+        try {
+          await c.connect();
+          const dur = Date.now() - start;
+          try {
+            console.info(
+              `chat.connectWithRetry: connected on attempt=${attempt} duration=${dur}ms`
+            );
+          } catch (e) {
+            /* ignore logging errors */
+          }
+          return;
+        } catch (err) {
+          const dur = Date.now() - start;
+          try {
+            console.warn(
+              `chat.connectWithRetry: connect attempt=${attempt} failed duration=${dur}ms error=${
+                err && err.message ? err.message : err
+              }`
+            );
+          } catch (logErr) {
+            /* ignore logging errors */
+          }
+          if (attempt >= maxAttempts) throw err;
+          const backoff = baseDelay * Math.pow(2, attempt - 1);
+          await new Promise((r) => setTimeout(r, backoff));
+        }
+      }
+    }
+
+    await connectWithRetry(client);
 
     let assistantResponse;
     try {
