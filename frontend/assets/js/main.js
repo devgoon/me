@@ -39,6 +39,98 @@
   if (chatOverlay) chatOverlay.addEventListener('click', closeChat);
 })();
 
+// Populate hero company badges from /api/experience
+(function () {
+  'use strict';
+  function fetchWithTimeout(url, opts, timeoutMs) {
+    timeoutMs = timeoutMs || 8000;
+    if (typeof AbortController === 'undefined') {
+      return Promise.race([
+        fetch(url, opts),
+        new Promise(function (_, reject) {
+          setTimeout(function () {
+            reject(new Error('Timeout'));
+          }, timeoutMs);
+        }),
+      ]);
+    }
+    const controller = new AbortController();
+    const id = setTimeout(function () {
+      controller.abort();
+    }, timeoutMs);
+    return fetch(url, Object.assign({}, opts || {}, { signal: controller.signal })).finally(
+      function () {
+        clearTimeout(id);
+      }
+    );
+  }
+
+  async function loadCompanies() {
+    const container = document.querySelector('.hero-company-badges');
+    if (!container) return;
+    // show simple loading state
+    const original = container.innerHTML;
+    container.innerHTML = '<span>Loading…</span>';
+
+    const maxAttempts = 3;
+    const baseDelay = 500;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const res = await fetchWithTimeout(
+          '/api/experience',
+          { method: 'GET', headers: { Accept: 'application/json' } },
+          10000
+        );
+        if (!res.ok) throw new Error('Non-OK response ' + res.status);
+        const data = await res.json();
+        const ex = data && data.experiences ? data.experiences : [];
+        let companies = Array.isArray(ex)
+          ? ex.map((e) => (e && e.companyName ? String(e.companyName).trim() : '')).filter(Boolean)
+          : [];
+        // Remove duplicates while preserving order (case-insensitive)
+        const seen = new Set();
+        companies = companies.filter((c) => {
+          const key = String(c).toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        if (!companies || companies.length === 0) {
+          container.innerHTML = original; // restore fallback
+          return;
+        }
+        container.innerHTML = '';
+        companies.forEach(function (c) {
+          const span = document.createElement('span');
+          span.textContent = c;
+          container.appendChild(span);
+        });
+        // mark success for easier debugging/inspection
+        try {
+          container.setAttribute('data-dynamic', 'true');
+          console.info('Experience: loaded', ex.length, 'items from /api/experience');
+        } catch (e) {
+          // ignore
+        }
+        return;
+      } catch (err) {
+        if (attempt === maxAttempts) {
+          container.innerHTML = original; // restore original static badges on failure
+          console.warn('Failed to load companies from API', err && err.message ? err.message : err);
+          return;
+        }
+        await new Promise((r) => setTimeout(r, baseDelay * Math.pow(2, attempt - 1)));
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadCompanies);
+  } else {
+    loadCompanies();
+  }
+})();
+
 // Handle images in the Certifications section without using inline event handlers
 document.addEventListener('DOMContentLoaded', function () {
   try {
@@ -185,15 +277,34 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   let backtotop = select('.back-to-top');
   if (backtotop) {
-    const toggleBacktotop = () => {
-      if (window.scrollY > 100) {
-        backtotop.classList.add('active');
+    // Hide the floating back-to-top on admin pages
+    try {
+      var path = window.location && window.location.pathname ? window.location.pathname : '';
+      if (String(path).toLowerCase().startsWith('/admin')) {
+        backtotop.style.display = 'none';
       } else {
-        backtotop.classList.remove('active');
+        const toggleBacktotop = () => {
+          if (window.scrollY > 100) {
+            backtotop.classList.add('active');
+          } else {
+            backtotop.classList.remove('active');
+          }
+        };
+        window.addEventListener('load', toggleBacktotop);
+        onscroll(document, toggleBacktotop);
       }
-    };
-    window.addEventListener('load', toggleBacktotop);
-    onscroll(document, toggleBacktotop);
+    } catch (e) {
+      // fallback to default behavior
+      const toggleBacktotop = () => {
+        if (window.scrollY > 100) {
+          backtotop.classList.add('active');
+        } else {
+          backtotop.classList.remove('active');
+        }
+      };
+      window.addEventListener('load', toggleBacktotop);
+      onscroll(document, toggleBacktotop);
+    }
   }
   /**
    * Mobile nav toggle

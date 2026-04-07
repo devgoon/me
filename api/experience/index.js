@@ -258,11 +258,11 @@ async function loadCandidateData(client) {
 
   const experiencesResult = await client.query(
     `SELECT id, company_name, title, title_progression, start_date, end_date, is_current,
-            bullet_points, why_joined, actual_contributions, proudest_achievement,
-            lessons_learned, challenges_faced
-     FROM experiences
-    WHERE candidate_id = @p1
-     ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
+          bullet_points, why_joined, actual_contributions, proudest_achievement,
+          lessons_learned, challenges_faced
+         FROM experiences
+        WHERE candidate_id = @p1
+         ORDER BY CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
     [candidateId]
   );
 
@@ -425,12 +425,34 @@ module.exports = async function (context) {
                 `AI cache miss for question ${EXPERIENCE_QUESTION_KEY}, storing response (len=${responseStr.length})`
               );
               // insert cache record with hash as primary key, so duplicates will be ignored if another request has already cached the same response
-              await client.query(
-                `INSERT INTO ai_response_cache (question, model, hash, response, cache_hit_count, last_accessed, updated_at, is_cached)
-                 VALUES (@p1, @p2, @p3, @p4, 1, GETUTCDATE(), GETUTCDATE(), 1);`,
-                [EXPERIENCE_QUESTION_KEY, AI_MODEL, cacheHash, responseStr]
-              );
-              console.log(`AI cache miss - stored response with hash ${cacheHash}`);
+              try {
+                await client.query(
+                  `INSERT INTO ai_response_cache (question, model, hash, response, cache_hit_count, last_accessed, updated_at, is_cached)
+                   VALUES (@p1, @p2, @p3, @p4, 1, GETUTCDATE(), GETUTCDATE(), 1);`,
+                  [EXPERIENCE_QUESTION_KEY, AI_MODEL, cacheHash, responseStr]
+                );
+                console.log(`AI cache miss - stored response with hash ${cacheHash}`);
+              } catch (err) {
+                // Ignore duplicate key race errors (another process inserted same hash concurrently)
+                try {
+                  if (
+                    err &&
+                    (err.number === 2627 ||
+                      (err.originalError &&
+                        err.originalError.info &&
+                        err.originalError.info.number === 2627))
+                  ) {
+                    console.warn('AI cache insert race: duplicate key, ignoring');
+                  } else {
+                    throw err;
+                  }
+                } catch (inner) {
+                  console.error('Failed to write AI cache', inner);
+                  context.log &&
+                    context.log.warn &&
+                    context.log.warn('Failed to write AI cache', inner.message || inner);
+                }
+              }
             }
           } catch (err) {
             console.error('Failed to write AI cache', err);
