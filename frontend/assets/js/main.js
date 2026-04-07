@@ -239,9 +239,21 @@ document.addEventListener('DOMContentLoaded', function () {
   applyMode(configuredMode);
   on('click', '#mode-toggle-traditional', () => {
     applyMode(MODE_TRADITIONAL);
+    try {
+      if (select('#hero')) scrollto('#hero');
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      // ignore if scrolling fails
+    }
   });
   on('click', '#mode-toggle-ai', () => {
     applyMode(MODE_AI);
+    try {
+      if (select('#hero')) scrollto('#hero');
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      // ignore if scrolling fails
+    }
   });
   /**
    * Navbar links active state on scroll

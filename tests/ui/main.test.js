@@ -93,3 +93,229 @@ test('sendPrompt shows timeout message when fetch aborts', async () => {
   expect(history.textContent).toMatch(/timed out/i);
   delete global.fetch;
 });
+
+test('loadCompanies populates container with deduped companies (preserve order, case-insensitive)', async () => {
+  document.body.innerHTML = `<div class="hero-company-badges">static</div>`;
+  const container = document.querySelector('.hero-company-badges');
+  const mockData = {
+    experiences: [
+      { companyName: 'Acme' },
+      { companyName: 'Beta' },
+      { companyName: 'ACME' },
+      { companyName: 'Gamma' },
+      { companyName: 'beta' },
+    ],
+  };
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => mockData });
+  require('../../frontend/assets/js/main.js');
+  // allow async microtasks
+  await new Promise((r) => setTimeout(r, 0));
+  expect(container.getAttribute('data-dynamic')).toBe('true');
+  const spans = container.querySelectorAll('span');
+  expect(spans.length).toBe(3);
+  expect(spans[0].textContent).toBe('Acme');
+  expect(spans[1].textContent).toBe('Beta');
+  expect(spans[2].textContent).toBe('Gamma');
+  delete global.fetch;
+});
+
+test('loadCompanies restores original content when API returns no companies', async () => {
+  document.body.innerHTML = `<div class="hero-company-badges"><span>One</span><span>Two</span></div>`;
+  const container = document.querySelector('.hero-company-badges');
+  const original = container.innerHTML;
+  const mockData = { experiences: [] };
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => mockData });
+  require('../../frontend/assets/js/main.js');
+  await new Promise((r) => setTimeout(r, 0));
+  expect(container.innerHTML).toBe(original);
+  delete global.fetch;
+});
+
+test('certification images are halved when loaded/complete', async () => {
+  document.body.innerHTML = `<div id="certifications"><img id="cert1" /></div>`;
+  const img = document.getElementById('cert1');
+  // simulate an already-complete image with width
+  Object.defineProperty(img, 'complete', { value: true, configurable: true });
+  img.width = 240;
+  require('../../frontend/assets/js/main.js');
+  // dispatch DOMContentLoaded to trigger the handler
+  document.dispatchEvent(new Event('DOMContentLoaded'));
+  // allow handler to run
+  await new Promise((r) => setTimeout(r, 0));
+  // width should be reduced from the original value (halved at least once)
+  expect(img.width).toBeLessThan(240);
+  expect(img.width).toBeGreaterThan(0);
+});
+
+test('initializes Typed and PureCounter when elements present', () => {
+  document.body.innerHTML = `<span class="typed" data-typed-items="one,two"></span>`;
+  require('../../frontend/assets/js/main.js');
+  expect(global.Typed).toHaveBeenCalled();
+  expect(global.PureCounter).toHaveBeenCalled();
+});
+
+test('navbarlinksActive adds active class based on scroll position', () => {
+  document.body.innerHTML = `
+    <nav id="navbar"><a class="scrollto" href="#sec1">S</a></nav>
+    <section id="sec1"></section>
+  `;
+  const link = document.querySelector('#navbar .scrollto');
+  const section = document.getElementById('sec1');
+  // choose offsets so position (scrollY + 200) falls inside [offsetTop, offsetTop+offsetHeight]
+  Object.defineProperty(section, 'offsetTop', { value: 250, configurable: true });
+  Object.defineProperty(section, 'offsetHeight', { value: 100, configurable: true });
+  // set scroll so scrollY + 200 is inside 250..350
+  Object.defineProperty(window, 'scrollY', { value: 120, writable: true });
+  require('../../frontend/assets/js/main.js');
+  // trigger load handler that runs navbarlinksActive
+  window.dispatchEvent(new Event('load'));
+  expect(link.classList.contains('active')).toBe(true);
+});
+
+test('back-to-top toggles active on scroll', () => {
+  document.body.innerHTML = `<div class="back-to-top"></div>`;
+  const btn = document.querySelector('.back-to-top');
+  require('../../frontend/assets/js/main.js');
+  // simulate scroll > 100
+  Object.defineProperty(window, 'scrollY', { value: 150, writable: true });
+  document.dispatchEvent(new Event('scroll'));
+  // handler attached via onscroll should toggle class
+  expect(btn.classList.contains('active')).toBe(true);
+  // simulate scroll <= 100
+  Object.defineProperty(window, 'scrollY', { value: 0, writable: true });
+  document.dispatchEvent(new Event('scroll'));
+  expect(btn.classList.contains('active')).toBe(false);
+});
+
+test('mobile nav toggle toggles body class and icons', () => {
+  document.body.innerHTML = `<button class="mobile-nav-toggle bi-list"></button>`;
+  const btn = document.querySelector('.mobile-nav-toggle');
+  require('../../frontend/assets/js/main.js');
+  btn.click();
+  expect(document.body.classList.contains('mobile-nav-active')).toBe(true);
+  // classes on button should have toggled
+  expect(btn.classList.contains('bi-list')).toBe(false);
+});
+
+test('scrollto click calls scrollTo and closes mobile nav when active', () => {
+  document.body.innerHTML = `
+    <button class="mobile-nav-toggle bi-list"></button>
+    <a class="scrollto" href="#foo">Go</a>
+    <div id="foo"></div>
+  `;
+  document.body.classList.add('mobile-nav-active');
+  const target = document.getElementById('foo');
+  Object.defineProperty(target, 'offsetTop', { value: 10, configurable: true });
+  window.scrollTo = jest.fn();
+  require('../../frontend/assets/js/main.js');
+  const link = document.querySelector('.scrollto');
+  link.click();
+  expect(window.scrollTo).toHaveBeenCalled();
+  // mobile nav should be closed
+  expect(document.body.classList.contains('mobile-nav-active')).toBe(false);
+});
+
+test('portfolio filter click arranges isotope and marks active filter', () => {
+  document.body.innerHTML = `
+    <div class="portfolio-container"></div>
+    <ul id="portfolio-filters"><li data-filter=".one">One</li><li data-filter=".two">Two</li></ul>
+  `;
+  // Ensure Isotope returns an instance we can inspect
+  global.Isotope = jest.fn().mockImplementation(() => ({ arrange: jest.fn(), on: jest.fn() }));
+  require('../../frontend/assets/js/main.js');
+  // trigger load handlers
+  window.dispatchEvent(new Event('load'));
+  const filters = document.querySelectorAll('#portfolio-filters li');
+  filters[1].click();
+  // first and second: only second should be active
+  expect(filters[1].classList.contains('filter-active')).toBe(true);
+  // inspect Isotope instance arrange call
+  const instance = global.Isotope.mock.results[0].value;
+  expect(instance.arrange).toHaveBeenCalledWith({ filter: '.two' });
+});
+
+test('sendPrompt success appends assistant response and manages typing indicator', async () => {
+  document.body.innerHTML = `
+    <div id="ai-chat-history"></div>
+    <input id="ai-chat-input" />
+    <button id="ai-chat-send"></button>
+  `;
+  global.fetch = jest
+    .fn()
+    .mockResolvedValue({ ok: true, json: async () => ({ response: 'Hello from AI' }) });
+  require('../../frontend/assets/js/main.js');
+  document.dispatchEvent(new Event('DOMContentLoaded'));
+  const input = document.getElementById('ai-chat-input');
+  const send = document.getElementById('ai-chat-send');
+  const history = document.getElementById('ai-chat-history');
+  input.value = 'Query';
+  send.click();
+  // allow async handlers to run
+  await new Promise((r) => setTimeout(r, 0));
+  expect(history.textContent).toMatch(/Hello from AI/);
+  delete global.fetch;
+});
+
+test('sendPrompt API non-ok response shows error details in assistant message', async () => {
+  document.body.innerHTML = `
+    <div id="ai-chat-history"></div>
+    <input id="ai-chat-input" />
+    <button id="ai-chat-send"></button>
+  `;
+  global.fetch = jest
+    .fn()
+    .mockResolvedValue({ ok: false, status: 500, json: async () => ({ error: 'server oops' }) });
+  require('../../frontend/assets/js/main.js');
+  document.dispatchEvent(new Event('DOMContentLoaded'));
+  const input = document.getElementById('ai-chat-input');
+  const send = document.getElementById('ai-chat-send');
+  const history = document.getElementById('ai-chat-history');
+  input.value = 'Query';
+  send.click();
+  await new Promise((r) => setTimeout(r, 0));
+  expect(history.textContent).toMatch(/AI request failed \(500\)/);
+  delete global.fetch;
+});
+
+test('Waypoint handler and Isotope arrangeComplete refresh AOS and set progress widths', async () => {
+  document.body.innerHTML = `
+    <div class="skills-content"></div>
+    <div class="progress"><div class="progress-bar" aria-valuenow="60"></div></div>
+    <div class="portfolio-container"></div>
+    <ul id="portfolio-filters"><li data-filter=".one">One</li></ul>
+  `;
+  // Make Waypoint call its handler immediately
+  global.Waypoint = jest.fn().mockImplementation((opts) => {
+    if (opts && typeof opts.handler === 'function') opts.handler('down');
+    return {};
+  });
+  // Make Isotope call arrangeComplete when arrange is invoked
+  global.Isotope = jest.fn().mockImplementation(() => {
+    const inst = {
+      arrange: function (_opts) {
+        // noop: arrange will not immediately trigger callback here
+      },
+      on: function (ev, cb) {
+        if (ev === 'arrangeComplete' && typeof cb === 'function') {
+          // simulate arrange completion by invoking callback
+          cb();
+        }
+      },
+    };
+    return inst;
+  });
+  // AOS shim
+  global.AOS = { init: jest.fn(), refresh: jest.fn() };
+  require('../../frontend/assets/js/main.js');
+  // trigger load handlers
+  window.dispatchEvent(new Event('load'));
+  // waypoint handler should set progress width
+  const pb = document.querySelector('.progress-bar');
+  expect(pb.style.width).toBe('60%');
+  // arrange should trigger AOS.refresh via arrangeComplete
+  const instance = global.Isotope.mock.results[0].value;
+  // invoke arrange by simulating a click on filter
+  const filter = document.querySelector('#portfolio-filters li');
+  filter.click();
+  expect(global.AOS.refresh).toHaveBeenCalled();
+});
