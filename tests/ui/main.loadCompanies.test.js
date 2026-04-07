@@ -6,7 +6,14 @@ beforeEach(() => {
   document.body.innerHTML = '';
   jest.resetModules();
   localStorage.clear();
+  // stub third-party globals used by main.js
+  global.GLightbox = jest.fn();
+  global.Isotope = jest.fn().mockImplementation(() => ({ arrange: jest.fn(), on: jest.fn() }));
+  global.Swiper = jest.fn().mockImplementation(() => ({}));
+  global.Typed = jest.fn();
   global.AOS = { init: jest.fn(), refresh: jest.fn() };
+  global.PureCounter = jest.fn();
+  global.Waypoint = jest.fn().mockImplementation(() => ({}));
 });
 
 test('loadCompanies populates hero-company-badges with unique companies preserving order', async () => {
