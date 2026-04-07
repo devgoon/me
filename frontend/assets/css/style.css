@@ -72,8 +72,9 @@ h6 {
 --------------------------------------------------------------*/
 .back-to-top {
   position: fixed;
-  visibility: hidden;
-  opacity: 0;
+  /* visible by default; JS will hide on admin paths */
+  visibility: visible;
+  opacity: 1;
   right: 15px;
   bottom: 15px;
   z-index: 996;

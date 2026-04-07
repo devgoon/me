@@ -136,6 +136,8 @@
           <span>Thermo Fisher</span>
           <span>Fiserv</span>
           <span>The Hartford</span>
+          <span>Neopost</span>
+          <span>Ingenix</span>
         </div>
         <div class="hero-actions" data-aos="fade-up" data-aos-delay="400">
           <button
@@ -286,7 +288,7 @@
       </section>
       <!-- End Certifications Section -->
 
-      <!-- ======= Experience Section ======= -->
+      <!-- ======= Experience Section (dynamic) ======= -->
       <section id="experience" class="resume section-bg">
         <div class="container" data-aos="fade-up">
           <div class="section-title">
@@ -296,217 +298,18 @@
 
           <div class="row">
             <div class="col-lg-12">
-              <div class="resume-item">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                  <h4>Senior Software Engineer</h4>
-                  <h5>Sept 2024 – Present</h5>
-                </div>
-                <p>
-                  <em
-                    ><a href="https://torc.ai" target="_blank" rel="noopener">Torc Robotics</a>
-                    &mdash; Autonomous Vehicle Software</em
-                  >
-                </p>
-                <ul>
-                  <li>
-                    Developed React applications for monitoring vehicle fault events and visualizing
-                    live truck data including cameras, lidar, and mission logs.
-                  </li>
-                  <li>
-                    Built a configuration management system to track hardware and software changes
-                    and enforce compliance across the fleet.
-                  </li>
-                  <li>
-                    Designed a REST API integrated with DynamoDB, documented via OpenAPI, enabling
-                    automated client SDK generation.
-                  </li>
-                  <li>
-                    Authored Datadog dashboards, SLOs, and Synthetic monitoring tests for
-                    observability across services.
-                  </li>
-                  <li>
-                    Wrote unit, integration, and end-to-end tests to maintain high code quality and
-                    build confidence.
-                  </li>
-                </ul>
-                <div class="resume-tags">
-                  <span>React</span><span>TypeScript</span><span>AWS DynamoDB</span
-                  ><span>REST API</span><span>OpenAPI</span><span>Datadog</span><span>SLO/SLI</span>
-                </div>
-              </div>
+              <div id="experience-loading">Loading Experience…</div>
+            </div>
+          </div>
 
-              <div class="resume-item resume-item--current">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                  <h4>Technical Advisor</h4>
-                  <h5>Jan 2009 – Present</h5>
-                </div>
-                <p><em>Southern Connecticut State University &mdash; New Haven, CT</em></p>
-                <ul>
-                  <li>
-                    Serving on the Technical Advisory Committee for the Computer Science Department,
-                    providing industry perspective on curriculum, technology trends, and graduate
-                    outcomes.
-                  </li>
-                </ul>
-                <div class="resume-tags">
-                  <span>Advisory</span><span>Computer Science</span><span>Curriculum</span>
-                </div>
-              </div>
-
-              <div class="resume-item">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                  <h4>Systems Architect</h4>
-                  <h5>Dec 2020 – Sept 2024</h5>
-                </div>
-                <p><em>Ancera &mdash; Branford, CT &mdash; Edge AI &amp; Agri-tech</em></p>
-                <ul>
-                  <li>
-                    Led Azure administration, DevOps strategy, and security initiatives; drove the
-                    organization to SOC 2 compliance.
-                  </li>
-                  <li>
-                    Designed edge AI solutions using Docker, NVIDIA GPUs, and Ubuntu, improving
-                    image recognition performance by <strong>700%</strong>.
-                  </li>
-                  <li>
-                    Maintained top scores in cost, security, reliability, and performance across all
-                    Azure infrastructure.
-                  </li>
-                </ul>
-                <div class="resume-tags">
-                  <span>Azure</span><span>Docker</span><span>Terraform</span><span>SOC 2</span
-                  ><span>Snyk</span><span>ML-Ops</span><span>TensorFlow</span><span>DevSecOps</span>
-                </div>
-              </div>
-
-              <div class="resume-item">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                  <h4>Lead Integration Engineer</h4>
-                  <h5>Jul 2019 – Dec 2020</h5>
-                </div>
-                <p><em>Subway &mdash; Milford, CT &mdash; Global Quick-Service Restaurant</em></p>
-                <ul>
-                  <li>
-                    Designed and developed APIs for mobile, web, and B2B integrations serving
-                    millions of users daily.
-                  </li>
-                </ul>
-              </div>
-
-              <div class="resume-item">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                  <h4>Principal Software Engineer</h4>
-                  <h5>Jul 2015 – Jul 2019</h5>
-                </div>
-                <p><em>Thermo Fisher Scientific &mdash; Fortune 500 Life Sciences</em></p>
-                <ul>
-                  <li>
-                    Developed platform applications using Java, Docker, Kubernetes, and AWS for
-                    Fortune 500 clients.
-                  </li>
-                  <li>
-                    Pioneered containerization and observability prototypes on Kubernetes, laying
-                    the foundation for enterprise-wide adoption.
-                  </li>
-                </ul>
-                <div class="resume-tags">
-                  <span>Java</span><span>Kubernetes</span><span>Docker</span><span>AWS</span
-                  ><span>Observability</span>
-                </div>
-              </div>
-
-              <div class="resume-item">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                  <h4>Adjunct Faculty Instructor</h4>
-                  <h5>Sep 2015 – Dec 2015</h5>
-                </div>
-                <p><em>Southern Connecticut State University &mdash; New Haven, CT</em></p>
-                <ul>
-                  <li>
-                    Taught CSC 443: Internet Programming in Node.js to undergraduate computer
-                    science students.
-                  </li>
-                </ul>
-                <div class="resume-tags"><span>Node.js</span><span>Teaching</span></div>
-              </div>
-
-              <div class="resume-item">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                  <h4>Team Lead / Senior Software Engineer</h4>
-                  <h5>May 2009 – Mar 2014</h5>
-                </div>
-                <p><em>Fiserv &mdash; Wallingford, CT &mdash; Financial Technology</em></p>
-                <ul>
-                  <li>
-                    Led onshore and offshore development teams building a commercial real-time bill
-                    payment web service used by major retail establishments.
-                  </li>
-                  <li>
-                    Owned client relationships, project estimation, code reviews, and performance
-                    tuning for a system processing over $1M in daily transactions.
-                  </li>
-                  <li>
-                    Progressed from Senior Software Engineer to Team Lead over ~5 years, growing
-                    scope from individual contribution to team and delivery ownership.
-                  </li>
-                </ul>
-              </div>
-
-              <div class="resume-item">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                  <h4>Senior Software Engineer</h4>
-                  <h5>Jun 2008 – May 2009</h5>
-                </div>
-                <p><em>The Hartford &mdash; Fortune 500 Insurance</em></p>
-                <ul>
-                  <li>
-                    Developed .NET enterprise applications for one of the largest insurance carriers
-                    in the US.
-                  </li>
-                </ul>
-                <div class="resume-tags">
-                  <span>.NET</span><span>C#</span><span>Enterprise Software</span>
-                </div>
-              </div>
-
-              <div class="resume-item">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                  <h4>Software Engineer</h4>
-                  <h5>March 2002 – May 2008</h5>
-                </div>
-                <p><em>Neopost Technologies &mdash; Document &amp; Postage Technology</em></p>
-                <ul>
-                  <li>
-                    Designed and developed Java and .NET applications for enterprise document
-                    management and postage automation systems.
-                  </li>
-                </ul>
-                <div class="resume-tags">
-                  <span>Java</span><span>.NET</span><span>Enterprise Software</span>
-                </div>
-              </div>
-
-              <div class="resume-item">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                  <h4>Software Engineer</h4>
-                  <h5>Mar 1996 – Mar 2002</h5>
-                </div>
-                <p><em>Ingenix (UnitedHealth Group) &mdash; Healthcare Data &amp; Analytics</em></p>
-                <ul>
-                  <li>
-                    Built healthcare data and analytics applications on ASP.NET and the
-                    MicroStrategy platform for a UnitedHealth Group subsidiary.
-                  </li>
-                </ul>
-                <div class="resume-tags">
-                  <span>Java</span><span>.NET</span><span>Enterprise Software</span>
-                </div>
-              </div>
+          <div class="row">
+            <div class="col-lg-12">
+              <div id="experience-list"></div>
             </div>
           </div>
         </div>
       </section>
-      <!-- End Experience Section -->
+      <!-- End Experience Section (dynamic) -->
 
       <!-- ======= Education Section ======= -->
       <section id="education" class="education section-bg">
@@ -552,8 +355,16 @@
     <!-- Site JS -->
     <script src="assets/js/skills.js"></script>
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/experience.js"></script>
 
     <div id="preloader"></div>
+    <a
+      href="#hero"
+      class="back-to-top scrollto d-flex align-items-center justify-content-center"
+      aria-label="Back to top"
+    >
+      <i class="bi bi-arrow-up"></i>
+    </a>
     <div id="ai-chat-overlay" class="ai-chat-overlay" aria-hidden="true"></div>
     <aside id="ai-chat-panel" class="ai-chat-panel" aria-label="Ask AI chat" aria-hidden="true">
       <div class="ai-chat-header">
