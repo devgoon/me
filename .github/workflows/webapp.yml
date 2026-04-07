@@ -98,6 +98,25 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Persist runtime app settings to Static Web App
+        shell: bash
+        env:
+          STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
+          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
+        run: |
+          set -euo pipefail
+          echo "Setting Static Web App runtime settings for $STATIC_WEB_APP_NAME ($RESOURCE_GROUP)"
+          az staticwebapp appsettings set \
+            --name "$STATIC_WEB_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --setting-names \
+              AI_MODEL="$AI_MODEL" \
+              ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+              AZURE_DATABASE_URL="$AZURE_DATABASE_URL"
+
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
         env:
@@ -109,11 +128,10 @@ jobs:
           RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
         with:
           azure_static_web_apps_api_token: ${{ env.SWA_DEPLOY_TOKEN }}
-          skip_deploy_on_missing_secrets: true
           skip_app_build: true # ✅ prevents Oryx from rebuilding the static app
           action: upload
-          app_location: "frontend" # serve site from `frontend/` (assets/ present)
-          api_location: "api/" # ✅ deploy functions directly from api/: site is static from repo root (html + assets)
+          app_location: 'frontend' # serve site from `frontend/` (assets/ present)
+          api_location: 'api/' # ✅ deploy functions directly from api/: site is static from repo root (html + assets)
           # leaving this blank avoids Oryx scanning the repo root for builds
 
       - name: Smoke test AAD login endpoint
