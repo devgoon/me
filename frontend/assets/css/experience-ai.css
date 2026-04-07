@@ -178,6 +178,24 @@ body {
   }
 }
 
+/* Current role pill rendered via ::after (match homepage style) */
+.role-card.resume-item--current .role-meta h2::after,
+.role-card:first-child .role-meta h2::after,
+.role-card.resume-item--current .role-meta h2::after {
+  content: 'Current';
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.1);
+  border: 1px solid rgba(63, 185, 80, 0.35);
+  border-radius: 50px;
+  padding: 2px 9px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
 /* Loading spinner (matching site-wide skills spinner) */
 .loading {
   display: inline-block;

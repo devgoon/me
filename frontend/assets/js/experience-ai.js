@@ -72,11 +72,33 @@
     return [];
   }
   function renderExperience(experiences) {
-    // Sort experiences by start date descending (most recent first)
+    // Sort experiences: current items first, then most-recent `startDate` first, then `endDate`.
     const sorted = (experiences || []).slice().sort((a, b) => {
-      const ta = a && a.startDate ? new Date(a.startDate).getTime() : 0;
-      const tb = b && b.startDate ? new Date(b.startDate).getTime() : 0;
-      return tb - ta;
+      if (!!a.isCurrent !== !!b.isCurrent) return a.isCurrent ? -1 : 1;
+
+      function parseTime(v) {
+        if (!v) return null;
+        const t = Date.parse(v);
+        return isNaN(t) ? null : t;
+      }
+
+      const aStart = parseTime(a && a.startDate);
+      const bStart = parseTime(b && b.startDate);
+      if (aStart !== bStart) {
+        if (aStart === null) return 1;
+        if (bStart === null) return -1;
+        return bStart - aStart;
+      }
+
+      const aEnd = parseTime(a && a.endDate);
+      const bEnd = parseTime(b && b.endDate);
+      if (aEnd !== bEnd) {
+        if (aEnd === null) return 1;
+        if (bEnd === null) return -1;
+        return bEnd - aEnd;
+      }
+
+      return 0;
     });
     experienceList.innerHTML = sorted
       .map((exp) => {
@@ -85,13 +107,9 @@
           .map((item) => `<li>${escapeHtml(item)}</li>`)
           .join('');
         return `
-          <article class="role-card">
+          <article class="role-card${exp.isCurrent ? ' resume-item--current' : ''}">
                         <div class="role-meta">
-                              <h2>${escapeHtml(exp.companyName)}${
-          exp.isCurrent
-            ? ' <span class="current-star" aria-hidden="true" style="color:#ffd700;font-size:1.5rem;">★</span>'
-            : ''
-        }</h2>
+                              <h2>${escapeHtml(exp.companyName)}</h2>
                             <span>${escapeHtml(
                               formatDateRange(exp.startDate, exp.endDate, exp.isCurrent)
                             )}</span>
