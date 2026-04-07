@@ -8,29 +8,7 @@
 
     if (loadingEl) loadingEl.style.display = '';
 
-    // If the experience chat toggle exists, forward clicks to the main ask-ai toggle
-    try {
-      var expToggle = document.getElementById('experience-chat-toggle');
-      if (expToggle) {
-        expToggle.addEventListener('click', function () {
-          var primary = document.getElementById('ask-ai-toggle');
-          if (primary) {
-            try {
-              primary.click();
-            } catch (e) {
-              // fallback: reveal chat panel directly if available
-              var panel = document.getElementById('ai-chat-panel');
-              var overlay = document.getElementById('ai-chat-overlay');
-              if (panel) panel.setAttribute('aria-hidden', 'false');
-              if (overlay) overlay.setAttribute('aria-hidden', 'false');
-              document.body.classList.add('ai-chat-open');
-            }
-          }
-        });
-      }
-    } catch (e) {
-      // no-op
-    }
+    // Experience loading placeholder now shows plain text; chat bubble removed
 
     fetch('/api/experience')
       .then(function (res) {
@@ -58,9 +36,16 @@
 
     function renderExperience(experiences, container) {
       container.innerHTML = '';
-      experiences.forEach(function (exp) {
+      // Sort so current work experiences appear first
+      var sorted = (Array.isArray(experiences) ? experiences.slice() : []).sort(function (a, b) {
+        if (!!a.isCurrent === !!b.isCurrent) return 0;
+        return a.isCurrent ? -1 : 1;
+      });
+
+      sorted.forEach(function (exp) {
         var item = document.createElement('div');
         item.className = 'resume-item';
+        if (exp.isCurrent) item.classList.add('resume-item--current');
 
         var header = document.createElement('div');
         header.className = 'd-flex justify-content-between align-items-start flex-wrap gap-2 mb-2';
