@@ -219,3 +219,39 @@ test('loadData failure shows error and clears lists', async () => {
   expect(document.getElementById('skills-list').innerHTML).toBe('');
   delete global.fetch;
 });
+
+test('does not render inline star and uses class for current roles', async () => {
+  document.body.innerHTML = `
+    <section id="experience-list"></section>
+    <div id="skills-list"></div>
+    <div id="experience-error" hidden></div>
+  `;
+  const mockResponse = {
+    experiences: [
+      {
+        id: 99,
+        companyName: 'StarlessCo',
+        title: 'NoStar',
+        startDate: '2021-01-01',
+        endDate: null,
+        isCurrent: true,
+        bulletPoints: ['X'],
+        aiContext: { situation: '', approach: '', technicalWork: '', lessonsLearned: '' },
+      },
+    ],
+    skills: { strong: [], moderate: [], gap: [] },
+  };
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => mockResponse });
+  require('../../frontend/assets/js/experience-ai.js');
+  await new Promise((r) => setTimeout(r, 0));
+
+  const expList = document.getElementById('experience-list');
+  // there should be no inline .current-star element
+  expect(expList.querySelector('.current-star')).toBeNull();
+  // article should have the resume-item--current class so CSS ::after will render the pill
+  const article = expList.querySelector('.role-card');
+  expect(article).toBeTruthy();
+  expect(article.classList.contains('resume-item--current')).toBe(true);
+
+  delete global.fetch;
+});
