@@ -27,7 +27,6 @@ const {
   failRequest,
   withRequestId,
 } = require('../_shared/observability');
-const logger = require('../_shared/logger');
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const AI_MODEL = process.env.AI_MODEL || 'claude-haiku-4-5-20251001-blah';
@@ -174,7 +173,7 @@ function coerceToArray(val) {
   return [];
 }
 
-async function callAnthropicForContexts(profile, experiences, apiKey, certifications, context) {
+async function callAnthropicForContexts(profile, experiences, apiKey, certifications) {
   if (!apiKey || experiences.length === 0) {
     return {};
   }
@@ -247,9 +246,7 @@ async function callAnthropicForContexts(profile, experiences, apiKey, certificat
   // Optional debug: dump a truncated raw response when enabled to help diagnose empty responses
   if (!text && process.env.DEBUG_ANTHROPIC) {
     try {
-      logger.warn(context, 'Anthropic raw response (truncated)', {
-        raw: JSON.stringify(data).slice(0, 2000),
-      });
+      console.warn('Anthropic raw response:', JSON.stringify(data).slice(0, 2000));
     } catch {
       void 0;
     }
@@ -422,27 +419,24 @@ module.exports = async function (context) {
             `UPDATE ai_response_cache SET cache_hit_count = COALESCE(cache_hit_count,0) + 1, last_accessed = GETUTCDATE() WHERE hash = @p1`,
             [row.hash]
           );
-          logger.info(context, `AI cache hit for hash ${row.hash}`);
+          console.log(`AI cache hit for hash ${row.hash}`);
         } else {
           // cache miss: call Anthropic and insert result (include certifications if available)
           aiContexts = await callAnthropicForContexts(
             payload.profile,
             payload.experiences,
             apiKey,
-            compactCertifications,
-            context
+            compactCertifications
           );
           try {
             const responseStr = JSON.stringify(aiContexts || {});
             // Don't store empty objects or trivially small responses
             if (!responseStr || responseStr === '{}' || responseStr.length < 10) {
-              logger.info(
-                null,
+              console.log(
                 `AI cache miss: empty or small response, not storing for question ${EXPERIENCE_QUESTION_KEY}`
               );
             } else {
-              logger.info(
-                null,
+              console.log(
                 `AI cache miss for question ${EXPERIENCE_QUESTION_KEY}, storing response (len=${responseStr.length})`
               );
               // insert cache record with hash as primary key, so duplicates will be ignored if another request has already cached the same response
@@ -453,7 +447,7 @@ module.exports = async function (context) {
                    VALUES (@p1, @p2, @p3, @p4, 1, GETUTCDATE(), GETUTCDATE(), 1);`,
                   [EXPERIENCE_QUESTION_KEY, AI_MODEL, cacheHash, responseStr]
                 );
-                logger.info(context, `AI cache miss - stored response with hash ${cacheHash}`);
+                console.log(`AI cache miss - stored response with hash ${cacheHash}`);
               } catch (err) {
                 // Ignore duplicate key race errors (another process inserted same hash concurrently)
                 try {
@@ -464,34 +458,46 @@ module.exports = async function (context) {
                         err.originalError.info &&
                         err.originalError.info.number === 2627))
                   ) {
-                    logger.warn(context, 'AI cache insert race: duplicate key, ignoring');
+                    console.warn('AI cache insert race: duplicate key, ignoring');
                   } else {
                     throw err;
                   }
                 } catch (inner) {
-                  logger.error(context, 'Failed to write AI cache', inner);
+                  console.error('Failed to write AI cache', inner);
+                  context.log &&
+                    context.log.warn &&
+                    context.log.warn('Failed to write AI cache', inner.message || inner);
                 }
               }
             }
           } catch (err) {
-            logger.error(context, 'Failed to write AI cache', err);
+            console.error('Failed to write AI cache', err);
+            context.log &&
+              context.log.warn &&
+              context.log.warn('Failed to write AI cache', err.message || err);
           }
         }
       } catch (err) {
-        logger.error(context, 'AI cache lookup failed, calling Anthropic', err);
+        console.error('AI cache lookup failed, calling Anthropic', err);
         // If cache table doesn't exist or query fails, fall back to calling Anthropic
+        context.log &&
+          context.log.debug &&
+          context.log.debug('AI cache lookup failed, calling Anthropic', err.message || err);
         aiContexts = await callAnthropicForContexts(
           payload.profile,
           payload.experiences,
           apiKey,
-          compactCertifications,
-          context
+          compactCertifications
         );
       }
     } catch (error) {
-      // Non-fatal: if AI context generation fails, log and continue with fallback contexts
-      logger.error(context, 'Experience AI context generation failed, using fallback', error);
-      aiContexts = {};
+      console.error('Experience AI context generation failed, using fallback', error);
+      context.log &&
+        context.log.warn &&
+        context.log.warn(
+          'Experience AI context generation failed, using fallback',
+          error.message || error
+        );
     }
 
     const experiences = payload.experiences.map((exp) => ({

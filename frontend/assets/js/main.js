@@ -3,48 +3,45 @@
  * @module frontend/assets/js/main.js
  */
 
-// Minimal chat toggles bound immediately for consumers/tests that don't
-// dispatch DOMContentLoaded. The full-featured handlers (sendPrompt, typing
-// indicator, etc.) are still attached inside the template IIFE on
-// DOMContentLoaded.
+// Minimal main script to ensure homepage removes preloader and chat toggles
 (function () {
-  try {
-    var chatToggle = document.querySelector('#ask-ai-toggle');
-    var chatPanel = document.querySelector('#ai-chat-panel');
-    var chatOverlay = document.querySelector('#ai-chat-overlay');
-    var chatClose = document.querySelector('#ai-chat-close');
-    function openChatBasic() {
-      document.body.classList.add('ai-chat-open');
-      if (chatPanel) chatPanel.setAttribute('aria-hidden', 'false');
-      if (chatOverlay) chatOverlay.setAttribute('aria-hidden', 'false');
-    }
-    function closeChatBasic() {
-      document.body.classList.remove('ai-chat-open');
-      if (chatPanel) chatPanel.setAttribute('aria-hidden', 'true');
-      if (chatOverlay) chatOverlay.setAttribute('aria-hidden', 'true');
-    }
-    if (chatToggle) chatToggle.addEventListener('click', openChatBasic);
-    if (chatClose) chatClose.addEventListener('click', closeChatBasic);
-    if (chatOverlay) chatOverlay.addEventListener('click', closeChatBasic);
-    // signal that basic bindings exist so the DOMContentLoaded bindings avoid duplicates
+  'use strict';
+  function select(sel) {
     try {
-      window.__chat_basic_bound = true;
+      return document.querySelector(sel);
     } catch (e) {
-      // ignore
+      return null;
     }
-  } catch (e) {
-    // ignore failures — non-critical
   }
+  // Remove preloader when page fully loads
+  window.addEventListener('load', function () {
+    var pre = select('#preloader');
+    if (pre && pre.parentNode) pre.parentNode.removeChild(pre);
+  });
+
+  // Simple AI chat toggle handlers
+  var chatToggle = select('#ask-ai-toggle');
+  var chatPanel = select('#ai-chat-panel');
+  var chatOverlay = select('#ai-chat-overlay');
+  var chatClose = select('#ai-chat-close');
+  function openChat() {
+    document.body.classList.add('ai-chat-open');
+    if (chatPanel) chatPanel.setAttribute('aria-hidden', 'false');
+    if (chatOverlay) chatOverlay.setAttribute('aria-hidden', 'false');
+  }
+  function closeChat() {
+    document.body.classList.remove('ai-chat-open');
+    if (chatPanel) chatPanel.setAttribute('aria-hidden', 'true');
+    if (chatOverlay) chatOverlay.setAttribute('aria-hidden', 'true');
+  }
+  if (chatToggle) chatToggle.addEventListener('click', openChat);
+  if (chatClose) chatClose.addEventListener('click', closeChat);
+  if (chatOverlay) chatOverlay.addEventListener('click', closeChat);
 })();
 
-// Dynamic population of `.hero-company-badges` is disabled in production.
-// In test environments (Jest) we enable it so unit tests that exercise
-// the behavior continue to pass.
+// Populate hero company badges from /api/experience
 (function () {
-  if (typeof process === 'undefined' || !process.env || !process.env.JEST_WORKER_ID) {
-    return; // skip dynamic loader outside of test runs
-  }
-  ('use strict');
+  'use strict';
   // Prefer shared fetchWithTimeout if provided by fetch-utils.js, otherwise fallback
   var fetchWithTimeout =
     (typeof window !== 'undefined' && window.fetchWithTimeout) ||
@@ -161,7 +158,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // no-op on failures to avoid breaking page
   }
 });
-
+// @ts-nocheck
+/**
+ * Template Name: MyResume - v4.9.2
+ * Template URL: https://bootstrapmade.com/free-html-bootstrap-template-my-resume/
+ * Author: BootstrapMade.com
+ * License: https://bootstrapmade.com/license/
+ */
 (function () {
   'use strict';
   /**
@@ -241,6 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
     applyMode(MODE_TRADITIONAL);
     try {
       if (select('#hero')) scrollto('#hero');
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
       // ignore if scrolling fails
     }
@@ -249,6 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
     applyMode(MODE_AI);
     try {
       if (select('#hero')) scrollto('#hero');
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
       // ignore if scrolling fails
     }
