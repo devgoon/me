@@ -39,100 +39,7 @@
   if (chatOverlay) chatOverlay.addEventListener('click', closeChat);
 })();
 
-// Populate hero company badges from /api/experience
-(function () {
-  'use strict';
-  // Prefer shared fetchWithTimeout if provided by fetch-utils.js, otherwise fallback
-  var fetchWithTimeout =
-    (typeof window !== 'undefined' && window.fetchWithTimeout) ||
-    function (url, opts, timeoutMs) {
-      timeoutMs = timeoutMs || 8000;
-      if (typeof AbortController === 'undefined') {
-        return Promise.race([
-          fetch(url, opts),
-          new Promise(function (_, reject) {
-            setTimeout(function () {
-              reject(new Error('Timeout'));
-            }, timeoutMs);
-          }),
-        ]);
-      }
-      const controller = new AbortController();
-      const id = setTimeout(function () {
-        controller.abort();
-      }, timeoutMs);
-      return fetch(url, Object.assign({}, opts || {}, { signal: controller.signal })).finally(
-        function () {
-          clearTimeout(id);
-        }
-      );
-    };
-
-  async function loadCompanies() {
-    const container = document.querySelector('.hero-company-badges');
-    if (!container) return;
-    // show simple loading state
-    const original = container.innerHTML;
-    container.innerHTML = '<span>Loading…</span>';
-
-    const maxAttempts = 3;
-    const baseDelay = 500;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const res = await fetchWithTimeout(
-          '/api/experience',
-          { method: 'GET', headers: { Accept: 'application/json' } },
-          10000
-        );
-        if (!res.ok) throw new Error('Non-OK response ' + res.status);
-        const data = await res.json();
-        const ex = data && data.experiences ? data.experiences : [];
-        let companies = Array.isArray(ex)
-          ? ex.map((e) => (e && e.companyName ? String(e.companyName).trim() : '')).filter(Boolean)
-          : [];
-        // Remove duplicates while preserving order (case-insensitive)
-        const seen = new Set();
-        companies = companies.filter((c) => {
-          const key = String(c).toLowerCase();
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-        if (!companies || companies.length === 0) {
-          container.innerHTML = original; // restore fallback
-          return;
-        }
-        container.innerHTML = '';
-        companies.forEach(function (c) {
-          const span = document.createElement('span');
-          span.textContent = c;
-          container.appendChild(span);
-        });
-        // mark success for easier debugging/inspection
-        try {
-          container.setAttribute('data-dynamic', 'true');
-          console.info('Experience: loaded', ex.length, 'items from /api/experience');
-        } catch (e) {
-          // ignore
-        }
-        return;
-      } catch (err) {
-        if (attempt === maxAttempts) {
-          container.innerHTML = original; // restore original static badges on failure
-          console.warn('Failed to load companies from API', err && err.message ? err.message : err);
-          return;
-        }
-        await new Promise((r) => setTimeout(r, baseDelay * Math.pow(2, attempt - 1)));
-      }
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadCompanies);
-  } else {
-    loadCompanies();
-  }
-})();
+// Dynamic loading of hero company badges removed — keep static badges in HTML
 
 // Handle images in the Certifications section without using inline event handlers
 document.addEventListener('DOMContentLoaded', function () {
@@ -250,12 +157,86 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
   on('click', '#mode-toggle-ai', () => {
-    applyMode(MODE_AI);
+    // Show experimental modal before enabling AI mode
     try {
-      if (select('#hero')) scrollto('#hero');
-      else window.scrollTo({ top: 0, behavior: 'smooth' });
+      const modal = document.getElementById('ai-experimental-modal');
+      const confirmBtn = document.getElementById('ai-experimental-confirm');
+      const backBtn = document.getElementById('ai-experimental-back');
+      if (!modal || !confirmBtn) {
+        applyMode(MODE_AI);
+        try {
+          if (select('#hero')) scrollto('#hero');
+          else window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (e) {
+          // ignore if scrolling fails
+        }
+        return;
+      }
+      const backdrop = modal.querySelector('.modal-backdrop');
+
+      const showModal = () => {
+        modal.style.display = 'block';
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        modal.style.zIndex = '1050';
+        if (backdrop) {
+          backdrop.style.display = 'block';
+          backdrop.style.zIndex = '1040';
+        }
+        try {
+          document.body.classList.add('modal-open');
+        } catch (e) {}
+        try {
+          setTimeout(function () {
+            if (confirmBtn && typeof confirmBtn.focus === 'function') confirmBtn.focus();
+          }, 0);
+        } catch (e) {}
+      };
+
+      const hideModal = () => {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        if (backdrop) backdrop.style.display = 'none';
+        try {
+          document.body.classList.remove('modal-open');
+        } catch (e) {}
+      };
+
+      const onConfirm = () => {
+        hideModal();
+        applyMode(MODE_AI);
+        try {
+          if (select('#hero')) scrollto('#hero');
+          else window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (e) {
+          // ignore if scrolling fails
+        }
+        confirmBtn.removeEventListener('click', onConfirm);
+        if (backBtn) backBtn.removeEventListener('click', onBack);
+      };
+
+      const onBack = () => {
+        hideModal();
+        applyMode(MODE_TRADITIONAL);
+        try {
+          if (select('#hero')) scrollto('#hero');
+          else window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (e) {}
+        confirmBtn.removeEventListener('click', onConfirm);
+        if (backBtn) backBtn.removeEventListener('click', onBack);
+      };
+
+      confirmBtn.addEventListener('click', onConfirm);
+      if (backBtn) backBtn.addEventListener('click', onBack);
+      showModal();
     } catch (e) {
-      // ignore if scrolling fails
+      try {
+        if (select('#hero')) scrollto('#hero');
+        else window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {
+        // ignore if scrolling fails
+      }
     }
   });
   /**
@@ -503,7 +484,45 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!chatHistory) return;
       const bubble = document.createElement('div');
       bubble.classList.add('ai-msg', role === 'user' ? 'ai-msg-user' : 'ai-msg-assistant');
-      bubble.textContent = text;
+      // Render lightweight Markdown (bold **text** and simple - list items)
+      const escapeHtml = (str) =>
+        String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+
+      const renderMarkdown = (md) => {
+        if (!md) return '';
+        // escape first to prevent XSS
+        const escaped = escapeHtml(md);
+        // handle bold **text**
+        let html = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // handle simple unordered lists: lines starting with '- '
+        const lines = html.split(/\r?\n/);
+        let out = [];
+        let inList = false;
+        lines.forEach((ln) => {
+          if (/^\s*-\s+/.test(ln)) {
+            if (!inList) {
+              inList = true;
+              out.push('<ul>');
+            }
+            out.push('<li>' + ln.replace(/^\s*-\s+/, '') + '</li>');
+          } else {
+            if (inList) {
+              inList = false;
+              out.push('</ul>');
+            }
+            out.push('<p>' + ln + '</p>');
+          }
+        });
+        if (inList) out.push('</ul>');
+        return out.join('\n');
+      };
+
+      bubble.innerHTML = renderMarkdown(text);
       chatHistory.appendChild(bubble);
       chatHistory.scrollTop = chatHistory.scrollHeight;
     };

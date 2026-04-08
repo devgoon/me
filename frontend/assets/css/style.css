@@ -1,10 +1,3 @@
-/**
-* Template Name: MyResume - v4.9.2
-* Template URL: https://bootstrapmade.com/free-html-bootstrap-template-my-resume/
-* Author: BootstrapMade.com
-* License: https://bootstrapmade.com/license/
-*/
-
 /*--------------------------------------------------------------
 # General
 --------------------------------------------------------------*/
@@ -171,6 +164,77 @@ h6 {
   transition: all 0.5s;
   padding: 15px;
   overflow-y: auto;
+}
+
+/*--------------------------------------------------------------
+# Modal (site palette overrides)
+--------------------------------------------------------------*/
+.modal .modal-content {
+  background: #000000; /* strong black background for contrast */
+  color: #ffffff; /* use pure white for better contrast */
+  border: 2px solid #1f6feb; /* blue border to match primary accent */
+  border-radius: 12px;
+  box-shadow: 0 30px 80px rgba(2, 6, 23, 0.85), 0 0 30px rgba(31, 111, 235, 0.06);
+  transform-origin: center top;
+  position: relative;
+  z-index: 1065;
+  font-weight: 700; /* make modal text bold */
+}
+.modal .modal-title {
+  color: #ffffff;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+.modal .modal-content p,
+.modal .modal-content h2,
+.modal .modal-content .modal-title {
+  color: #ffffff;
+}
+.modal .modal-footer {
+  border-top: 0;
+  padding-top: 0.75rem;
+}
+.modal .modal-backdrop {
+  background: rgba(2, 6, 23, 0.86);
+  pointer-events: auto; /* block interaction with background while modal open */
+  position: fixed;
+  inset: 0;
+  z-index: 1040; /* keep backdrop below dialog */
+}
+.modal .modal-dialog {
+  transform: translateY(-8px) scale(0.98);
+  transition: transform 180ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 180ms ease;
+  opacity: 0;
+  position: relative;
+  z-index: 1060; /* ensure dialog sits above the backdrop */
+}
+.modal.show .modal-dialog {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.modal .modal-content p,
+.modal .modal-content h2,
+.modal .modal-content .modal-title {
+  color: #ffffff;
+}
+.modal .btn-outline-light {
+  color: #cfe3ff;
+  border-color: #30363d;
+}
+.modal .btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: #ffffff;
+  border-color: #1f6feb;
+}
+.modal .modal-footer .btn,
+.modal .modal-content .btn,
+.modal .btn {
+  font-weight: 800; /* bold buttons inside modal */
+}
+.modal-open {
+  /* ensure page content doesn't show through poorly */
+  overflow: hidden;
 }
 
 @media (max-width: 991px) {

@@ -52,12 +52,21 @@ test('mode toggle applies ai/traditional classes and persists to localStorage', 
   document.body.innerHTML = `
     <button id="mode-toggle-traditional">T</button>
     <button id="mode-toggle-ai">AI</button>
+    <div id="ai-experimental-modal" style="display:none;" aria-hidden="true">
+      <button id="ai-experimental-back">Go back to Classic view</button>
+      <button id="ai-experimental-confirm">Proceed</button>
+    </div>
   `;
   require('../../frontend/assets/js/main.js');
   const aiBtn = document.getElementById('mode-toggle-ai');
   const tradBtn = document.getElementById('mode-toggle-traditional');
-  // click AI
+  // click AI -> modal appears, then confirm
   aiBtn.click();
+  const modal = document.getElementById('ai-experimental-modal');
+  expect(modal.getAttribute('aria-hidden')).toBe('false');
+  // confirm the modal
+  const confirm = document.getElementById('ai-experimental-confirm');
+  confirm.click();
   expect(document.body.dataset.siteMode).toBe('ai');
   expect(aiBtn.getAttribute('aria-pressed')).toBe('true');
   expect(tradBtn.getAttribute('aria-pressed')).toBe('false');
@@ -68,6 +77,51 @@ test('mode toggle applies ai/traditional classes and persists to localStorage', 
   expect(tradBtn.getAttribute('aria-pressed')).toBe('true');
   expect(aiBtn.getAttribute('aria-pressed')).toBe('false');
   expect(localStorage.getItem('site_mode')).toBe('traditional');
+});
+
+test('modal Back button returns to Classic mode without confirming', () => {
+  document.body.innerHTML = `
+    <button id="mode-toggle-traditional">T</button>
+    <button id="mode-toggle-ai">AI</button>
+    <div id="ai-experimental-modal" style="display:none;" aria-hidden="true">
+      <button id="ai-experimental-back">Go back to Classic view</button>
+      <button id="ai-experimental-confirm">Proceed</button>
+    </div>
+  `;
+  require('../../frontend/assets/js/main.js');
+  const aiBtn = document.getElementById('mode-toggle-ai');
+  const back = document.getElementById('ai-experimental-back');
+  // open modal
+  aiBtn.click();
+  const modal = document.getElementById('ai-experimental-modal');
+  expect(modal.getAttribute('aria-hidden')).toBe('false');
+  // click Back
+  back.click();
+  expect(document.body.dataset.siteMode).toBe('traditional');
+  expect(modal.getAttribute('aria-hidden')).toBe('true');
+});
+
+test('confirm button is auto-focused when modal opens', () => {
+  jest.useFakeTimers();
+  document.body.innerHTML = `
+    <button id="mode-toggle-ai">AI</button>
+    <div id="ai-experimental-modal" style="display:none;" aria-hidden="true">
+      <button id="ai-experimental-back">Go back to Classic view</button>
+      <button id="ai-experimental-confirm">Proceed</button>
+    </div>
+  `;
+  // attach a spy to focus
+  const dom = document.createElement('div');
+  document.body.appendChild(dom);
+  require('../../frontend/assets/js/main.js');
+  const confirm = document.getElementById('ai-experimental-confirm');
+  confirm.focus = jest.fn();
+  const aiBtn = document.getElementById('mode-toggle-ai');
+  aiBtn.click();
+  // advance timers for the setTimeout used to focus the button
+  jest.runAllTimers();
+  expect(confirm.focus).toHaveBeenCalled();
+  jest.useRealTimers();
 });
 
 test('sendPrompt shows timeout message when fetch aborts', async () => {
@@ -94,42 +148,7 @@ test('sendPrompt shows timeout message when fetch aborts', async () => {
   delete global.fetch;
 });
 
-test('loadCompanies populates container with deduped companies (preserve order, case-insensitive)', async () => {
-  document.body.innerHTML = `<div class="hero-company-badges">static</div>`;
-  const container = document.querySelector('.hero-company-badges');
-  const mockData = {
-    experiences: [
-      { companyName: 'Acme' },
-      { companyName: 'Beta' },
-      { companyName: 'ACME' },
-      { companyName: 'Gamma' },
-      { companyName: 'beta' },
-    ],
-  };
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => mockData });
-  require('../../frontend/assets/js/main.js');
-  // allow async microtasks
-  await new Promise((r) => setTimeout(r, 0));
-  expect(container.getAttribute('data-dynamic')).toBe('true');
-  const spans = container.querySelectorAll('span');
-  expect(spans.length).toBe(3);
-  expect(spans[0].textContent).toBe('Acme');
-  expect(spans[1].textContent).toBe('Beta');
-  expect(spans[2].textContent).toBe('Gamma');
-  delete global.fetch;
-});
-
-test('loadCompanies restores original content when API returns no companies', async () => {
-  document.body.innerHTML = `<div class="hero-company-badges"><span>One</span><span>Two</span></div>`;
-  const container = document.querySelector('.hero-company-badges');
-  const original = container.innerHTML;
-  const mockData = { experiences: [] };
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => mockData });
-  require('../../frontend/assets/js/main.js');
-  await new Promise((r) => setTimeout(r, 0));
-  expect(container.innerHTML).toBe(original);
-  delete global.fetch;
-});
+// Dynamic company-loading unit tests removed; companies are static in HTML now
 
 test('certification images are halved when loaded/complete', async () => {
   document.body.innerHTML = `<div id="certifications"><img id="cert1" /></div>`;
@@ -253,6 +272,28 @@ test('sendPrompt success appends assistant response and manages typing indicator
   // allow async handlers to run
   await new Promise((r) => setTimeout(r, 0));
   expect(history.textContent).toMatch(/Hello from AI/);
+  delete global.fetch;
+});
+
+test('assistant responses render basic markdown (bold)', async () => {
+  document.body.innerHTML = `
+    <div id="ai-chat-history"></div>
+    <input id="ai-chat-input" />
+    <button id="ai-chat-send"></button>
+  `;
+  global.fetch = jest
+    .fn()
+    .mockResolvedValue({ ok: true, json: async () => ({ response: '**bold**' }) });
+  require('../../frontend/assets/js/main.js');
+  document.dispatchEvent(new Event('DOMContentLoaded'));
+  const input = document.getElementById('ai-chat-input');
+  const send = document.getElementById('ai-chat-send');
+  const history = document.getElementById('ai-chat-history');
+  input.value = 'Query';
+  send.click();
+  await new Promise((r) => setTimeout(r, 0));
+  // assistant response should render <strong>bold</strong>
+  expect(history.innerHTML).toMatch(/<strong>\s*bold\s*<\/strong>/i);
   delete global.fetch;
 });
 
