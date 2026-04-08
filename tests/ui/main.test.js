@@ -94,42 +94,7 @@ test('sendPrompt shows timeout message when fetch aborts', async () => {
   delete global.fetch;
 });
 
-test('loadCompanies populates container with deduped companies (preserve order, case-insensitive)', async () => {
-  document.body.innerHTML = `<div class="hero-company-badges">static</div>`;
-  const container = document.querySelector('.hero-company-badges');
-  const mockData = {
-    experiences: [
-      { companyName: 'Acme' },
-      { companyName: 'Beta' },
-      { companyName: 'ACME' },
-      { companyName: 'Gamma' },
-      { companyName: 'beta' },
-    ],
-  };
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => mockData });
-  require('../../frontend/assets/js/main.js');
-  // allow async microtasks
-  await new Promise((r) => setTimeout(r, 0));
-  expect(container.getAttribute('data-dynamic')).toBe('true');
-  const spans = container.querySelectorAll('span');
-  expect(spans.length).toBe(3);
-  expect(spans[0].textContent).toBe('Acme');
-  expect(spans[1].textContent).toBe('Beta');
-  expect(spans[2].textContent).toBe('Gamma');
-  delete global.fetch;
-});
-
-test('loadCompanies restores original content when API returns no companies', async () => {
-  document.body.innerHTML = `<div class="hero-company-badges"><span>One</span><span>Two</span></div>`;
-  const container = document.querySelector('.hero-company-badges');
-  const original = container.innerHTML;
-  const mockData = { experiences: [] };
-  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => mockData });
-  require('../../frontend/assets/js/main.js');
-  await new Promise((r) => setTimeout(r, 0));
-  expect(container.innerHTML).toBe(original);
-  delete global.fetch;
-});
+// Dynamic company-loading unit tests removed; companies are static in HTML now
 
 test('certification images are halved when loaded/complete', async () => {
   document.body.innerHTML = `<div id="certifications"><img id="cert1" /></div>`;
