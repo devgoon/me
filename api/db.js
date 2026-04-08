@@ -93,6 +93,33 @@ class Client {
     return { rows: res.recordset || [] };
   }
 
+  // Helper: query with retry/backoff for transient DB errors.
+  // Options: { maxAttempts, baseDelayMs }
+  async queryWithRetry(text, params, options) {
+    const maxAttempts = (options && options.maxAttempts) || 3;
+    const baseDelay = (options && options.baseDelayMs) || 200;
+    const isTransient = (err) => {
+      if (!err) return false;
+      const msg = String(err.message || '').toLowerCase();
+      return (
+        msg.includes('deadlock') ||
+        msg.includes('timeout') ||
+        msg.includes('connection') ||
+        msg.includes('transient') ||
+        msg.includes('could not serialize')
+      );
+    };
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await this.query(text, params);
+      } catch (err) {
+        if (attempt === maxAttempts || !isTransient(err)) throw err;
+        const backoff = baseDelay * Math.pow(2, attempt - 1);
+        await new Promise((r) => setTimeout(r, backoff));
+      }
+    }
+  }
+
   async end() {
     try {
       if (this._pool) {
@@ -116,5 +143,13 @@ module.exports = {
     } catch {
       return undefined;
     }
+  },
+  // convenience db query helper: prefer client's queryWithRetry when available
+  runQueryWithRetry(client, sql, params, opts) {
+    if (!client) throw new Error('Client required');
+    if (typeof client.queryWithRetry === 'function') {
+      return client.queryWithRetry(sql, params || [], opts || { maxAttempts: 3, baseDelayMs: 200 });
+    }
+    return client.query(sql, params || []);
   },
 };

@@ -173,15 +173,25 @@
       let analysis = null;
       status.innerHTML = `<article class="role-card" style="text-align:left;padding:12px"><div class="loading" aria-busy="true" aria-live="polite">Determining fit…</div></article>`;
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000); // 30 seconds
-        const res = await fetch('/api/fit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jobDescription: jd }),
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
+        const _fetch =
+          (typeof apiFetch !== 'undefined' && apiFetch) ||
+          (typeof fetchWithTimeout !== 'undefined' &&
+            function (u, o, opts) {
+              return fetchWithTimeout(u, o, opts && opts.timeoutMs);
+            }) ||
+          function (u, o, opts) {
+            return fetch(u, o);
+          };
+        let res;
+        res = await _fetch(
+          '/api/fit',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jobDescription: jd }),
+          },
+          { timeoutMs: 30000 }
+        );
         if (!res.ok) throw new Error('Fit API error');
         const ai = await res.json();
         // Map AI response to UI fields

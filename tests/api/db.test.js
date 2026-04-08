@@ -1,3 +1,30 @@
+const { Client } = require('../../api/db');
+
+describe('Client.queryWithRetry', () => {
+  test('retries on transient error then succeeds', async () => {
+    const c = new Client({ connectionString: 'conn' });
+    // override query to simulate transient failure then success
+    c.query = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('deadlock detected'))
+      .mockResolvedValue({ rows: [{ id: 1 }] });
+
+    const res = await c.queryWithRetry('SELECT 1', [], { maxAttempts: 2, baseDelayMs: 1 });
+    expect(res).toBeDefined();
+    expect(res.rows[0].id).toBe(1);
+    expect(c.query).toHaveBeenCalledTimes(2);
+  });
+
+  test('does not retry on non-transient error', async () => {
+    const c = new Client({ connectionString: 'conn' });
+    c.query = jest.fn().mockRejectedValue(new Error('syntax error at or near'));
+
+    await expect(
+      c.queryWithRetry('SELECT', [], { maxAttempts: 2, baseDelayMs: 1 })
+    ).rejects.toThrow(/syntax error/i);
+    expect(c.query).toHaveBeenCalledTimes(1);
+  });
+});
 const path = require('path');
 
 // Provide a stable top-level virtual mock for 'mssql'. Individual tests

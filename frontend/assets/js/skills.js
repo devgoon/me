@@ -39,29 +39,15 @@
     }
   }
 
-  function fetchWithTimeout(url, opts, timeoutMs) {
-    timeoutMs = timeoutMs || 8000;
-    if (typeof AbortController === 'undefined') {
-      // environment without AbortController: race fetch against a timeout
-      return Promise.race([
-        fetch(url, opts),
-        new Promise(function (_, reject) {
-          setTimeout(function () {
-            reject(new Error('Timeout'));
-          }, timeoutMs);
-        }),
-      ]);
-    }
-    const controller = new AbortController();
-    const id = setTimeout(function () {
-      controller.abort();
-    }, timeoutMs);
-    return fetch(url, Object.assign({}, opts || {}, { signal: controller.signal })).finally(
-      function () {
-        clearTimeout(id);
-      }
-    );
-  }
+  // prefer shared implementation from fetch-utils if present
+  var _fetch =
+    (typeof apiFetch !== 'undefined' && apiFetch) ||
+    (typeof window !== 'undefined' &&
+      window.fetchWithTimeout &&
+      function (u, o, opts) {
+        return window.fetchWithTimeout(u, o, opts && opts.timeoutMs);
+      }) ||
+    fetch;
 
   let __skillsApiError = null;
   const __SKILLS_API_MAX_ATTEMPTS = 5;
@@ -78,10 +64,10 @@
       try {
         console.info(`[skills] API attempt ${attempt}/${__SKILLS_API_MAX_ATTEMPTS}`);
         // use the lightweight skills endpoint (reads DB directly, no AI)
-        const res = await fetchWithTimeout(
+        const res = await _fetch(
           '/api/skills',
           { method: 'GET', headers: { Accept: 'application/json' } },
-          20000
+          { timeoutMs: 20000 }
         );
         if (!res.ok) throw new Error('Non-OK response ' + res.status);
         const data = await res.json();

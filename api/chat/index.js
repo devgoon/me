@@ -3,7 +3,23 @@
  * @module api/chat/index.js
  */
 
-const { Client } = require('../db');
+const _db = require('../db');
+const Client = _db.Client;
+// Provide a fallback q helper when tests/mock don't export it.
+const q =
+  typeof _db.runQueryWithRetry === 'function'
+    ? _db.runQueryWithRetry
+    : (client, sql, params, opts) => {
+        if (!client) throw new Error('Client required');
+        if (typeof client.queryWithRetry === 'function') {
+          return client.queryWithRetry(
+            sql,
+            params || [],
+            opts || { maxAttempts: 3, baseDelayMs: 200 }
+          );
+        }
+        return client.query(sql, params || []);
+      };
 const {
   beginRequest,
   endRequest,
@@ -28,6 +44,10 @@ function timeoutSignal(ms) {
   };
 }
 
+// prefer server-side fetch helpers for consistent timeouts/retries
+const { fetchWithTimeout } = require('../fetch');
+
+// use centralized `q` from ../db for write retries
 // helper moved to prompts module; keep no local definition
 
 // helper functions moved to prompts module; keep only `textOrNA` here
@@ -143,26 +163,29 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
     attempt++;
     const timeout = timeoutSignal(AI_TIMEOUT_MS);
     try {
-      const response = await fetch(ANTHROPIC_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
+      const response = await fetchWithTimeout(
+        ANTHROPIC_API_URL,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: AI_MODEL,
+            max_tokens: MAX_TOKENS,
+            system: systemPrompt,
+            messages: [
+              {
+                role: 'user',
+                content: userMessage,
+              },
+            ],
+          }),
         },
-        body: JSON.stringify({
-          model: AI_MODEL,
-          max_tokens: MAX_TOKENS,
-          system: systemPrompt,
-          messages: [
-            {
-              role: 'user',
-              content: userMessage,
-            },
-          ],
-        }),
-        signal: timeout.signal,
-      });
+        AI_TIMEOUT_MS
+      );
 
       if (!response.ok) {
         const errText = await response.text().catch(() => '');
@@ -245,7 +268,8 @@ async function getCache(client, model, question) {
     /* ignore logging errors */
   }
   if (result.rows.length > 0) {
-    await client.query(
+    await q(
+      client,
       `UPDATE ai_response_cache SET cache_hit_count = cache_hit_count + 1, last_accessed = GETUTCDATE() WHERE hash = @p1`,
       [hash]
     );
@@ -267,7 +291,8 @@ async function setCache(client, model, question, response) {
       ? response.trim()
       : JSON.stringify(response);
 
-  await client.query(
+  await q(
+    client,
     `MERGE ai_response_cache AS target
        USING (SELECT @p1 AS hash, @p2 AS question, @p3 AS model, @p4 AS response, 1 AS cache_hit_count, GETUTCDATE() AS last_accessed, GETUTCDATE() AS updated_at, 1 AS is_cached) AS src
        ON target.hash = src.hash AND target.model = src.model

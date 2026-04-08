@@ -10,7 +10,15 @@
 
     // Experience loading placeholder now shows plain text; chat bubble removed
 
-    fetch('/api/experience')
+    var _fetch =
+      (typeof apiFetch !== 'undefined' && apiFetch) ||
+      (typeof fetchWithTimeout !== 'undefined' &&
+        function (u, o) {
+          return fetchWithTimeout(u, o, 10000);
+        }) ||
+      fetch;
+
+    _fetch('/api/experience', { method: 'GET' })
       .then(function (res) {
         if (!res.ok) throw new Error('Network response was not ok');
         return res.json();
