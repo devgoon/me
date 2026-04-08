@@ -52,12 +52,21 @@ test('mode toggle applies ai/traditional classes and persists to localStorage', 
   document.body.innerHTML = `
     <button id="mode-toggle-traditional">T</button>
     <button id="mode-toggle-ai">AI</button>
+    <div id="ai-experimental-modal" style="display:none;" aria-hidden="true">
+      <button id="ai-experimental-back">Go back to Classic view</button>
+      <button id="ai-experimental-confirm">Proceed</button>
+    </div>
   `;
   require('../../frontend/assets/js/main.js');
   const aiBtn = document.getElementById('mode-toggle-ai');
   const tradBtn = document.getElementById('mode-toggle-traditional');
-  // click AI
+  // click AI -> modal appears, then confirm
   aiBtn.click();
+  const modal = document.getElementById('ai-experimental-modal');
+  expect(modal.getAttribute('aria-hidden')).toBe('false');
+  // confirm the modal
+  const confirm = document.getElementById('ai-experimental-confirm');
+  confirm.click();
   expect(document.body.dataset.siteMode).toBe('ai');
   expect(aiBtn.getAttribute('aria-pressed')).toBe('true');
   expect(tradBtn.getAttribute('aria-pressed')).toBe('false');
@@ -68,6 +77,51 @@ test('mode toggle applies ai/traditional classes and persists to localStorage', 
   expect(tradBtn.getAttribute('aria-pressed')).toBe('true');
   expect(aiBtn.getAttribute('aria-pressed')).toBe('false');
   expect(localStorage.getItem('site_mode')).toBe('traditional');
+});
+
+test('modal Back button returns to Classic mode without confirming', () => {
+  document.body.innerHTML = `
+    <button id="mode-toggle-traditional">T</button>
+    <button id="mode-toggle-ai">AI</button>
+    <div id="ai-experimental-modal" style="display:none;" aria-hidden="true">
+      <button id="ai-experimental-back">Go back to Classic view</button>
+      <button id="ai-experimental-confirm">Proceed</button>
+    </div>
+  `;
+  require('../../frontend/assets/js/main.js');
+  const aiBtn = document.getElementById('mode-toggle-ai');
+  const back = document.getElementById('ai-experimental-back');
+  // open modal
+  aiBtn.click();
+  const modal = document.getElementById('ai-experimental-modal');
+  expect(modal.getAttribute('aria-hidden')).toBe('false');
+  // click Back
+  back.click();
+  expect(document.body.dataset.siteMode).toBe('traditional');
+  expect(modal.getAttribute('aria-hidden')).toBe('true');
+});
+
+test('confirm button is auto-focused when modal opens', () => {
+  jest.useFakeTimers();
+  document.body.innerHTML = `
+    <button id="mode-toggle-ai">AI</button>
+    <div id="ai-experimental-modal" style="display:none;" aria-hidden="true">
+      <button id="ai-experimental-back">Go back to Classic view</button>
+      <button id="ai-experimental-confirm">Proceed</button>
+    </div>
+  `;
+  // attach a spy to focus
+  const dom = document.createElement('div');
+  document.body.appendChild(dom);
+  require('../../frontend/assets/js/main.js');
+  const confirm = document.getElementById('ai-experimental-confirm');
+  confirm.focus = jest.fn();
+  const aiBtn = document.getElementById('mode-toggle-ai');
+  aiBtn.click();
+  // advance timers for the setTimeout used to focus the button
+  jest.runAllTimers();
+  expect(confirm.focus).toHaveBeenCalled();
+  jest.useRealTimers();
 });
 
 test('sendPrompt shows timeout message when fetch aborts', async () => {

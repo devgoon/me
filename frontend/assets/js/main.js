@@ -157,12 +157,86 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
   on('click', '#mode-toggle-ai', () => {
-    applyMode(MODE_AI);
+    // Show experimental modal before enabling AI mode
     try {
-      if (select('#hero')) scrollto('#hero');
-      else window.scrollTo({ top: 0, behavior: 'smooth' });
+      const modal = document.getElementById('ai-experimental-modal');
+      const confirmBtn = document.getElementById('ai-experimental-confirm');
+      const backBtn = document.getElementById('ai-experimental-back');
+      if (!modal || !confirmBtn) {
+        applyMode(MODE_AI);
+        try {
+          if (select('#hero')) scrollto('#hero');
+          else window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (e) {
+          // ignore if scrolling fails
+        }
+        return;
+      }
+      const backdrop = modal.querySelector('.modal-backdrop');
+
+      const showModal = () => {
+        modal.style.display = 'block';
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        modal.style.zIndex = '1050';
+        if (backdrop) {
+          backdrop.style.display = 'block';
+          backdrop.style.zIndex = '1040';
+        }
+        try {
+          document.body.classList.add('modal-open');
+        } catch (e) {}
+        try {
+          setTimeout(function () {
+            if (confirmBtn && typeof confirmBtn.focus === 'function') confirmBtn.focus();
+          }, 0);
+        } catch (e) {}
+      };
+
+      const hideModal = () => {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        if (backdrop) backdrop.style.display = 'none';
+        try {
+          document.body.classList.remove('modal-open');
+        } catch (e) {}
+      };
+
+      const onConfirm = () => {
+        hideModal();
+        applyMode(MODE_AI);
+        try {
+          if (select('#hero')) scrollto('#hero');
+          else window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (e) {
+          // ignore if scrolling fails
+        }
+        confirmBtn.removeEventListener('click', onConfirm);
+        if (backBtn) backBtn.removeEventListener('click', onBack);
+      };
+
+      const onBack = () => {
+        hideModal();
+        applyMode(MODE_TRADITIONAL);
+        try {
+          if (select('#hero')) scrollto('#hero');
+          else window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (e) {}
+        confirmBtn.removeEventListener('click', onConfirm);
+        if (backBtn) backBtn.removeEventListener('click', onBack);
+      };
+
+      confirmBtn.addEventListener('click', onConfirm);
+      if (backBtn) backBtn.addEventListener('click', onBack);
+      showModal();
     } catch (e) {
-      // ignore if scrolling fails
+      try {
+        if (select('#hero')) scrollto('#hero');
+        else window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {
+        // ignore if scrolling fails
+      }
     }
   });
   /**
