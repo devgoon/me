@@ -1,5 +1,6 @@
 /**
- * @fileoverview TODO: Describe this file's purpose.
+ * @fileoverview Authentication helpers: password hashing, token signing/verification,
+ * and client principal extraction from request headers.
  * @module api/_shared/auth.js
  */
 

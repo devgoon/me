@@ -26,6 +26,7 @@ const {
   failRequest,
   withRequestId,
 } = require('../_shared/observability');
+const logger = require('../_shared/logger');
 const crypto = require('crypto');
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
@@ -217,7 +218,8 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
       if (error && error.name === 'AbortError') {
         lastErr = new Error('Anthropic API timeout');
         try {
-          console.warn(
+          logger.warn(
+            null,
             `chat.callAnthropic: Anthropic API timeout after ${AI_TIMEOUT_MS}ms on attempt ${attempt}`
           );
         } catch {
@@ -226,9 +228,11 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
       } else {
         lastErr = error;
         try {
-          console.warn(
-            `chat.callAnthropic: Anthropic API error on attempt ${attempt}:`,
-            error && error.message ? error.message : error
+          logger.warn(
+            null,
+            `chat.callAnthropic: Anthropic API error on attempt ${attempt}: ${
+              error && error.message ? error.message : error
+            }`
           );
         } catch {
           /* noop */
@@ -249,7 +253,7 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
   throw lastErr || new Error('Anthropic API failure');
 }
 
-async function getCache(client, model, question) {
+async function getCache(client, model, question, context) {
   const hash = crypto
     .createHash('sha256')
     .update(model + '|' + question)
@@ -261,7 +265,8 @@ async function getCache(client, model, question) {
   );
   const duration = Date.now() - start;
   try {
-    console.info(
+    logger.info(
+      context,
       `chat.getCache: lookup hash=${hash} duration=${duration}ms rows=${result.rows.length}`
     );
   } catch (e) {
@@ -373,7 +378,8 @@ module.exports = async function (context, req) {
           await c.connect();
           const dur = Date.now() - start;
           try {
-            console.info(
+            logger.info(
+              null,
               `chat.connectWithRetry: connected on attempt=${attempt} duration=${dur}ms`
             );
           } catch (e) {
@@ -383,7 +389,8 @@ module.exports = async function (context, req) {
         } catch (err) {
           const dur = Date.now() - start;
           try {
-            console.warn(
+            logger.warn(
+              null,
               `chat.connectWithRetry: connect attempt=${attempt} failed duration=${dur}ms error=${
                 err && err.message ? err.message : err
               }`
@@ -403,7 +410,7 @@ module.exports = async function (context, req) {
     let assistantResponse;
     try {
       // Check cache first
-      const cached = await getCache(client, AI_MODEL, userMessage);
+      const cached = await getCache(client, AI_MODEL, userMessage, context);
       if (cached) {
         assistantResponse = cached;
       } else {
