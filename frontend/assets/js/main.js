@@ -484,7 +484,45 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!chatHistory) return;
       const bubble = document.createElement('div');
       bubble.classList.add('ai-msg', role === 'user' ? 'ai-msg-user' : 'ai-msg-assistant');
-      bubble.textContent = text;
+      // Render lightweight Markdown (bold **text** and simple - list items)
+      const escapeHtml = (str) =>
+        String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+
+      const renderMarkdown = (md) => {
+        if (!md) return '';
+        // escape first to prevent XSS
+        const escaped = escapeHtml(md);
+        // handle bold **text**
+        let html = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // handle simple unordered lists: lines starting with '- '
+        const lines = html.split(/\r?\n/);
+        let out = [];
+        let inList = false;
+        lines.forEach((ln) => {
+          if (/^\s*-\s+/.test(ln)) {
+            if (!inList) {
+              inList = true;
+              out.push('<ul>');
+            }
+            out.push('<li>' + ln.replace(/^\s*-\s+/, '') + '</li>');
+          } else {
+            if (inList) {
+              inList = false;
+              out.push('</ul>');
+            }
+            out.push('<p>' + ln + '</p>');
+          }
+        });
+        if (inList) out.push('</ul>');
+        return out.join('\n');
+      };
+
+      bubble.innerHTML = renderMarkdown(text);
       chatHistory.appendChild(bubble);
       chatHistory.scrollTop = chatHistory.scrollHeight;
     };

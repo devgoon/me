@@ -275,6 +275,28 @@ test('sendPrompt success appends assistant response and manages typing indicator
   delete global.fetch;
 });
 
+test('assistant responses render basic markdown (bold)', async () => {
+  document.body.innerHTML = `
+    <div id="ai-chat-history"></div>
+    <input id="ai-chat-input" />
+    <button id="ai-chat-send"></button>
+  `;
+  global.fetch = jest
+    .fn()
+    .mockResolvedValue({ ok: true, json: async () => ({ response: '**bold**' }) });
+  require('../../frontend/assets/js/main.js');
+  document.dispatchEvent(new Event('DOMContentLoaded'));
+  const input = document.getElementById('ai-chat-input');
+  const send = document.getElementById('ai-chat-send');
+  const history = document.getElementById('ai-chat-history');
+  input.value = 'Query';
+  send.click();
+  await new Promise((r) => setTimeout(r, 0));
+  // assistant response should render <strong>bold</strong>
+  expect(history.innerHTML).toMatch(/<strong>\s*bold\s*<\/strong>/i);
+  delete global.fetch;
+});
+
 test('sendPrompt API non-ok response shows error details in assistant message', async () => {
   document.body.innerHTML = `
     <div id="ai-chat-history"></div>
