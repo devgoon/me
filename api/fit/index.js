@@ -14,6 +14,9 @@ const {
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 10000;
 
+// use shared server fetch helper for timeouts/retries
+const { fetchWithTimeout } = require('../fetch');
+
 function getDbClient() {
   const databaseUrl = process.env.AZURE_DATABASE_URL;
   if (!databaseUrl) throw new Error('AZURE_DATABASE_URL is not configured');
@@ -139,21 +142,24 @@ module.exports = async function (context, req) {
           attempt++;
           const timeout = timeoutSignal(AI_TIMEOUT_MS);
           try {
-            const response = await fetch(ANTHROPIC_API_URL, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
+            const response = await fetchWithTimeout(
+              ANTHROPIC_API_URL,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': apiKey,
+                  'anthropic-version': '2023-06-01',
+                },
+                body: JSON.stringify({
+                  model: AI_MODEL,
+                  max_tokens: MAX_TOKENS,
+                  system: systemPrompt,
+                  messages: [{ role: 'user', content: userMessage }],
+                }),
               },
-              body: JSON.stringify({
-                model: AI_MODEL,
-                max_tokens: MAX_TOKENS,
-                system: systemPrompt,
-                messages: [{ role: 'user', content: userMessage }],
-              }),
-              signal: timeout.signal,
-            });
+              AI_TIMEOUT_MS
+            );
 
             if (!response.ok) {
               const errText = await response.text().catch(() => '');

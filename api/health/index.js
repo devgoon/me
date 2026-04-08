@@ -15,27 +15,7 @@ const API_TIMEOUT_MS = 3000;
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/models';
 const ANTHROPIC_VERSION = '2023-06-01';
 const ANTHROPIC_CHAT_URL = 'https://api.anthropic.com/v1/messages';
-
-async function fetchWithTimeout(url, opts, ms) {
-  // Prefer AbortController-based cancellation when available.
-  if (typeof AbortController !== 'undefined') {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), ms || API_TIMEOUT_MS);
-    try {
-      const res = await fetch(url, Object.assign({}, opts || {}, { signal: controller.signal }));
-      return res;
-    } finally {
-      clearTimeout(id);
-    }
-  }
-  // Fallback: race fetch against a timeout promise.
-  return Promise.race([
-    fetch(url, opts),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout')), ms || API_TIMEOUT_MS)
-    ),
-  ]);
-}
+const { apiFetch } = require('../fetch');
 
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'health.get');
@@ -71,7 +51,11 @@ module.exports = async function (context, req) {
     const client = new Client({ connectionString: databaseUrl });
     try {
       await client.connect();
-      await client.query('SELECT 1');
+      if (typeof client.queryWithRetry === 'function') {
+        await client.queryWithRetry('SELECT 1');
+      } else {
+        await client.query('SELECT 1');
+      }
       baseBody.checks.database = 'ok';
     } catch (error) {
       baseBody.checks.database = 'error';
@@ -112,7 +96,7 @@ module.exports = async function (context, req) {
 
       const question = `What are your strongest skills? Candidate skills: ${skillsText}`;
 
-      const aiResp = await fetchWithTimeout(
+      const aiResp = await apiFetch(
         ANTHROPIC_CHAT_URL,
         {
           method: 'POST',
@@ -133,7 +117,7 @@ module.exports = async function (context, req) {
             ],
           }),
         },
-        API_TIMEOUT_MS * 2
+        { timeoutMs: API_TIMEOUT_MS * 2 }
       );
 
       if (aiResp && aiResp.ok) {
@@ -171,7 +155,7 @@ module.exports = async function (context, req) {
   if (anthropicKey) {
     try {
       // use local fetchWithTimeout helper to support environments without AbortController
-      const res = await fetchWithTimeout(
+      const res = await apiFetch(
         ANTHROPIC_API_URL,
         {
           method: 'GET',
@@ -181,7 +165,7 @@ module.exports = async function (context, req) {
             'Content-Type': 'application/json',
           },
         },
-        API_TIMEOUT_MS
+        { timeoutMs: API_TIMEOUT_MS }
       );
       if (res.ok) {
         let data = null;

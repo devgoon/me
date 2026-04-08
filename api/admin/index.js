@@ -3,7 +3,19 @@
  * @module api/admin/index.js
  */
 
-const { Client } = require('../db');
+const _db = require('../db');
+const Client = _db.Client;
+const q =
+  _db.runQueryWithRetry ||
+  ((client, sql, params = [], opts = {}) => {
+    if (client && typeof client.queryWithRetry === 'function') {
+      return client.queryWithRetry(sql, params, opts);
+    }
+    if (client && typeof client.query === 'function') {
+      return client.query(sql, params);
+    }
+    throw new Error('No query function available on client');
+  });
 const { getClientPrincipal } = require('../_shared/auth');
 const {
   beginRequest,
@@ -57,30 +69,28 @@ function coerceToNewlineString(v) {
 }
 
 function coerceToArray(v) {
-  if (Array.isArray(v)) return v;
   if (v === null || v === undefined) return [];
+  if (Array.isArray(v)) return v;
   if (typeof v === 'string') {
     const s = v.trim();
     if (s === '') return [];
-    // Try JSON first
-    const pj = safeParseJson(s);
-    if (pj) {
-      if (Array.isArray(pj)) return pj.map((x) => (x === null || x === undefined ? '' : String(x)));
-      if (typeof pj === 'object' && pj !== null)
-        return Object.values(pj).map(String).filter(Boolean);
+    try {
+      const p = JSON.parse(s);
+      if (Array.isArray(p)) return p;
+    } catch {
+      // ignore
     }
-    // Try Postgres array literal
     const pg = parsePgArray(s);
     if (pg !== null) return pg;
-    // split by newline or comma heuristics
     return s
-      .split(/\r?\n|,\s*/)
-      .map((x) => x.trim())
+      .split(/[,\r?\n]+/)
+      .map((x) => String(x).trim())
       .filter(Boolean);
   }
   if (typeof v === 'object')
     return Object.values(v)
-      .map((x) => (x === null || x === undefined ? '' : String(x)))
+      .filter((x) => x !== null && x !== undefined)
+      .map((x) => String(x).trim())
       .filter(Boolean);
   return [String(v)];
 }
@@ -182,6 +192,8 @@ function mapSkillCategory(input) {
   return 'strong';
 }
 
+// use centralized `q` from ../db for write retries
+
 async function resolveCandidate(client, email, profile) {
   const existing = await client.query(
     `SELECT TOP 1 id
@@ -194,7 +206,8 @@ async function resolveCandidate(client, email, profile) {
     return existing.rows[0].id;
   }
 
-  const inserted = await client.query(
+  const inserted = await q(
+    client,
     `INSERT INTO candidate_profile (name, email)
      OUTPUT INSERTED.id
      VALUES (@p1, @p2)`,
@@ -432,8 +445,10 @@ async function saveAll(client, candidateId, payload, authEmail) {
 
   console.log(`[admin.saveAll] BEGIN TRANSACTION candidateId=${candidateId}`);
   await client.beginTransaction();
+  // use centralized `q` from ../db for writes (imported at top)
   try {
-    await client.query(
+    await q(
+      client,
       `UPDATE candidate_profile
        SET
          updated_at = GETUTCDATE(),
@@ -478,7 +493,8 @@ async function saveAll(client, candidateId, payload, authEmail) {
         asText(profile.remotePreference),
         asText(profile.linkedInUrl),
         asText(profile.githubUrl),
-      ]
+      ],
+      { maxAttempts: 3, baseDelayMs: 200 }
     );
 
     // Only require companyName (company_name is NOT NULL in the DB). Titles may be empty.
@@ -498,8 +514,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
       const _startDate = formatDateToYMD(item.startDate) || null;
       const _endDate = item.current ? null : formatDateToYMD(item.endDate) || null;
 
-      await client.query(
-        `MERGE INTO experiences AS target
+      const _mergeSql = `MERGE INTO experiences AS target
          USING (VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19))
            AS src(candidate_id, company_name, title, title_progression, start_date, end_date, is_current, bullet_points, why_joined, why_left, actual_contributions, proudest_achievement, would_do_differently, challenges_faced, lessons_learned, manager_would_say, reports_would_say, quantified_impact, display_order)
          ON target.candidate_id = src.candidate_id AND target.company_name = src.company_name AND target.start_date = src.start_date
@@ -523,38 +538,39 @@ async function saveAll(client, candidateId, payload, authEmail) {
              display_order = src.display_order
          WHEN NOT MATCHED BY TARGET THEN
            INSERT (candidate_id, company_name, title, title_progression, start_date, end_date, is_current, bullet_points, why_joined, why_left, actual_contributions, proudest_achievement, would_do_differently, challenges_faced, lessons_learned, manager_would_say, reports_would_say, quantified_impact, display_order)
-           VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19);`,
-        [
-          candidateId,
-          asText(item.companyName),
-          asText(item.title),
-          asText(item.titleProgression),
-          _startDate,
-          _endDate,
-          Boolean(item.current),
-          asArray(item.achievementBullets),
-          asText(item.whyJoined),
-          asText(item.whyLeft),
-          asText(item.actualContributions),
-          asText(item.proudestAchievement),
-          asText(item.wouldDoDifferently),
-          asText(item.hardOrFrustrating || item.conflictsChallenges),
-          asText(item.lessonsLearned),
-          asText(item.managerDescribe),
-          asText(item.reportsDescribe),
-          impactJson,
-          Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : index,
-        ]
-      );
+           VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19);`;
+      const _mergeParams = [
+        candidateId,
+        asText(item.companyName),
+        asText(item.title),
+        asText(item.titleProgression),
+        _startDate,
+        _endDate,
+        Boolean(item.current),
+        asArray(item.achievementBullets),
+        asText(item.whyJoined),
+        asText(item.whyLeft),
+        asText(item.actualContributions),
+        asText(item.proudestAchievement),
+        asText(item.wouldDoDifferently),
+        asText(item.hardOrFrustrating || item.conflictsChallenges),
+        asText(item.lessonsLearned),
+        asText(item.managerDescribe),
+        asText(item.reportsDescribe),
+        impactJson,
+        Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : index,
+      ];
+      await q(client, _mergeSql, _mergeParams, { maxAttempts: 3, baseDelayMs: 200 });
     }
 
-    await client.query('DELETE FROM skills WHERE candidate_id = @p1', [candidateId]);
+    await q(client, 'DELETE FROM skills WHERE candidate_id = @p1', [candidateId]);
     const validSkills = skills.filter((item) => asText(item.skillName));
     for (const item of validSkills) {
       // Normalize lastUsed: prefer canonical YMD, fall back to MDY display if provided
       const normalizedLastUsed =
         formatDateToYMD(item.lastUsed) || formatMDYToYMD(item.lastUsedDisplay || '') || null;
-      await client.query(
+      await q(
+        client,
         `INSERT INTO skills (
           candidate_id, skill_name, category, self_rating, evidence, honest_notes, years_experience, last_used
         ) VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8)`,
@@ -571,10 +587,11 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await client.query('DELETE FROM gaps_weaknesses WHERE candidate_id = @p1', [candidateId]);
+    await q(client, 'DELETE FROM gaps_weaknesses WHERE candidate_id = @p1', [candidateId]);
     const validGaps = gaps.filter((item) => asText(item.description));
     for (const item of validGaps) {
-      await client.query(
+      await q(
+        client,
         `INSERT INTO gaps_weaknesses (candidate_id, gap_type, description, why_its_a_gap, interest_in_learning)
          VALUES (@p1, @p2, @p3, @p4, @p5)`,
         [
@@ -587,12 +604,13 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await client.query('DELETE FROM education WHERE candidate_id = @p1', [candidateId]);
+    await q(client, 'DELETE FROM education WHERE candidate_id = @p1', [candidateId]);
     const validEducation = education.filter(
       (item) => asText(item.institution) || asText(item.degree)
     );
     for (const [index, item] of validEducation.entries()) {
-      await client.query(
+      await q(
+        client,
         `INSERT INTO education (
           candidate_id, institution, degree, field_of_study, start_date, end_date, is_current, grade, notes, display_order
         ) VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10)`,
@@ -612,12 +630,13 @@ async function saveAll(client, candidateId, payload, authEmail) {
     }
 
     // Certifications
-    await client.query('DELETE FROM certifications WHERE candidate_id = @p1', [candidateId]);
+    await q(client, 'DELETE FROM certifications WHERE candidate_id = @p1', [candidateId]);
     const validCerts = Array.isArray(payload.certifications)
       ? payload.certifications.filter((c) => asText(c.name))
       : [];
     for (const [index, item] of validCerts.entries()) {
-      await client.query(
+      await q(
+        client,
         `INSERT INTO certifications (
           candidate_id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
         ) VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9)`,
@@ -635,8 +654,9 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await client.query('DELETE FROM values_culture WHERE candidate_id = @p1', [candidateId]);
-    await client.query(
+    await q(client, 'DELETE FROM values_culture WHERE candidate_id = @p1', [candidateId]);
+    await q(
+      client,
       `INSERT INTO values_culture (
         candidate_id, must_haves, dealbreakers, management_style_preferences,
         team_size_preferences, how_handle_conflict, how_handle_ambiguity, how_handle_failure
@@ -653,10 +673,11 @@ async function saveAll(client, candidateId, payload, authEmail) {
       ]
     );
 
-    await client.query('DELETE FROM faq_responses WHERE candidate_id = @p1', [candidateId]);
+    await q(client, 'DELETE FROM faq_responses WHERE candidate_id = @p1', [candidateId]);
     const validFaq = faq.filter((item) => asText(item.question) || asText(item.answer));
     for (const item of validFaq) {
-      await client.query(
+      await q(
+        client,
         `INSERT INTO faq_responses (candidate_id, question, answer, is_common_question)
          VALUES (@p1, @p2, @p3, @p4)`,
         [
@@ -668,10 +689,11 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await client.query('DELETE FROM ai_instructions WHERE candidate_id = @p1', [candidateId]);
+    await q(client, 'DELETE FROM ai_instructions WHERE candidate_id = @p1', [candidateId]);
 
     const honestyLevel = Number(aiInstructions.honestyLevel || 7);
-    await client.query(
+    await q(
+      client,
       `INSERT INTO ai_instructions (candidate_id, instruction_type, instruction, priority)
        VALUES (@p1, 'honesty', @p2, 0)`,
       [candidateId, `HONESTY_LEVEL:${Math.min(10, Math.max(1, Math.round(honestyLevel)))}`]
@@ -682,7 +704,8 @@ async function saveAll(client, candidateId, payload, authEmail) {
       if (!asText(item.instruction)) {
         continue;
       }
-      await client.query(
+      await q(
+        client,
         `INSERT INTO ai_instructions (candidate_id, instruction_type, instruction, priority)
          VALUES (@p1, @p2, @p3, @p4)`,
         [
@@ -699,9 +722,8 @@ async function saveAll(client, candidateId, payload, authEmail) {
     // Invalidate AI response cache after successful save.
     // Use a best-effort update so save failures are not masked by cache update errors.
     try {
-      await client.query(
-        `UPDATE ai_response_cache SET is_cached = 0, invalidated_at = GETUTCDATE() WHERE is_cached = 1`
-      );
+      const _invalidateSql = `UPDATE ai_response_cache SET is_cached = 0, invalidated_at = GETUTCDATE() WHERE is_cached = 1`;
+      await q(client, _invalidateSql, [], { maxAttempts: 3, baseDelayMs: 200 });
     } catch (cacheErr) {
       console.error(
         '[admin.saveAll] failed to invalidate AI cache',
@@ -842,9 +864,8 @@ module.exports.cacheReport = async function (context, req) {
 };
 
 module.exports.hideCacheRecords = async function (client) {
-  await client.query(
-    `UPDATE ai_response_cache SET is_cached = FALSE, invalidated_at = GETUTCDATE() WHERE is_cached = TRUE`
-  );
+  const _sql = `UPDATE ai_response_cache SET is_cached = FALSE, invalidated_at = GETUTCDATE() WHERE is_cached = TRUE`;
+  await q(client, _sql);
 };
 
 // Export internal helpers for unit testing.

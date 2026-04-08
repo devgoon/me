@@ -27,9 +27,18 @@
   }
   async function checkSession() {
     try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-      });
+      const _fetch =
+        (typeof apiFetch !== 'undefined' && apiFetch) ||
+        (typeof fetchWithTimeout !== 'undefined' &&
+          function (u, o, opts) {
+            return fetchWithTimeout(u, o, opts && opts.timeoutMs);
+          }) ||
+        function (u, o, opts) {
+          return fetch(u, o);
+        };
+      let response;
+      const opts = { credentials: 'include' };
+      response = await _fetch('/api/auth/me', opts, { timeoutMs: 5000 });
       if (response.ok) {
         if (!(typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID)) {
           window.location.href = '/admin';

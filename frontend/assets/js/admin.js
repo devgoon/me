@@ -150,14 +150,24 @@
     el.classList.toggle('ok', Boolean(text && !isError));
   }
   async function apiRequest(url, options) {
-    const response = await fetch(url, {
-      ...options,
+    const _fetch =
+      (typeof apiFetch !== 'undefined' && apiFetch) ||
+      (typeof fetchWithTimeout !== 'undefined' &&
+        function (u, o, opts) {
+          return fetchWithTimeout(u, o, opts && opts.timeoutMs);
+        }) ||
+      function (u, o, opts) {
+        return fetch(u, o);
+      };
+    let response;
+    const optsWithCreds = Object.assign({}, options || {}, {
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options && options.headers ? options.headers : {}),
-      },
+      headers: Object.assign(
+        { 'Content-Type': 'application/json' },
+        options && options.headers ? options.headers : {}
+      ),
     });
+    response = await _fetch(url, optsWithCreds, { timeoutMs: 10000 });
     let data = {};
     try {
       data = await response.json();

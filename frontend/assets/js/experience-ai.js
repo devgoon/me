@@ -211,8 +211,15 @@
     skillsList.innerHTML = `<article class="role-card" style="text-align:left;padding:24px">${spinnerSkillsHtml}</article>`;
     try {
       // Always request server-side cached payload (server stores in ai_response_cache)
+      const _fetch =
+        (typeof apiFetch !== 'undefined' && apiFetch) ||
+        (typeof fetchWithTimeout !== 'undefined' &&
+          function (u, o) {
+            return fetchWithTimeout(u, o, 10000);
+          }) ||
+        fetch;
 
-      const response = await fetch('/api/experience', { method: 'GET' });
+      const response = await _fetch('/api/experience', { method: 'GET' });
       if (!response.ok) {
         throw new Error(`Request failed (${response.status})`);
       }

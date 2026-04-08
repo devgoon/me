@@ -3,7 +3,23 @@
  * @module api/experience/index.js
  */
 
-const { Client } = require('../db');
+const _db = require('../db');
+const Client = _db.Client;
+// Provide a fallback q helper when tests/mock don't export it.
+const q =
+  typeof _db.runQueryWithRetry === 'function'
+    ? _db.runQueryWithRetry
+    : (client, sql, params, opts) => {
+        if (!client) throw new Error('Client required');
+        if (typeof client.queryWithRetry === 'function') {
+          return client.queryWithRetry(
+            sql,
+            params || [],
+            opts || { maxAttempts: 3, baseDelayMs: 200 }
+          );
+        }
+        return client.query(sql, params || []);
+      };
 const crypto = require('crypto');
 const {
   beginRequest,
@@ -28,6 +44,11 @@ function timeoutSignal(ms) {
     clear: () => clearTimeout(timeout),
   };
 }
+
+// prefer server-side fetch helpers for consistent timeouts/retries
+const { fetchWithTimeout } = require('../fetch');
+
+// use centralized `q` from ../db for write retries
 
 function toIsoDate(value) {
   if (!value) {
@@ -178,10 +199,10 @@ async function callAnthropicForContexts(profile, experiences, apiKey, certificat
     experiences: compactExperiences,
     certifications: certifications || [],
   });
-  const timeout = timeoutSignal(AI_TIMEOUT_MS);
-  let response;
-  try {
-    response = await fetch(ANTHROPIC_API_URL, {
+  // Use centralized fetch with a timeout for Anthropic calls
+  const response = await fetchWithTimeout(
+    ANTHROPIC_API_URL,
+    {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -194,16 +215,9 @@ async function callAnthropicForContexts(profile, experiences, apiKey, certificat
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
       }),
-      signal: timeout.signal,
-    });
-  } catch (error) {
-    if (error && error.name === 'AbortError') {
-      throw new Error('Anthropic API timeout');
-    }
-    throw error;
-  } finally {
-    timeout.clear();
-  }
+    },
+    AI_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     const errText = await response.text();
@@ -400,7 +414,8 @@ module.exports = async function (context) {
           }
 
           // update hit count and last_accessed (use hash as primary key)
-          await client.query(
+          await q(
+            client,
             `UPDATE ai_response_cache SET cache_hit_count = COALESCE(cache_hit_count,0) + 1, last_accessed = GETUTCDATE() WHERE hash = @p1`,
             [row.hash]
           );
@@ -426,7 +441,8 @@ module.exports = async function (context) {
               );
               // insert cache record with hash as primary key, so duplicates will be ignored if another request has already cached the same response
               try {
-                await client.query(
+                await q(
+                  client,
                   `INSERT INTO ai_response_cache (question, model, hash, response, cache_hit_count, last_accessed, updated_at, is_cached)
                    VALUES (@p1, @p2, @p3, @p4, 1, GETUTCDATE(), GETUTCDATE(), 1);`,
                   [EXPERIENCE_QUESTION_KEY, AI_MODEL, cacheHash, responseStr]

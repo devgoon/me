@@ -42,28 +42,31 @@
 // Populate hero company badges from /api/experience
 (function () {
   'use strict';
-  function fetchWithTimeout(url, opts, timeoutMs) {
-    timeoutMs = timeoutMs || 8000;
-    if (typeof AbortController === 'undefined') {
-      return Promise.race([
-        fetch(url, opts),
-        new Promise(function (_, reject) {
-          setTimeout(function () {
-            reject(new Error('Timeout'));
-          }, timeoutMs);
-        }),
-      ]);
-    }
-    const controller = new AbortController();
-    const id = setTimeout(function () {
-      controller.abort();
-    }, timeoutMs);
-    return fetch(url, Object.assign({}, opts || {}, { signal: controller.signal })).finally(
-      function () {
-        clearTimeout(id);
+  // Prefer shared fetchWithTimeout if provided by fetch-utils.js, otherwise fallback
+  var fetchWithTimeout =
+    (typeof window !== 'undefined' && window.fetchWithTimeout) ||
+    function (url, opts, timeoutMs) {
+      timeoutMs = timeoutMs || 8000;
+      if (typeof AbortController === 'undefined') {
+        return Promise.race([
+          fetch(url, opts),
+          new Promise(function (_, reject) {
+            setTimeout(function () {
+              reject(new Error('Timeout'));
+            }, timeoutMs);
+          }),
+        ]);
       }
-    );
-  }
+      const controller = new AbortController();
+      const id = setTimeout(function () {
+        controller.abort();
+      }, timeoutMs);
+      return fetch(url, Object.assign({}, opts || {}, { signal: controller.signal })).finally(
+        function () {
+          clearTimeout(id);
+        }
+      );
+    };
 
   async function loadCompanies() {
     const container = document.querySelector('.hero-company-badges');
@@ -524,20 +527,35 @@ document.addEventListener('DOMContentLoaded', function () {
       _typingIndicatorEl = null;
     };
     const callChatApi = async (prompt) => {
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 20000);
+      const _fetch =
+        (typeof apiFetch !== 'undefined' && apiFetch) ||
+        (typeof fetchWithTimeout !== 'undefined' &&
+          function (u, o, opts) {
+            return fetchWithTimeout(u, o, opts && opts.timeoutMs);
+          }) ||
+        fetch;
       let response;
       try {
-        response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const _fetch =
+          (typeof apiFetch !== 'undefined' && apiFetch) ||
+          (typeof fetchWithTimeout !== 'undefined' &&
+            function (u, o, opts) {
+              return fetchWithTimeout(u, o, opts && opts.timeoutMs);
+            }) ||
+          function (u, o, opts) {
+            return fetch(u, o);
+          };
+        response = await _fetch(
+          '/api/chat',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: prompt }),
           },
-          body: JSON.stringify({ message: prompt }),
-          signal: controller.signal,
-        });
-      } finally {
-        window.clearTimeout(timeoutId);
+          { timeoutMs: 20000 }
+        );
+      } catch (err) {
+        throw err;
       }
       if (!response.ok) {
         let details = '';
