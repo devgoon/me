@@ -10,12 +10,13 @@ const {
   failRequest,
   withRequestId,
 } = require('../_shared/observability');
+const logger = require('../_shared/logger');
 
 function text(value) {
   return value === null || value === undefined ? '' : String(value).trim();
 }
 
-async function handleMe(req) {
+async function handleMe(req, context) {
   const principal = getClientPrincipal(req);
   if (principal && principal.email) {
     return {
@@ -34,7 +35,7 @@ async function handleMe(req) {
   // Log header keys when no principal found to help local dev debugging
   try {
     const headerKeys = req && req.headers ? Object.keys(req.headers) : [];
-    console.log('[auth.me] no client principal; request header keys:', headerKeys);
+    logger.info(context, '[auth.me] no client principal; request header keys', headerKeys);
   } catch {
     // ignore logging errors
   }
@@ -50,7 +51,7 @@ module.exports = async function (context, req) {
   try {
     let response;
     if (method === 'GET' && action === 'me') {
-      response = await handleMe(req);
+      response = await handleMe(req, context);
     } else {
       response = { status: 405, body: { error: 'Method not allowed' } };
     }

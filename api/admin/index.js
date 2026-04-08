@@ -23,6 +23,7 @@ const {
   failRequest,
   withRequestId,
 } = require('../_shared/observability');
+const logger = require('../_shared/logger');
 
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 15000;
@@ -424,7 +425,7 @@ async function loadAll(client, candidateId) {
   };
 }
 
-async function saveAll(client, candidateId, payload, authEmail) {
+async function saveAll(client, candidateId, payload, authEmail, context) {
   const profile = payload.profile || {};
   const experiences = Array.isArray(payload.experiences) ? payload.experiences : [];
   const skills = Array.isArray(payload.skills) ? payload.skills : [];
@@ -443,7 +444,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
     throw new Error('Salary min cannot be greater than salary max');
   }
 
-  console.log(`[admin.saveAll] BEGIN TRANSACTION candidateId=${candidateId}`);
+  logger.info(context, `[admin.saveAll] BEGIN TRANSACTION candidateId=${candidateId}`);
   await client.beginTransaction();
   // use centralized `q` from ../db for writes (imported at top)
   try {
@@ -725,17 +726,22 @@ async function saveAll(client, candidateId, payload, authEmail) {
       const _invalidateSql = `UPDATE ai_response_cache SET is_cached = 0, invalidated_at = GETUTCDATE() WHERE is_cached = 1`;
       await q(client, _invalidateSql, [], { maxAttempts: 3, baseDelayMs: 200 });
     } catch (cacheErr) {
-      console.error(
+      logger.error(
+        context,
         '[admin.saveAll] failed to invalidate AI cache',
         cacheErr && cacheErr.stack ? cacheErr.stack : cacheErr
       );
     }
   } catch (error) {
-    console.error('[admin.saveAll] error', error && error.stack ? error.stack : error);
+    logger.error(context, '[admin.saveAll] error', error && error.stack ? error.stack : error);
     try {
       await client.rollbackTransaction();
     } catch (rbErr) {
-      console.error('[admin.saveAll] rollback error', rbErr && rbErr.stack ? rbErr.stack : rbErr);
+      logger.error(
+        context,
+        '[admin.saveAll] rollback error',
+        rbErr && rbErr.stack ? rbErr.stack : rbErr
+      );
     }
     throw error;
   }
@@ -777,7 +783,7 @@ module.exports = async function (context, req) {
     }
 
     if (String(req.method || '').toUpperCase() === 'POST') {
-      await saveAll(client, candidateId, req.body || {}, String(auth.email).toLowerCase());
+      await saveAll(client, candidateId, req.body || {}, String(auth.email).toLowerCase(), context);
       // Invalidate AI cache after profile updates that affect generated responses
       try {
         if (module.exports && typeof module.exports.hideCacheRecords === 'function') {
