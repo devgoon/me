@@ -36,8 +36,8 @@
       "frontend/assets/js/**/*.js"
     ],
     "coverageDirectory": "coverage"
-  }
-  ,"engines": {
+  },
+  "engines": {
     "node": "22.x"
   }
 }
