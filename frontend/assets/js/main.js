@@ -147,7 +147,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (expBtn) {
         if (resolvedMode === MODE_AI) {
           // remove href and mark disabled for accessibility
-          if (expBtn.getAttribute('href')) expBtn.setAttribute('data-href-backup', expBtn.getAttribute('href'));
+          if (expBtn.getAttribute('href'))
+            expBtn.setAttribute('data-href-backup', expBtn.getAttribute('href'));
           expBtn.removeAttribute('href');
           expBtn.setAttribute('aria-disabled', 'true');
           expBtn.classList.add('disabled');

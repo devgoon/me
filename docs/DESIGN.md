@@ -336,4 +336,3 @@ Usage:
 
 - Cache keys include the model name and a deterministic compact of the context (profile id, experiences summary, certifications list) so that identical inputs return the cached output.
 - Small/empty LLM responses are not cached; large responses are recorded with the SHA-256 hash used as the cache key.
-
