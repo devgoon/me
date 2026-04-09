@@ -141,6 +141,25 @@ document.addEventListener('DOMContentLoaded', function () {
       aiBtn.setAttribute('aria-pressed', String(resolvedMode === MODE_AI));
     }
     setStoredMode(resolvedMode);
+    // Disable or restore Experience hero button to prevent navigation in AI mode
+    try {
+      const expBtn = select('#hero-experience');
+      if (expBtn) {
+        if (resolvedMode === MODE_AI) {
+          // remove href and mark disabled for accessibility
+          if (expBtn.getAttribute('href')) expBtn.setAttribute('data-href-backup', expBtn.getAttribute('href'));
+          expBtn.removeAttribute('href');
+          expBtn.setAttribute('aria-disabled', 'true');
+          expBtn.classList.add('disabled');
+        } else {
+          const backup = expBtn.getAttribute('data-href-backup');
+          if (backup) expBtn.setAttribute('href', backup);
+          expBtn.removeAttribute('data-href-backup');
+          expBtn.removeAttribute('aria-disabled');
+          expBtn.classList.remove('disabled');
+        }
+      }
+    } catch (e) {}
   };
   // Local storage persists mode across navigations; body data attribute is fallback default.
   const bodyMode = document.body && document.body.dataset ? document.body.dataset.siteMode : null;
