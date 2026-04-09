@@ -24,7 +24,7 @@ jobs:
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 22.13.0
+          node-version: 22.18.0
 
       - name: Install dependencies
         run: make install
@@ -62,10 +62,10 @@ jobs:
         with:
           submodules: false
 
-      - name: Use Node.js 22.13.0
+      - name: Use Node.js 22.18.0
         uses: actions/setup-node@v4
         with:
-          node-version: 22.13.0
+          node-version: 22.18.0
 
       - name: Validate AI deployment settings
         shell: bash
@@ -106,7 +106,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
           AI_MODEL: ${{ vars.AI_MODEL }}
-          WEBSITE_NODE_DEFAULT_VERSION: "22.13.0"
+          WEBSITE_NODE_DEFAULT_VERSION: "22.18.0"
         run: |
           set -euo pipefail
           echo "Setting Static Web App runtime settings for $STATIC_WEB_APP_NAME ($RESOURCE_GROUP)"
@@ -125,7 +125,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
           AI_MODEL: ${{ vars.AI_MODEL }}
-          WEBSITE_NODE_DEFAULT_VERSION: "22.13.0"
+          WEBSITE_NODE_DEFAULT_VERSION: "22.18.0"
           SWA_DEPLOY_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
           RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
