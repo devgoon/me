@@ -263,3 +263,77 @@ erDiagram
 
   %% AI_RESPONSE_CACHE is keyed by hash (model+question) and is not directly tied to a candidate
 ```
+
+## AI Prompt Contexts
+
+This section documents what contextual data each AI prompt type includes when calling the LLM. All context is assembled server-side in the API layer (see `api/experience/index.js`, `api/fit/index.js`, `api/chat/index.js`) and passed into centralized prompt builders in `api/prompts.js`.
+
+- Notes:
+  - Sensitive fields such as `salary_min`, `salary_max`, and direct contact details are excluded from prompts and logs.
+  - Prompt builders trim or compact optional context (e.g. equivalents, long bullet lists) when prompt length approaches configured limits to obey token constraints.
+  - Certifications and `ai_instructions` are included where noted; caching keys include model + compacted context so cached responses are specific to inputs.
+
+### Chat (/api/chat)
+
+Context included:
+
+- `profile`: `id`, `name`, `title`, `elevator_pitch` (short summary)
+- `skills`: skill names, categories and optionally `equivalents` (compact string form)
+- `faq` / `faq_responses`: common Q&A entries (short answers)
+- `ai_instructions`: high-priority per-candidate instructions (text)
+- `target_titles`: job titles the candidate is targeting (when present)
+- `recent_activity`: brief indicators (recent roles or highlights) — compacted
+
+Usage:
+
+- Used for conversational assistant UI (Ask AI). Prompts favor brevity; include only the most relevant profile snippets and FAQ items. The chat path is tolerant of conversational follow-ups and may pass dialog history plus a compact candidate context to the prompt builder.
+
+### Experience (/api/experience)
+
+Context included:
+
+- `profile`: `id`, `name`, `title`, `elevator_pitch`
+- `experiences`: full list of experience records; for each experience include:
+  - `id`, `company_name`, `title` / `title_progression`, `start_date`, `end_date`, `is_current`
+  - `bullet_points` (array) — normalized to arrays; long lists may be truncated
+  - `why_joined`, `actual_contributions`, `proudest_achievement`, `lessons_learned`, `challenges_faced`
+- `skills` and `equivalents` (used to surface relevant technologies)
+- `certifications` (when table exists and records present)
+- `education` (summary fields)
+- `ai_instructions` (candidate-specific guidance)
+
+Usage:
+
+- Used for generating summaries, exports, or detailed experience-focused outputs. Prompts receive richer, structured experience objects so the LLM can synthesize situation/approach/results narratives. The service may call Anthropic to generate a JSON object inside a fenced block which is then parsed back into structured context.
+
+### Fit Check (/api/fit)
+
+Context included:
+
+- `profile`: `id`, `name`, `title`, `elevator_pitch`
+- `skills`: full skill rows (category, self_rating, equivalents)
+- `experiences`: condensed experience records (company, title, dates, notable bullets)
+- `certifications` and `education` (optional context)
+- `gaps_weaknesses`: descriptions and interest flags
+- `values_culture` (must_haves / dealbreakers)
+- Job description or `job_description` payload provided by the user
+- `ai_instructions` and any per-request tuning options (temperature, length)
+
+Usage:
+
+- Used to evaluate candidate fit for a specific role. Prompt includes the job description and compares candidate skills/experiences. Responses are often structured (scores, recommended gaps, suggested interview questions) and are cached against a deterministic key composed of the model + compacted inputs.
+
+### Other prompts / internal calls
+
+- `skills` endpoint: includes `profile` and skill rows; used to suggest tag groupings and equivalences.
+- `admin` tools or manual prompt playgrounds: may pass arbitrary context but should obey the same redaction and length guard rules.
+
+### Prompt Size & Trimming
+
+- Prompt builders apply heuristics to trim `bullet_points`, `equivalents`, and long free-text fields when the composed prompt length exceeds `MAX_PROMPT_CHARS` (see `api/prompts.js` configuration). Trimming favors keeping representative bullets and high-priority instructions.
+
+### Caching Considerations
+
+- Cache keys include the model name and a deterministic compact of the context (profile id, experiences summary, certifications list) so that identical inputs return the cached output.
+- Small/empty LLM responses are not cached; large responses are recorded with the SHA-256 hash used as the cache key.
+
