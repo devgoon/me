@@ -40,7 +40,7 @@ flowchart LR
 Architecture Diagram
 
 - Prerequisites
-- Node.js (tested on 20+) and npm
+- Node.js (tested on 22+) and npm
 - GNU Make
 - Azure SQL tools: `sqlcmd` and `sqlpackage` (for backups/restore). Alternatively, you can run DB commands with a Node script using the `mssql`/`tedious` packages.
 

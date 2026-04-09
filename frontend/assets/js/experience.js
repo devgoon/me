@@ -18,7 +18,8 @@
         }) ||
       fetch;
 
-    _fetch('/api/experience', { method: 'GET' })
+    // Request experience data without AI enrichment for faster classic list render
+    _fetch('/api/experience?skipAI=1', { method: 'GET' })
       .then(function (res) {
         if (!res.ok) throw new Error('Network response was not ok');
         return res.json();

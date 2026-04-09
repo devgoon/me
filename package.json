@@ -37,4 +37,7 @@
     ],
     "coverageDirectory": "coverage"
   }
+  ,"engines": {
+    "node": "22.x"
+  }
 }

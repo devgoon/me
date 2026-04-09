@@ -106,6 +106,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
           AI_MODEL: ${{ vars.AI_MODEL }}
+          WEBSITE_NODE_DEFAULT_VERSION: "22.13.0"
         run: |
           set -euo pipefail
           echo "Setting Static Web App runtime settings for $STATIC_WEB_APP_NAME ($RESOURCE_GROUP)"
@@ -116,6 +117,7 @@ jobs:
               AI_MODEL="$AI_MODEL" \
               ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
               AZURE_DATABASE_URL="$AZURE_DATABASE_URL"
+              WEBSITE_NODE_DEFAULT_VERSION="$WEBSITE_NODE_DEFAULT_VERSION"
 
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
@@ -123,6 +125,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
           AI_MODEL: ${{ vars.AI_MODEL }}
+          WEBSITE_NODE_DEFAULT_VERSION: "22.13.0"
           SWA_DEPLOY_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
           RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}

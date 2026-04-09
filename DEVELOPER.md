@@ -15,11 +15,11 @@ Run those scripts to install the matching platform binaries (they download the o
 
 ## Recommended Node version
 
-- Use Node 18+ (LTS). If you use `nvm`, run:
+- Use Node 22+ (LTS). If you use `nvm`, run:
 
 ```bash
-nvm install --lts
-nvm use --lts
+nvm install 22
+nvm use 22
 ```
 
 ## Getting started (project setup)
