@@ -626,6 +626,11 @@ body.ai-mode .ai-only {
   display: inline-flex !important;
 }
 
+/* Hide or visually disable the hero Experience button when AI mode is active. */
+body.ai-mode #hero-experience {
+  display: none !important; /* hide by default in AI view */
+}
+
 body.ai-mode #header,
 body.ai-mode .mobile-nav-toggle {
   display: none !important;
@@ -652,6 +657,10 @@ body.ai-mode .mobile-nav-toggle {
   padding: 13.75px 30px;
   border-radius: 50px;
   text-decoration: none;
+  border: none; /* remove default button border/bevel */
+  box-shadow: none; /* normalize shadow between <a> and <button> */
+  -webkit-appearance: none;
+  appearance: none;
   transition: all 0.3s;
   font-family: 'Poppins', sans-serif;
 }
