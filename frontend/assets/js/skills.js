@@ -40,7 +40,7 @@
   }
 
   // prefer shared implementation from fetch-utils if present
-  var _fetch =
+  var fetchImpl =
     (typeof apiFetch !== 'undefined' && apiFetch) ||
     (typeof window !== 'undefined' &&
       window.fetchWithTimeout &&
@@ -49,9 +49,9 @@
       }) ||
     fetch;
 
-  let __skillsApiError = null;
-  const __SKILLS_API_MAX_ATTEMPTS = 5;
-  const __SKILLS_API_BASE_DELAY_MS =
+  let skillsApiError = null;
+  const SKILLS_API_MAX_ATTEMPTS = 5;
+  const SKILLS_API_BASE_DELAY_MS =
     typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID ? 5 : 1000;
 
   function delay(ms) {
@@ -59,12 +59,12 @@
   }
 
   async function loadSkillsFromApi() {
-    __skillsApiError = null;
-    for (let attempt = 1; attempt <= __SKILLS_API_MAX_ATTEMPTS; attempt++) {
+    skillsApiError = null;
+    for (let attempt = 1; attempt <= SKILLS_API_MAX_ATTEMPTS; attempt++) {
       try {
-        console.info(`[skills] API attempt ${attempt}/${__SKILLS_API_MAX_ATTEMPTS}`);
+        console.info(`[skills] API attempt ${attempt}/${SKILLS_API_MAX_ATTEMPTS}`);
         // use the lightweight skills endpoint (reads DB directly, no AI)
-        const res = await _fetch(
+        const res = await fetchImpl(
           '/api/skills',
           { method: 'GET', headers: { Accept: 'application/json' } },
           { timeoutMs: 20000 }
@@ -78,10 +78,10 @@
         }
         throw new Error('Malformed skills payload');
       } catch (err) {
-        __skillsApiError = err;
+        skillsApiError = err;
         console.warn('[skills] API attempt failed', attempt, err && err.message);
-        if (attempt < __SKILLS_API_MAX_ATTEMPTS) {
-          const backoff = __SKILLS_API_BASE_DELAY_MS * Math.pow(2, attempt - 1);
+        if (attempt < SKILLS_API_MAX_ATTEMPTS) {
+          const backoff = SKILLS_API_BASE_DELAY_MS * Math.pow(2, attempt - 1);
           await delay(backoff);
         }
       }
@@ -122,7 +122,7 @@
     );
 
     if (source === 'fallback') {
-      console.error('[skills] API load failed', __skillsApiError);
+      console.error('[skills] API load failed', skillsApiError);
       // add a visible notice near the skills group
       try {
         var skillsContainer = document.querySelector('.skills');

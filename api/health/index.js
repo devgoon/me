@@ -51,11 +51,7 @@ module.exports = async function (context, req) {
     const client = new Client({ connectionString: databaseUrl });
     try {
       await client.connect();
-      if (typeof client.queryWithRetry === 'function') {
-        await client.queryWithRetry('SELECT 1');
-      } else {
-        await client.query('SELECT 1');
-      }
+      await client.queryWithRetry('SELECT 1');
       baseBody.checks.database = 'ok';
     } catch (error) {
       baseBody.checks.database = 'error';
@@ -86,7 +82,7 @@ module.exports = async function (context, req) {
     const client2 = new Client({ connectionString: databaseUrl });
     try {
       await client2.connect();
-      const skillsRes = await client2.query(
+      const skillsRes = await client2.queryWithRetry(
         `SELECT TOP 10 skill_name, self_rating FROM skills ORDER BY self_rating DESC, last_used DESC`
       );
       const skills = Array.isArray(skillsRes.rows)

@@ -11,6 +11,7 @@ describe('cache-report', () => {
     jest.clearAllMocks();
     client = { connect: jest.fn(), query: jest.fn(), end: jest.fn() };
     Client.mockImplementation(() => client);
+    client.queryWithRetry = client.query;
   });
 
   test('returns 401 when unauthenticated', async () => {

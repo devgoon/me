@@ -55,11 +55,10 @@ module.exports = async function (context, req) {
   const client = getDbClient();
   await client.connect();
   try {
-    const result = await client.query(
-      `SELECT question, model, cache_hit_count, last_accessed, is_cached, invalidated_at
-			 FROM ai_response_cache
-			 ORDER BY last_accessed DESC`
-    );
+    const result =
+      await client.queryWithRetry(`SELECT question, model, cache_hit_count, last_accessed, is_cached, invalidated_at
+ 		 FROM ai_response_cache
+ 		 ORDER BY last_accessed DESC`);
 
     const mappedRows = result.rows.map((row) => ({
       question: row.question,

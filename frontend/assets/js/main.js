@@ -547,9 +547,9 @@ document.addEventListener('DOMContentLoaded', function () {
       chatHistory.scrollTop = chatHistory.scrollHeight;
     };
     // Typing indicator helper (shows animated dots while awaiting AI response)
-    let _typingIndicatorEl = null;
+    let typingIndicatorEl = null;
     const showTypingIndicator = () => {
-      if (!chatHistory || _typingIndicatorEl) return;
+      if (!chatHistory || typingIndicatorEl) return;
       const bubble = document.createElement('div');
       bubble.classList.add('ai-msg', 'ai-msg-assistant', 'ai-msg-typing');
       bubble.setAttribute('aria-hidden', 'true');
@@ -557,16 +557,16 @@ document.addEventListener('DOMContentLoaded', function () {
         '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
       chatHistory.appendChild(bubble);
       chatHistory.scrollTop = chatHistory.scrollHeight;
-      _typingIndicatorEl = bubble;
+      typingIndicatorEl = bubble;
     };
     const hideTypingIndicator = () => {
-      if (_typingIndicatorEl && _typingIndicatorEl.parentNode) {
-        _typingIndicatorEl.parentNode.removeChild(_typingIndicatorEl);
+      if (typingIndicatorEl && typingIndicatorEl.parentNode) {
+        typingIndicatorEl.parentNode.removeChild(typingIndicatorEl);
       }
-      _typingIndicatorEl = null;
+      typingIndicatorEl = null;
     };
     const callChatApi = async (prompt) => {
-      const _fetch =
+      const fetchImpl =
         (typeof apiFetch !== 'undefined' && apiFetch) ||
         (typeof fetchWithTimeout !== 'undefined' &&
           function (u, o, opts) {
@@ -575,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch;
       let response;
       try {
-        const _fetch =
+        const fetchImpl =
           (typeof apiFetch !== 'undefined' && apiFetch) ||
           (typeof fetchWithTimeout !== 'undefined' &&
             function (u, o, opts) {
@@ -584,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function () {
           function (u, o, opts) {
             return fetch(u, o);
           };
-        response = await _fetch(
+        response = await fetchImpl(
           '/api/chat',
           {
             method: 'POST',

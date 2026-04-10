@@ -21,6 +21,7 @@ describe('skills API', () => {
       end: jest.fn().mockResolvedValue(undefined),
     };
     Client.mockImplementation(() => client);
+    client.queryWithRetry = client.query;
   });
 
   afterAll(() => {

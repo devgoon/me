@@ -144,12 +144,6 @@ module.exports = {
       return undefined;
     }
   },
-  // convenience db query helper: prefer client's queryWithRetry when available
-  runQueryWithRetry(client, sql, params, opts) {
-    if (!client) throw new Error('Client required');
-    if (typeof client.queryWithRetry === 'function') {
-      return client.queryWithRetry(sql, params || [], opts || { maxAttempts: 3, baseDelayMs: 200 });
-    }
-    return client.query(sql, params || []);
-  },
+  // NOTE: `createClient` and `runQueryWithRetry` removed. Callers should
+  // construct `new Client({...})` and call `client.queryWithRetry(...)`.
 };
