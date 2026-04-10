@@ -3,19 +3,8 @@
  * @module api/admin/index.js
  */
 
-const _db = require('../db');
-const Client = _db.Client;
-const q =
-  _db.runQueryWithRetry ||
-  ((client, sql, params = [], opts = {}) => {
-    if (client && typeof client.queryWithRetry === 'function') {
-      return client.queryWithRetry(sql, params, opts);
-    }
-    if (client && typeof client.query === 'function') {
-      return client.query(sql, params);
-    }
-    throw new Error('No query function available on client');
-  });
+const { Client } = require('../db');
+
 const { getClientPrincipal } = require('../_shared/auth');
 const {
   beginRequest,
@@ -149,7 +138,6 @@ function getDbClient() {
   if (!databaseUrl) {
     throw new Error('AZURE_DATABASE_URL is not configured');
   }
-
   return new Client({
     connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false },
@@ -195,7 +183,7 @@ function mapSkillCategory(input) {
 // use centralized `q` from ../db for write retries
 
 async function resolveCandidate(client, email, profile) {
-  const existing = await client.query(
+  const existing = await client.queryWithRetry(
     `SELECT TOP 1 id
      FROM candidate_profile
      WHERE LOWER(email) = LOWER(@p1)`,
@@ -206,8 +194,7 @@ async function resolveCandidate(client, email, profile) {
     return existing.rows[0].id;
   }
 
-  const inserted = await q(
-    client,
+  const inserted = await client.queryWithRetry(
     `INSERT INTO candidate_profile (name, email)
      OUTPUT INSERTED.id
      VALUES (@p1, @p2)`,
@@ -218,14 +205,14 @@ async function resolveCandidate(client, email, profile) {
 }
 
 async function loadAll(client, candidateId) {
-  const profileRes = await client.query(
+  const profileRes = await client.queryWithRetry(
     `SELECT TOP 1 *
      FROM candidate_profile
      WHERE id = @p1`,
     [candidateId]
   );
 
-  const expRes = await client.query(
+  const expRes = await client.queryWithRetry(
     `SELECT *
      FROM experiences
      WHERE candidate_id = @p1
@@ -233,7 +220,7 @@ async function loadAll(client, candidateId) {
     [candidateId]
   );
 
-  const skillsRes = await client.query(
+  const skillsRes = await client.queryWithRetry(
     `SELECT *
      FROM skills
      WHERE candidate_id = @p1
@@ -241,7 +228,7 @@ async function loadAll(client, candidateId) {
     [candidateId]
   );
 
-  const gapsRes = await client.query(
+  const gapsRes = await client.queryWithRetry(
     `SELECT *
      FROM gaps_weaknesses
      WHERE candidate_id = @p1
@@ -249,7 +236,7 @@ async function loadAll(client, candidateId) {
     [candidateId]
   );
 
-  const educationRes = await client.query(
+  const educationRes = await client.queryWithRetry(
     `SELECT *
      FROM education
      WHERE candidate_id = @p1
@@ -259,7 +246,7 @@ async function loadAll(client, candidateId) {
 
   let certRes = { rows: [] };
   try {
-    certRes = (await client.query(
+    certRes = (await client.queryWithRetry(
       `SELECT *
        FROM certifications
        WHERE candidate_id = @p1
@@ -270,7 +257,7 @@ async function loadAll(client, candidateId) {
     certRes = { rows: [] };
   }
 
-  const valuesRes = await client.query(
+  const valuesRes = await client.queryWithRetry(
     `SELECT TOP 1 *
      FROM values_culture
      WHERE candidate_id = @p1
@@ -278,7 +265,7 @@ async function loadAll(client, candidateId) {
     [candidateId]
   );
 
-  const faqRes = await client.query(
+  const faqRes = await client.queryWithRetry(
     `SELECT *
      FROM faq_responses
      WHERE candidate_id = @p1
@@ -286,7 +273,7 @@ async function loadAll(client, candidateId) {
     [candidateId]
   );
 
-  const insRes = await client.query(
+  const insRes = await client.queryWithRetry(
     `SELECT *
      FROM ai_instructions
      WHERE candidate_id = @p1
@@ -447,8 +434,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
   await client.beginTransaction();
   // use centralized `q` from ../db for writes (imported at top)
   try {
-    await q(
-      client,
+    await client.queryWithRetry(
       `UPDATE candidate_profile
        SET
          updated_at = GETUTCDATE(),
@@ -511,10 +497,10 @@ async function saveAll(client, candidateId, payload, authEmail) {
         }
       }
 
-      const _startDate = formatDateToYMD(item.startDate) || null;
-      const _endDate = item.current ? null : formatDateToYMD(item.endDate) || null;
+      const startDate = formatDateToYMD(item.startDate) || null;
+      const endDate = item.current ? null : formatDateToYMD(item.endDate) || null;
 
-      const _mergeSql = `MERGE INTO experiences AS target
+      const mergeSql = `MERGE INTO experiences AS target
          USING (VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19))
            AS src(candidate_id, company_name, title, title_progression, start_date, end_date, is_current, bullet_points, why_joined, why_left, actual_contributions, proudest_achievement, would_do_differently, challenges_faced, lessons_learned, manager_would_say, reports_would_say, quantified_impact, display_order)
          ON target.candidate_id = src.candidate_id AND target.company_name = src.company_name AND target.start_date = src.start_date
@@ -539,13 +525,13 @@ async function saveAll(client, candidateId, payload, authEmail) {
          WHEN NOT MATCHED BY TARGET THEN
            INSERT (candidate_id, company_name, title, title_progression, start_date, end_date, is_current, bullet_points, why_joined, why_left, actual_contributions, proudest_achievement, would_do_differently, challenges_faced, lessons_learned, manager_would_say, reports_would_say, quantified_impact, display_order)
            VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19);`;
-      const _mergeParams = [
+      const mergeParams = [
         candidateId,
         asText(item.companyName),
         asText(item.title),
         asText(item.titleProgression),
-        _startDate,
-        _endDate,
+        startDate,
+        endDate,
         Boolean(item.current),
         asArray(item.achievementBullets),
         asText(item.whyJoined),
@@ -560,17 +546,16 @@ async function saveAll(client, candidateId, payload, authEmail) {
         impactJson,
         Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : index,
       ];
-      await q(client, _mergeSql, _mergeParams, { maxAttempts: 3, baseDelayMs: 200 });
+      await client.queryWithRetry(mergeSql, mergeParams, { maxAttempts: 3, baseDelayMs: 200 });
     }
 
-    await q(client, 'DELETE FROM skills WHERE candidate_id = @p1', [candidateId]);
+    await client.queryWithRetry('DELETE FROM skills WHERE candidate_id = @p1', [candidateId]);
     const validSkills = skills.filter((item) => asText(item.skillName));
     for (const item of validSkills) {
       // Normalize lastUsed: prefer canonical YMD, fall back to MDY display if provided
       const normalizedLastUsed =
         formatDateToYMD(item.lastUsed) || formatMDYToYMD(item.lastUsedDisplay || '') || null;
-      await q(
-        client,
+      await client.queryWithRetry(
         `INSERT INTO skills (
           candidate_id, skill_name, category, self_rating, evidence, honest_notes, years_experience, last_used
         ) VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8)`,
@@ -587,11 +572,12 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await q(client, 'DELETE FROM gaps_weaknesses WHERE candidate_id = @p1', [candidateId]);
+    await client.queryWithRetry('DELETE FROM gaps_weaknesses WHERE candidate_id = @p1', [
+      candidateId,
+    ]);
     const validGaps = gaps.filter((item) => asText(item.description));
     for (const item of validGaps) {
-      await q(
-        client,
+      await client.queryWithRetry(
         `INSERT INTO gaps_weaknesses (candidate_id, gap_type, description, why_its_a_gap, interest_in_learning)
          VALUES (@p1, @p2, @p3, @p4, @p5)`,
         [
@@ -604,13 +590,12 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await q(client, 'DELETE FROM education WHERE candidate_id = @p1', [candidateId]);
+    await client.queryWithRetry('DELETE FROM education WHERE candidate_id = @p1', [candidateId]);
     const validEducation = education.filter(
       (item) => asText(item.institution) || asText(item.degree)
     );
     for (const [index, item] of validEducation.entries()) {
-      await q(
-        client,
+      await client.queryWithRetry(
         `INSERT INTO education (
           candidate_id, institution, degree, field_of_study, start_date, end_date, is_current, grade, notes, display_order
         ) VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10)`,
@@ -630,13 +615,14 @@ async function saveAll(client, candidateId, payload, authEmail) {
     }
 
     // Certifications
-    await q(client, 'DELETE FROM certifications WHERE candidate_id = @p1', [candidateId]);
+    await client.queryWithRetry('DELETE FROM certifications WHERE candidate_id = @p1', [
+      candidateId,
+    ]);
     const validCerts = Array.isArray(payload.certifications)
       ? payload.certifications.filter((c) => asText(c.name))
       : [];
     for (const [index, item] of validCerts.entries()) {
-      await q(
-        client,
+      await client.queryWithRetry(
         `INSERT INTO certifications (
           candidate_id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
         ) VALUES (@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9)`,
@@ -654,9 +640,10 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await q(client, 'DELETE FROM values_culture WHERE candidate_id = @p1', [candidateId]);
-    await q(
-      client,
+    await client.queryWithRetry('DELETE FROM values_culture WHERE candidate_id = @p1', [
+      candidateId,
+    ]);
+    await client.queryWithRetry(
       `INSERT INTO values_culture (
         candidate_id, must_haves, dealbreakers, management_style_preferences,
         team_size_preferences, how_handle_conflict, how_handle_ambiguity, how_handle_failure
@@ -673,11 +660,12 @@ async function saveAll(client, candidateId, payload, authEmail) {
       ]
     );
 
-    await q(client, 'DELETE FROM faq_responses WHERE candidate_id = @p1', [candidateId]);
+    await client.queryWithRetry('DELETE FROM faq_responses WHERE candidate_id = @p1', [
+      candidateId,
+    ]);
     const validFaq = faq.filter((item) => asText(item.question) || asText(item.answer));
     for (const item of validFaq) {
-      await q(
-        client,
+      await client.queryWithRetry(
         `INSERT INTO faq_responses (candidate_id, question, answer, is_common_question)
          VALUES (@p1, @p2, @p3, @p4)`,
         [
@@ -689,11 +677,12 @@ async function saveAll(client, candidateId, payload, authEmail) {
       );
     }
 
-    await q(client, 'DELETE FROM ai_instructions WHERE candidate_id = @p1', [candidateId]);
+    await client.queryWithRetry('DELETE FROM ai_instructions WHERE candidate_id = @p1', [
+      candidateId,
+    ]);
 
     const honestyLevel = Number(aiInstructions.honestyLevel || 7);
-    await q(
-      client,
+    await client.queryWithRetry(
       `INSERT INTO ai_instructions (candidate_id, instruction_type, instruction, priority)
        VALUES (@p1, 'honesty', @p2, 0)`,
       [candidateId, `HONESTY_LEVEL:${Math.min(10, Math.max(1, Math.round(honestyLevel)))}`]
@@ -704,8 +693,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
       if (!asText(item.instruction)) {
         continue;
       }
-      await q(
-        client,
+      await client.queryWithRetry(
         `INSERT INTO ai_instructions (candidate_id, instruction_type, instruction, priority)
          VALUES (@p1, @p2, @p3, @p4)`,
         [
@@ -722,8 +710,8 @@ async function saveAll(client, candidateId, payload, authEmail) {
     // Invalidate AI response cache after successful save.
     // Use a best-effort update so save failures are not masked by cache update errors.
     try {
-      const _invalidateSql = `UPDATE ai_response_cache SET is_cached = 0, invalidated_at = GETUTCDATE() WHERE is_cached = 1`;
-      await q(client, _invalidateSql, [], { maxAttempts: 3, baseDelayMs: 200 });
+      const invalidateSql = `UPDATE ai_response_cache SET is_cached = 0, invalidated_at = GETUTCDATE() WHERE is_cached = 1`;
+      await client.queryWithRetry(invalidateSql, [], { maxAttempts: 3, baseDelayMs: 200 });
     } catch (cacheErr) {
       console.error(
         '[admin.saveAll] failed to invalidate AI cache',
@@ -831,7 +819,7 @@ module.exports.cacheReport = async function (context, req) {
   const client = getDbClient();
   await client.connect();
   try {
-    const result = await client.query(
+    const result = await client.queryWithRetry(
       `SELECT question, model, cache_hit_count, last_accessed, is_cached, invalidated_at
          FROM ai_response_cache
          ORDER BY cache_hit_count DESC, last_accessed DESC`
@@ -864,8 +852,8 @@ module.exports.cacheReport = async function (context, req) {
 };
 
 module.exports.hideCacheRecords = async function (client) {
-  const _sql = `UPDATE ai_response_cache SET is_cached = FALSE, invalidated_at = GETUTCDATE() WHERE is_cached = TRUE`;
-  await q(client, _sql);
+  const sql = `UPDATE ai_response_cache SET is_cached = FALSE, invalidated_at = GETUTCDATE() WHERE is_cached = TRUE`;
+  await client.queryWithRetry(sql);
 };
 
 // Export internal helpers for unit testing.

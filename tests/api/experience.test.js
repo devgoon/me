@@ -21,6 +21,7 @@ describe('experience API', () => {
       end: jest.fn().mockResolvedValue(undefined),
     };
     Client.mockImplementation(() => client);
+    client.queryWithRetry = client.query;
   });
 
   afterAll(() => {
@@ -45,6 +46,7 @@ describe('experience API', () => {
         end: jest.fn().mockResolvedValue(undefined),
       };
       Client.mockImplementation(() => client);
+      client.queryWithRetry = client.query;
     });
 
     afterAll(() => {
@@ -95,6 +97,7 @@ describe('experience API', () => {
         end: jest.fn().mockResolvedValue(undefined),
       };
       Client.mockImplementation(() => client);
+      client.queryWithRetry = client.query;
     });
 
     afterAll(() => {
@@ -152,6 +155,7 @@ describe('experience API', () => {
         end: jest.fn().mockResolvedValue(undefined),
       };
       Client.mockImplementation(() => client);
+      client.queryWithRetry = client.query;
 
       global.fetch = jest.fn().mockResolvedValue(
         Promise.resolve({
@@ -344,6 +348,7 @@ describe('experience callAnthropicForContexts', () => {
 
   test('loadCandidateData throws when no profile found', async () => {
     const client = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+    client.queryWithRetry = client.query;
     await expect(helpers.loadCandidateData(client)).rejects.toThrow(/No candidate profile found/);
   });
 });

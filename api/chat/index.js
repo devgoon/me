@@ -3,23 +3,7 @@
  * @module api/chat/index.js
  */
 
-const _db = require('../db');
-const Client = _db.Client;
-// Provide a fallback q helper when tests/mock don't export it.
-const q =
-  typeof _db.runQueryWithRetry === 'function'
-    ? _db.runQueryWithRetry
-    : (client, sql, params, opts) => {
-        if (!client) throw new Error('Client required');
-        if (typeof client.queryWithRetry === 'function') {
-          return client.queryWithRetry(
-            sql,
-            params || [],
-            opts || { maxAttempts: 3, baseDelayMs: 200 }
-          );
-        }
-        return client.query(sql, params || []);
-      };
+const { Client } = require('../db');
 const {
   beginRequest,
   endRequest,
@@ -55,7 +39,7 @@ const { fetchWithTimeout } = require('../fetch');
 const { buildChatPrompt } = require('../prompts');
 
 async function loadCandidateContext(client) {
-  const profileResult = await client.query(
+  const profileResult = await client.queryWithRetry(
     `SELECT TOP 1 *
      FROM candidate_profile
      ORDER BY updated_at DESC, created_at DESC`
@@ -68,7 +52,7 @@ async function loadCandidateContext(client) {
   const profile = profileResult.rows[0];
   const candidateId = profile.id;
 
-  const experiencesResult = await client.query(
+  const experiencesResult = await client.queryWithRetry(
     `SELECT *
      FROM experiences
      WHERE candidate_id = @p1
@@ -76,7 +60,7 @@ async function loadCandidateContext(client) {
     [candidateId]
   );
 
-  const skillsResult = await client.query(
+  const skillsResult = await client.queryWithRetry(
     `SELECT s.id, s.candidate_id, s.skill_name, s.category, s.self_rating, s.evidence, s.honest_notes, s.years_experience, s.last_used,
             STRING_AGG(eq.equivalent_name, ',') AS equivalents
      FROM skills s
@@ -87,7 +71,7 @@ async function loadCandidateContext(client) {
     [candidateId]
   );
 
-  const gapsResult = await client.query(
+  const gapsResult = await client.queryWithRetry(
     `SELECT *
      FROM gaps_weaknesses
     WHERE candidate_id = @p1
@@ -95,7 +79,7 @@ async function loadCandidateContext(client) {
     [candidateId]
   );
 
-  const valuesResult = await client.query(
+  const valuesResult = await client.queryWithRetry(
     `SELECT TOP 1 *
      FROM values_culture
     WHERE candidate_id = @p1
@@ -103,7 +87,7 @@ async function loadCandidateContext(client) {
     [candidateId]
   );
 
-  const faqResult = await client.query(
+  const faqResult = await client.queryWithRetry(
     `SELECT *
      FROM faq_responses
       WHERE candidate_id = @p1
@@ -111,7 +95,7 @@ async function loadCandidateContext(client) {
     [candidateId]
   );
 
-  const aiInstructionsResult = await client.query(
+  const aiInstructionsResult = await client.queryWithRetry(
     `SELECT *
      FROM ai_instructions
       WHERE candidate_id = @p1
@@ -119,7 +103,7 @@ async function loadCandidateContext(client) {
     [candidateId]
   );
 
-  const educationResult = await client.query(
+  const educationResult = await client.queryWithRetry(
     `SELECT *
      FROM education
       WHERE candidate_id = @p1
@@ -130,7 +114,7 @@ async function loadCandidateContext(client) {
   // Attempt to load certifications if the table exists
   let certificationsResult = { rows: [] };
   try {
-    certificationsResult = await client.query(
+    certificationsResult = await client.queryWithRetry(
       `SELECT id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
          FROM certifications
          WHERE candidate_id = @p1
@@ -255,7 +239,7 @@ async function getCache(client, model, question) {
     .update(model + '|' + question)
     .digest('hex');
   const start = Date.now();
-  const result = await client.query(
+  const result = await client.queryWithRetry(
     `SELECT TOP 1 response, cache_hit_count FROM ai_response_cache WHERE hash = @p1 AND is_cached = 1`,
     [hash]
   );
@@ -268,8 +252,7 @@ async function getCache(client, model, question) {
     /* ignore logging errors */
   }
   if (result.rows.length > 0) {
-    await q(
-      client,
+    await client.queryWithRetry(
       `UPDATE ai_response_cache SET cache_hit_count = cache_hit_count + 1, last_accessed = GETUTCDATE() WHERE hash = @p1`,
       [hash]
     );
@@ -291,8 +274,7 @@ async function setCache(client, model, question, response) {
       ? response.trim()
       : JSON.stringify(response);
 
-  await q(
-    client,
+  await client.queryWithRetry(
     `MERGE ai_response_cache AS target
        USING (SELECT @p1 AS hash, @p2 AS question, @p3 AS model, @p4 AS response, 1 AS cache_hit_count, GETUTCDATE() AS last_accessed, GETUTCDATE() AS updated_at, 1 AS is_cached) AS src
        ON target.hash = src.hash AND target.model = src.model

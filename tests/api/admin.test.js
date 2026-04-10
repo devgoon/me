@@ -83,6 +83,7 @@ describe('admin API', () => {
       end: jest.fn().mockResolvedValue(undefined),
     };
     Client.mockImplementation(() => client);
+    client.queryWithRetry = client.query;
   });
 
   afterAll(() => {
@@ -259,6 +260,7 @@ describe('admin API', () => {
 
   test('hideCacheRecords calls client.query to hide cache records', async () => {
     const c = { query: jest.fn().mockResolvedValue({}), end: jest.fn() };
+    c.queryWithRetry = c.query;
     await hideCacheRecords(c);
     expect(c.query).toHaveBeenCalled();
     expect(c.query.mock.calls[0][0].toLowerCase()).toContain('update ai_response_cache');
@@ -464,6 +466,7 @@ describe('admin cache invalidation error path', () => {
     };
     const { Client } = require('../../api/db');
     Client.mockImplementation(() => client);
+    client.queryWithRetry = client.query;
     process.env.AZURE_DATABASE_URL = 'Server=.;Database=Test;User Id=u;Password=p;';
   });
 

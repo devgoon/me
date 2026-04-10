@@ -48,7 +48,7 @@ module.exports = async function (context, req) {
     await client.connect();
 
     // Load latest candidate id
-    const profileRes = await client.query(
+    const profileRes = await client.queryWithRetry(
       `SELECT TOP 1 id FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`
     );
     if (!profileRes.rows || profileRes.rows.length === 0) {
@@ -62,7 +62,7 @@ module.exports = async function (context, req) {
     }
     const candidateId = profileRes.rows[0].id;
 
-    const skillsRes = await client.query(
+    const skillsRes = await client.queryWithRetry(
       `SELECT s.id, s.skill_name, s.category
        FROM skills s
        WHERE s.candidate_id = @p1

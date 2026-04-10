@@ -3,23 +3,7 @@
  * @module api/experience/index.js
  */
 
-const _db = require('../db');
-const Client = _db.Client;
-// Provide a fallback q helper when tests/mock don't export it.
-const q =
-  typeof _db.runQueryWithRetry === 'function'
-    ? _db.runQueryWithRetry
-    : (client, sql, params, opts) => {
-        if (!client) throw new Error('Client required');
-        if (typeof client.queryWithRetry === 'function') {
-          return client.queryWithRetry(
-            sql,
-            params || [],
-            opts || { maxAttempts: 3, baseDelayMs: 200 }
-          );
-        }
-        return client.query(sql, params || []);
-      };
+const { Client } = require('../db');
 const crypto = require('crypto');
 const {
   beginRequest,
@@ -257,7 +241,7 @@ async function callAnthropicForContexts(profile, experiences, apiKey, certificat
 }
 
 async function loadCandidateData(client) {
-  const profileResult = await client.query(
+  const profileResult = await client.queryWithRetry(
     `SELECT TOP 1 id, name, title
      FROM candidate_profile
      ORDER BY updated_at DESC, created_at DESC`
@@ -270,7 +254,7 @@ async function loadCandidateData(client) {
   const profile = profileResult.rows[0];
   const candidateId = profile.id;
 
-  const experiencesResult = await client.query(
+  const experiencesResult = await client.queryWithRetry(
     `SELECT id, company_name, title, title_progression, start_date, end_date, is_current,
           bullet_points, why_joined, actual_contributions, proudest_achievement,
           lessons_learned, challenges_faced
@@ -286,7 +270,7 @@ async function loadCandidateData(client) {
     bullet_points: coerceToArray(r.bullet_points),
   }));
 
-  const skillsResult = await client.query(
+  const skillsResult = await client.queryWithRetry(
     `SELECT s.id, s.candidate_id, s.skill_name, s.category, s.self_rating, s.evidence, s.honest_notes, s.years_experience, s.last_used,
             STRING_AGG(eq.equivalent_name, ',') AS equivalents
      FROM skills s
@@ -297,7 +281,7 @@ async function loadCandidateData(client) {
     [candidateId]
   );
 
-  const gapsResult = await client.query(
+  const gapsResult = await client.queryWithRetry(
     `SELECT description, interest_in_learning
      FROM gaps_weaknesses
     WHERE candidate_id = @p1
@@ -346,6 +330,7 @@ module.exports = async function (context) {
 
     let aiContexts = {};
     // Allow callers to skip AI enrichment (faster for classic lists)
+    // Also skip AI enrichment entirely when no Anthropic API key is configured
     const skipAi = Boolean(
       req &&
         ((req.query && (req.query.skipAI === '1' || req.query.skipAI === 'true')) ||
@@ -353,6 +338,7 @@ module.exports = async function (context) {
             (req.headers['x-skip-ai'] === '1' || req.headers['x-skip-ai'] === 'true')))
     );
 
+    // If caller hasn't explicitly opted out, attempt cache lookup first.
     if (!skipAi) {
       try {
         // Build a compact representation of experiences to form a stable cache key
@@ -373,7 +359,7 @@ module.exports = async function (context) {
         // Optionally load certifications if the table exists and include them in prompts/cache
         let compactCertifications = [];
         try {
-          const certRes = await client.query(
+          const certRes = await client.queryWithRetry(
             `SELECT id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
            FROM certifications
           WHERE candidate_id = @p1
@@ -394,20 +380,17 @@ module.exports = async function (context) {
           compactCertifications = [];
         }
 
-        // Build a deterministic cache key that includes the profile, experiences,
-        // certifications and model so cached AI responses are specific to inputs.
         const cacheKeyData = JSON.stringify({
           profile: payload.profile || {},
           experiences: compactExperiences,
           certifications: compactCertifications || [],
           model: AI_MODEL,
         });
-
         const cacheHash = crypto.createHash('sha256').update(cacheKeyData).digest('hex');
 
         // Try to read from cache table if it exists. Failures here should not block the response.
         try {
-          const cacheSel = await client.query(
+          const cacheSel = await client.queryWithRetry(
             `SELECT TOP 1 hash, response
            FROM ai_response_cache
            WHERE model = @p1 AND hash = @p2 AND is_cached = 1`,
@@ -423,81 +406,87 @@ module.exports = async function (context) {
             }
 
             // update hit count and last_accessed (use hash as primary key)
-            await q(
-              client,
+            await client.queryWithRetry(
               `UPDATE ai_response_cache SET cache_hit_count = COALESCE(cache_hit_count,0) + 1, last_accessed = GETUTCDATE() WHERE hash = @p1`,
               [row.hash]
             );
             console.log(`AI cache hit for hash ${row.hash}`);
           } else {
-            // cache miss: call Anthropic and insert result (include certifications if available)
+            // cache miss: only call Anthropic when an API key is configured
+            if (apiKey) {
+              aiContexts = await callAnthropicForContexts(
+                payload.profile,
+                payload.experiences,
+                apiKey,
+                compactCertifications
+              );
+              try {
+                const responseStr = JSON.stringify(aiContexts || {});
+                // Don't store empty objects or trivially small responses
+                if (!responseStr || responseStr === '{}' || responseStr.length < 10) {
+                  console.log(
+                    `AI cache miss: empty or small response, not storing for question ${EXPERIENCE_QUESTION_KEY}`
+                  );
+                } else {
+                  console.log(
+                    `AI cache miss for question ${EXPERIENCE_QUESTION_KEY}, storing response (len=${responseStr.length})`
+                  );
+                  // insert cache record with hash as primary key, so duplicates will be ignored if another request has already cached the same response
+                  try {
+                    await client.queryWithRetry(
+                      `INSERT INTO ai_response_cache (question, model, hash, response, cache_hit_count, last_accessed, updated_at, is_cached)
+                       VALUES (@p1, @p2, @p3, @p4, 1, GETUTCDATE(), GETUTCDATE(), 1);`,
+                      [EXPERIENCE_QUESTION_KEY, AI_MODEL, cacheHash, responseStr]
+                    );
+                    console.log(`AI cache miss - stored response with hash ${cacheHash}`);
+                  } catch (err) {
+                    // Ignore duplicate key race errors (another process inserted same hash concurrently)
+                    try {
+                      if (
+                        err &&
+                        (err.number === 2627 ||
+                          (err.originalError &&
+                            err.originalError.info &&
+                            err.originalError.info.number === 2627))
+                      ) {
+                        console.warn('AI cache insert race: duplicate key, ignoring');
+                      } else {
+                        throw err;
+                      }
+                    } catch (inner) {
+                      console.error('Failed to write AI cache', inner);
+                      context.log &&
+                        context.log.warn &&
+                        context.log.warn('Failed to write AI cache', inner.message || inner);
+                    }
+                  }
+                }
+              } catch (err) {
+                console.error('Failed to write AI cache', err);
+                context.log &&
+                  context.log.warn &&
+                  context.log.warn('Failed to write AI cache', err.message || err);
+              }
+            } else {
+              aiContexts = {};
+            }
+          }
+        } catch (err) {
+          console.error('AI cache lookup failed', err);
+          // If cache table doesn't exist or query fails, fall back to calling Anthropic when available
+          context.log &&
+            context.log.debug &&
+            context.log.debug('AI cache lookup failed', err.message || err);
+          if (apiKey) {
             aiContexts = await callAnthropicForContexts(
               payload.profile,
               payload.experiences,
               apiKey,
               compactCertifications
             );
-            try {
-              const responseStr = JSON.stringify(aiContexts || {});
-              // Don't store empty objects or trivially small responses
-              if (!responseStr || responseStr === '{}' || responseStr.length < 10) {
-                console.log(
-                  `AI cache miss: empty or small response, not storing for question ${EXPERIENCE_QUESTION_KEY}`
-                );
-              } else {
-                console.log(
-                  `AI cache miss for question ${EXPERIENCE_QUESTION_KEY}, storing response (len=${responseStr.length})`
-                );
-                // insert cache record with hash as primary key, so duplicates will be ignored if another request has already cached the same response
-                try {
-                  await q(
-                    client,
-                    `INSERT INTO ai_response_cache (question, model, hash, response, cache_hit_count, last_accessed, updated_at, is_cached)
-                   VALUES (@p1, @p2, @p3, @p4, 1, GETUTCDATE(), GETUTCDATE(), 1);`,
-                    [EXPERIENCE_QUESTION_KEY, AI_MODEL, cacheHash, responseStr]
-                  );
-                  console.log(`AI cache miss - stored response with hash ${cacheHash}`);
-                } catch (err) {
-                  // Ignore duplicate key race errors (another process inserted same hash concurrently)
-                  try {
-                    if (
-                      err &&
-                      (err.number === 2627 ||
-                        (err.originalError &&
-                          err.originalError.info &&
-                          err.originalError.info.number === 2627))
-                    ) {
-                      console.warn('AI cache insert race: duplicate key, ignoring');
-                    } else {
-                      throw err;
-                    }
-                  } catch (inner) {
-                    console.error('Failed to write AI cache', inner);
-                    context.log &&
-                      context.log.warn &&
-                      context.log.warn('Failed to write AI cache', inner.message || inner);
-                  }
-                }
-              }
-            } catch (err) {
-              console.error('Failed to write AI cache', err);
-              context.log &&
-                context.log.warn &&
-                context.log.warn('Failed to write AI cache', err.message || err);
-            }
+          } else {
+            aiContexts = {};
           }
-        } catch (err) {
-          console.error('AI cache lookup failed, calling Anthropic', err);
-          // If cache table doesn't exist or query fails, fall back to calling Anthropic
-          context.log &&
-            context.log.debug &&
-            context.log.debug('AI cache lookup failed, calling Anthropic', err.message || err);
-          aiContexts = await callAnthropicForContexts(
-            payload.profile,
-            payload.experiences,
-            apiKey,
-            compactCertifications
-          );
         }
       } catch (error) {
         console.error('Experience AI context generation failed, using fallback', error);

@@ -62,18 +62,18 @@ module.exports = async function (context, req) {
       const { buildFitPrompt } = require('../prompts');
 
       const loadCandidateContext = async (client) => {
-        const profileResult = await client.query(
+        const profileResult = await client.queryWithRetry(
           `SELECT TOP 1 * FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`
         );
         if (profileResult.rows.length === 0) throw new Error('No candidate profile found');
         const profile = profileResult.rows[0];
         const candidateId = profile.id;
-        const experiencesResult = await client.query(
+        const experiencesResult = await client.queryWithRetry(
           `SELECT * FROM experiences WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
           [candidateId]
         );
         // Load skills and their equivalents (text-based)
-        const skillsResult = await client.query(
+        const skillsResult = await client.queryWithRetry(
           `
           SELECT s.id, s.candidate_id, s.skill_name, s.category, s.self_rating, s.evidence, s.honest_notes, s.years_experience, s.last_used,
                  STRING_AGG(eq.equivalent_name, ',') AS equivalents
@@ -85,23 +85,23 @@ module.exports = async function (context, req) {
         `,
           [candidateId]
         );
-        const gapsResult = await client.query(
+        const gapsResult = await client.queryWithRetry(
           `SELECT * FROM gaps_weaknesses WHERE candidate_id = @p1 ORDER BY id ASC`,
           [candidateId]
         );
-        const valuesResult = await client.query(
+        const valuesResult = await client.queryWithRetry(
           `SELECT TOP 1 * FROM values_culture WHERE candidate_id = @p1 ORDER BY created_at DESC`,
           [candidateId]
         );
-        const faqResult = await client.query(
+        const faqResult = await client.queryWithRetry(
           `SELECT * FROM faq_responses WHERE candidate_id = @p1 ORDER BY is_common_question DESC, id ASC`,
           [candidateId]
         );
-        const aiInstructionsResult = await client.query(
+        const aiInstructionsResult = await client.queryWithRetry(
           `SELECT * FROM ai_instructions WHERE candidate_id = @p1 ORDER BY priority ASC, id ASC`,
           [candidateId]
         );
-        const educationResult = await client.query(
+        const educationResult = await client.queryWithRetry(
           `SELECT * FROM education WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
           [candidateId]
         );
@@ -109,7 +109,7 @@ module.exports = async function (context, req) {
         // Attempt to load certifications if the table exists
         let certificationsResult = { rows: [] };
         try {
-          certificationsResult = (await client.query(
+          certificationsResult = (await client.queryWithRetry(
             `SELECT id, name, issuer, issue_date, expiration_date, credential_id, verification_url, notes, display_order
              FROM certifications
             WHERE candidate_id = @p1
@@ -278,7 +278,7 @@ module.exports = async function (context, req) {
     await client.connect();
 
     // load latest candidate profile
-    const profileRes = await client.query(
+    const profileRes = await client.queryWithRetry(
       `SELECT TOP 1 id, name, title, elevator_pitch FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`
     );
     if (!profileRes.rows.length) {
@@ -292,15 +292,15 @@ module.exports = async function (context, req) {
     }
     const profile = toCamel(profileRes.rows[0]);
 
-    const skillsRes = await client.query(
+    const skillsRes = await client.queryWithRetry(
       `SELECT skill_name, category, honest_notes, evidence FROM skills WHERE candidate_id = @p1 ORDER BY category ASC, CASE WHEN self_rating IS NULL THEN 1 ELSE 0 END ASC, self_rating DESC, skill_name ASC`,
       [profileRes.rows[0].id]
     );
-    const gapsRes = await client.query(
+    const gapsRes = await client.queryWithRetry(
       `SELECT description, why_its_a_gap FROM gaps_weaknesses WHERE candidate_id = @p1 ORDER BY id ASC`,
       [profileRes.rows[0].id]
     );
-    const educationRes = await client.query(
+    const educationRes = await client.queryWithRetry(
       `SELECT institution, degree, field_of_study, start_date, end_date, is_current, grade, notes FROM education WHERE candidate_id = @p1 ORDER BY display_order ASC, CASE WHEN start_date IS NULL THEN 1 ELSE 0 END ASC, start_date DESC`,
       [profileRes.rows[0].id]
     );

@@ -31,6 +31,7 @@ describe('health endpoint', () => {
       end: jest.fn().mockResolvedValue(undefined),
     };
     Client.mockImplementation(() => mockClient);
+    mockClient.queryWithRetry = mockClient.query;
     const context = { res: null };
     await health(context, {});
     expect(context.res.status).toBe(200);
@@ -48,6 +49,7 @@ describe('health endpoint', () => {
       end: jest.fn().mockResolvedValue(undefined),
     };
     Client.mockImplementation(() => mockClient);
+    mockClient.queryWithRetry = mockClient.query;
     global.fetch = jest
       .fn()
       .mockResolvedValue({ ok: true, json: async () => ({ models: [{ id: 'other' }] }) });

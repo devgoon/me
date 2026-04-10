@@ -150,7 +150,7 @@
     el.classList.toggle('ok', Boolean(text && !isError));
   }
   async function apiRequest(url, options) {
-    const _fetch =
+    const fetchImpl =
       (typeof apiFetch !== 'undefined' && apiFetch) ||
       (typeof fetchWithTimeout !== 'undefined' &&
         function (u, o, opts) {
@@ -167,7 +167,7 @@
         options && options.headers ? options.headers : {}
       ),
     });
-    response = await _fetch(url, optsWithCreds, { timeoutMs: 10000 });
+    response = await fetchImpl(url, optsWithCreds, { timeoutMs: 10000 });
     let data = {};
     try {
       data = await response.json();

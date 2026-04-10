@@ -173,7 +173,7 @@
       let analysis = null;
       status.innerHTML = `<article class="role-card" style="text-align:left;padding:12px"><div class="loading" aria-busy="true" aria-live="polite">Determining fit…</div></article>`;
       try {
-        const _fetch =
+        const fetchImpl =
           (typeof apiFetch !== 'undefined' && apiFetch) ||
           (typeof fetchWithTimeout !== 'undefined' &&
             function (u, o, opts) {
@@ -183,7 +183,7 @@
             return fetch(u, o);
           };
         let res;
-        res = await _fetch(
+        res = await fetchImpl(
           '/api/fit',
           {
             method: 'POST',

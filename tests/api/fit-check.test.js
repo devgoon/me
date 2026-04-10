@@ -23,6 +23,7 @@ describe('fit-check API', () => {
       end: jest.fn().mockResolvedValue(undefined),
     };
     Client.mockImplementation(() => client);
+    client.queryWithRetry = client.query;
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -161,6 +162,7 @@ describe('fit GET behavior', () => {
       end: jest.fn().mockResolvedValue(undefined),
     };
     Client.mockImplementation(() => client);
+    client.queryWithRetry = client.query;
   });
 
   test('returns profile, skills, gaps, education on GET', async () => {
@@ -208,6 +210,7 @@ describe('fit API additional tests', () => {
       end: jest.fn().mockResolvedValue(undefined),
     };
     Client.mockImplementation(() => client);
+    client.queryWithRetry = client.query;
   });
 
   afterAll(() => {

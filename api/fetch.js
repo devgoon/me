@@ -3,10 +3,10 @@
  * Usage: const { fetchWithTimeout, apiFetch } = require('./fetch');
  */
 'use strict';
-const { setTimeout: _setTimeout } = require('timers');
+const { setTimeout: setTimeoutImpl } = require('timers');
 
 function delay(ms) {
-  return new Promise((r) => _setTimeout(r, ms));
+  return new Promise((r) => setTimeoutImpl(r, ms));
 }
 
 async function fetchWithTimeout(url, opts, timeoutMs) {
@@ -14,15 +14,15 @@ async function fetchWithTimeout(url, opts, timeoutMs) {
   if (typeof AbortController === 'undefined') {
     return Promise.race([
       fetch(url, opts),
-      new Promise(function (_, reject) {
-        _setTimeout(function () {
+      new Promise(function (resolve, reject) {
+        setTimeoutImpl(function () {
           reject(new Error('Timeout'));
         }, timeoutMs);
       }),
     ]);
   }
   const controller = new AbortController();
-  const id = _setTimeout(function () {
+  const id = setTimeoutImpl(function () {
     controller.abort();
   }, timeoutMs);
   try {

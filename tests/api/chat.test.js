@@ -24,6 +24,7 @@ describe('chat API', () => {
       end: jest.fn().mockResolvedValue(undefined),
     };
     Client.mockImplementation(() => client);
+    client.queryWithRetry = client.query;
   });
 
   afterAll(() => {
@@ -170,6 +171,7 @@ describe('chat API additional tests', () => {
       end: jest.fn().mockResolvedValue(undefined),
     };
     Client.mockImplementation(() => client);
+    client.queryWithRetry = client.query;
 
     // Order of queries: cache select, then loadCandidateContext sequence
     client.query
@@ -232,6 +234,7 @@ describe('chat helpers additional', () => {
 
   test('getCache returns response and updates hit count', async () => {
     const client = { query: jest.fn() };
+    client.queryWithRetry = client.query;
     client.query
       .mockResolvedValueOnce({ rows: [{ response: '  answer  ', cache_hit_count: 1 }] })
       .mockResolvedValueOnce({});
@@ -244,6 +247,7 @@ describe('chat helpers additional', () => {
 
   test('setCache stores trimmed string and JSON for object', async () => {
     const client = { query: jest.fn() };
+    client.queryWithRetry = client.query;
     await helpers.setCache(client, 'm', 'q', '  hello  ');
     expect(client.query).toHaveBeenCalled();
     const callArgs = client.query.mock.calls[0][1];
@@ -268,6 +272,7 @@ describe('chat helpers additional', () => {
 
   test('getCache returns null when no rows', async () => {
     const client = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+    client.queryWithRetry = client.query;
     const res = await helpers.getCache(client, 'm', 'q');
     expect(res).toBeNull();
     expect(client.query).toHaveBeenCalledTimes(1);
