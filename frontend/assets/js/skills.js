@@ -90,20 +90,23 @@
   }
 
   document.addEventListener('DOMContentLoaded', async function () {
-    // Insert a compact typing-dots indicator into the skills columns
+    // Insert a loading indicator into the skills columns
     var typingHtml =
-      '<div class="typing-dots" role="status" aria-live="polite" aria-busy="true' >
-      +'<span class="dot" aria-hidden="true"></span>' +
-        '<span class="dot" aria-hidden="true"></span>' +
-        '<span class="dot" aria-hidden="true"></span>' +
-        '<span class="visually-hidden">Loading…</span>' +
-        '</div>';
+      '<div class="skills-loading" role="status" aria-live="polite" aria-busy="true">' +
+      '<span class="loading-text">Loading Skills</span>' +
+      '</div>';
     var cur = document.getElementById('skill-tags-current');
     var bro = document.getElementById('skill-tags-broader');
     if (cur)
-      cur.innerHTML = `<article class="role-card" style="text-align:center;padding:12px">${typingHtml}</article>`;
+      cur.innerHTML =
+        '<article class="role-card" style="text-align:center;padding:12px">' +
+        typingHtml +
+        '</article>';
     if (bro)
-      bro.innerHTML = `<article class="role-card" style="text-align:center;padding:12px">${typingHtml}</article>`;
+      bro.innerHTML =
+        '<article class="role-card" style="text-align:center;padding:12px">' +
+        typingHtml +
+        '</article>';
 
     // Try DB-backed API first, then fall back to static window.SKILLS_DATA
     var data = await loadSkillsFromApi();
@@ -143,7 +146,18 @@
         console.warn('[skills] failed to insert load warning', e);
       }
     }
-    render('skill-tags-current', data.strong || []);
-    render('skill-tags-broader', data.moderate || []);
+    function sanitize(items) {
+      if (!Array.isArray(items)) return [];
+      return items
+        .filter(function (it) {
+          return it !== false && it !== true && it !== null && it !== undefined;
+        })
+        .map(function (it) {
+          return it;
+        });
+    }
+
+    render('skill-tags-current', sanitize(data.strong));
+    render('skill-tags-broader', sanitize(data.moderate));
   });
 })();

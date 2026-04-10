@@ -49,7 +49,6 @@ module.exports = async function (context, req) {
 
     // Load latest candidate id
     const profileRes = await client.queryWithRetry(
-      client,
       `SELECT TOP 1 id FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`
     );
     if (!profileRes.rows || profileRes.rows.length === 0) {
