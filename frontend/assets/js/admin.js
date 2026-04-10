@@ -219,7 +219,12 @@
     }
   }
   async function loadCacheReport() {
-    setMessage('Loading cache report...', false);
+    setMessage(
+      typeof window !== 'undefined' && typeof window.getLoadingMessage === 'function'
+        ? window.getLoadingMessage()
+        : 'Loading cache report...',
+      false
+    );
     let data = [];
     try {
       // Use top-level API path
@@ -1354,7 +1359,12 @@
     }
   }
   async function loadServerData() {
-    setMessage('Loading admin data...', false);
+    setMessage(
+      typeof window !== 'undefined' && typeof window.getLoadingMessage === 'function'
+        ? window.getLoadingMessage()
+        : 'Loading admin data...',
+      false
+    );
     const data = await apiRequest('/api/panel-data', { method: 'GET' });
     mergeState(data);
     setMessage('Admin data loaded.', false);

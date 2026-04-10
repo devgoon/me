@@ -154,7 +154,10 @@
       ce(
         'div',
         { id: 'fit-status', class: 'ask-status', style: 'margin-top:12px' },
-        'Loading profile and skills…'
+        // show a shared snarky loading message when available
+        typeof window !== 'undefined' && typeof window.getLoadingMessage === 'function'
+          ? window.getLoadingMessage()
+          : 'Loading profile and skills…'
       )
     );
     const output = ce('div', { id: 'fit-output', style: 'margin-top:16px' });
@@ -171,7 +174,11 @@
       const jd = qs('#job-description').value.trim();
       if (!jd) return alert('Paste a job description first');
       let analysis = null;
-      status.innerHTML = `<article class="role-card" style="text-align:left;padding:12px"><div class="loading" aria-busy="true" aria-live="polite">Determining fit…</div></article>`;
+      status.innerHTML = `<article class="role-card" style="text-align:left;padding:12px"><div class="loading" aria-busy="true" aria-live="polite">${
+        typeof window !== 'undefined' && typeof window.getLoadingMessage === 'function'
+          ? window.getLoadingMessage()
+          : 'Determining fit…'
+      }</div></article>`;
       try {
         const fetchImpl =
           (typeof apiFetch !== 'undefined' && apiFetch) ||

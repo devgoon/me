@@ -50,50 +50,50 @@
     fetch;
 
   let skillsApiError = null;
-  const SKILLS_API_MAX_ATTEMPTS = 5;
-  const SKILLS_API_BASE_DELAY_MS =
-    typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID ? 5 : 1000;
-
-  function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 
   async function loadSkillsFromApi() {
     skillsApiError = null;
-    for (let attempt = 1; attempt <= SKILLS_API_MAX_ATTEMPTS; attempt++) {
-      try {
-        console.info(`[skills] API attempt ${attempt}/${SKILLS_API_MAX_ATTEMPTS}`);
-        // use the lightweight skills endpoint (reads DB directly, no AI)
-        const res = await fetchImpl(
-          '/api/skills',
-          { method: 'GET', headers: { Accept: 'application/json' } },
-          { timeoutMs: 20000 }
-        );
-        if (!res.ok) throw new Error('Non-OK response ' + res.status);
-        const data = await res.json();
-        const skills = data && data.skills ? data.skills : null;
-        if (skills && (Array.isArray(skills.strong) || Array.isArray(skills.moderate))) {
-          if (attempt > 1) console.info('[skills] API succeeded on attempt', attempt);
-          return { strong: skills.strong || [], moderate: skills.moderate || [] };
-        }
-        throw new Error('Malformed skills payload');
-      } catch (err) {
-        skillsApiError = err;
-        console.warn('[skills] API attempt failed', attempt, err && err.message);
-        if (attempt < SKILLS_API_MAX_ATTEMPTS) {
-          const backoff = SKILLS_API_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-          await delay(backoff);
-        }
+    try {
+      // Prefer centralized apiFetch which implements retries/backoff.
+      const res =
+        typeof apiFetch !== 'undefined'
+          ? await apiFetch(
+              '/api/skills',
+              { method: 'GET', headers: { Accept: 'application/json' } },
+              { timeoutMs: 20000, maxAttempts: 5, baseDelay: 1000 }
+            )
+          : // fallback to fetchWithTimeout or global fetch
+          typeof window !== 'undefined' && window.fetchWithTimeout
+          ? await window.fetchWithTimeout(
+              '/api/skills',
+              { method: 'GET', headers: { Accept: 'application/json' } },
+              20000
+            )
+          : await fetch('/api/skills', { method: 'GET', headers: { Accept: 'application/json' } });
+
+      if (!res || !res.ok) throw new Error('Non-OK response ' + (res && res.status));
+      const data = await res.json();
+      const skills = data && data.skills ? data.skills : null;
+      if (skills && (Array.isArray(skills.strong) || Array.isArray(skills.moderate))) {
+        return { strong: skills.strong || [], moderate: skills.moderate || [] };
       }
+      throw new Error('Malformed skills payload');
+    } catch (err) {
+      skillsApiError = err;
+      console.warn('[skills] API load failed', err && err.message);
+      return null;
     }
-    return null;
   }
 
   document.addEventListener('DOMContentLoaded', async function () {
     // Insert a loading indicator into the skills columns
+    var loadingText =
+      typeof window !== 'undefined' && typeof window.getLoadingMessage === 'function'
+        ? window.getLoadingMessage()
+        : 'Loading Skills';
     var typingHtml =
       '<div class="skills-loading" role="status" aria-live="polite" aria-busy="true">' +
-      '<span class="loading-text">Loading Skills</span>' +
+      String(loadingText) +
       '</div>';
     var cur = document.getElementById('skill-tags-current');
     var bro = document.getElementById('skill-tags-broader');

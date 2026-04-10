@@ -572,30 +572,18 @@ document.addEventListener('DOMContentLoaded', function () {
           function (u, o, opts) {
             return fetchWithTimeout(u, o, opts && opts.timeoutMs);
           }) ||
-        fetch;
-      let response;
-      try {
-        const fetchImpl =
-          (typeof apiFetch !== 'undefined' && apiFetch) ||
-          (typeof fetchWithTimeout !== 'undefined' &&
-            function (u, o, opts) {
-              return fetchWithTimeout(u, o, opts && opts.timeoutMs);
-            }) ||
-          function (u, o, opts) {
-            return fetch(u, o);
-          };
-        response = await fetchImpl(
-          '/api/chat',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: prompt }),
-          },
-          { timeoutMs: 20000 }
-        );
-      } catch (err) {
-        throw err;
-      }
+        function (u, o, opts) {
+          return fetch(u, o);
+        };
+      const response = await fetchImpl(
+        '/api/chat',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: prompt }),
+        },
+        { timeoutMs: 20000 }
+      );
       if (!response.ok) {
         let details = '';
         try {

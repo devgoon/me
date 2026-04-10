@@ -6,32 +6,56 @@
     const loadingEl = document.getElementById('experience-loading');
     if (!listEl) return;
 
-    if (loadingEl) loadingEl.style.display = '';
+    if (loadingEl) {
+      // show and set a snarky loading message if available
+      loadingEl.style.display = '';
+      try {
+        if (typeof window !== 'undefined' && typeof window.getLoadingMessage === 'function') {
+          loadingEl.textContent = window.getLoadingMessage();
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    }
 
     // Experience loading placeholder now shows plain text; chat bubble removed
 
-    var fetchImpl =
-      (typeof apiFetch !== 'undefined' && apiFetch) ||
-      (typeof fetchWithTimeout !== 'undefined' &&
-        function (u, o) {
-          return fetchWithTimeout(u, o, 10000);
-        }) ||
-      fetch;
+    // Use centralized apiFetch (with retries/backoff) when available, otherwise fall back
+    async function loadExperienceFromApi() {
+      try {
+        const res =
+          typeof apiFetch !== 'undefined'
+            ? await apiFetch(
+                '/api/experience?skipAI=1',
+                { method: 'GET' },
+                { timeoutMs: 20000, maxAttempts: 5, baseDelay: 1000 }
+              )
+            : typeof window !== 'undefined' && window.fetchWithTimeout
+            ? await window.fetchWithTimeout('/api/experience?skipAI=1', { method: 'GET' }, 20000)
+            : await fetch('/api/experience?skipAI=1', { method: 'GET' });
 
-    // Request experience data without AI enrichment for faster classic list render
-    fetchImpl('/api/experience?skipAI=1', { method: 'GET' })
-      .then(function (res) {
-        if (!res.ok) throw new Error('Network response was not ok');
-        return res.json();
-      })
-      .then(function (data) {
-        if (loadingEl) loadingEl.style.display = 'none';
-        renderExperience((data && data.experiences) || [], listEl);
-      })
-      .catch(function (err) {
+        if (!res || !res.ok) throw new Error('Non-OK response ' + (res && res.status));
+        const data = await res.json().catch(function () {
+          return null;
+        });
+        if (data && Array.isArray(data.experiences)) return data.experiences;
+        throw new Error('Malformed experience payload');
+      } catch (err) {
+        console.error('[experience] API load failed', err && err.message);
+        return null;
+      }
+    }
+
+    (async function () {
+      const experiences = await loadExperienceFromApi();
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (!experiences) {
         if (loadingEl) loadingEl.textContent = 'Unable to load experience.';
-        console.error('Failed to load experience', err);
-      });
+        renderExperience([], listEl);
+        return;
+      }
+      renderExperience(experiences || [], listEl);
+    })();
 
     function formatDate(iso) {
       if (!iso) return '';
