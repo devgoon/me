@@ -11,7 +11,7 @@ const {
   withRequestId,
 } = require('../_shared/observability');
 
-const API_TIMEOUT_MS = 20000;
+const API_TIMEOUT_MS = 15000;
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/models';
 const ANTHROPIC_VERSION = '2023-06-01';
 const ANTHROPIC_CHAT_URL = 'https://api.anthropic.com/v1/messages';
