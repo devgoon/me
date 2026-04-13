@@ -1,4 +1,9 @@
 // @ts-nocheck
+// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
+if (typeof require === 'function') {
+  require('./fetch-utils.js');
+}
+// `fetch-utils.js` is loaded globally from HTML; per-file sync loaders removed.
 /**
  * @fileoverview Admin UI client script (handles admin panel interactions).
  * @module frontend/assets/js/admin.js
@@ -150,16 +155,7 @@
     el.classList.toggle('ok', Boolean(text && !isError));
   }
   async function apiRequest(url, options) {
-    const fetchImpl =
-      (typeof apiFetch !== 'undefined' && apiFetch) ||
-      (typeof fetchWithTimeout !== 'undefined' &&
-        function (u, o, opts) {
-          return fetchWithTimeout(u, o, opts && opts.timeoutMs);
-        }) ||
-      function (u, o, opts) {
-        return fetch(u, o);
-      };
-    let response;
+    // Use centralized apiFetch (required). Remove defensive fallbacks.
     const optsWithCreds = Object.assign({}, options || {}, {
       credentials: 'include',
       headers: Object.assign(
@@ -167,7 +163,11 @@
         options && options.headers ? options.headers : {}
       ),
     });
-    response = await fetchImpl(url, optsWithCreds, { timeoutMs: 10000 });
+    const response = await apiFetch(url, optsWithCreds, {
+      timeoutMs: 15000,
+      maxAttempts: 5,
+      baseDelay: 1000,
+    });
     let data = {};
     try {
       data = await response.json();
@@ -1354,7 +1354,9 @@
       }
       return true;
     } catch (error) {
-      window.location.href = '/auth';
+      if (!(typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID)) {
+        window.location.href = '/auth';
+      }
       return false;
     }
   }
@@ -1394,7 +1396,9 @@
               setMessage(err.message || 'Save failed', true);
               return;
             }
-            window.location.href = LOGOUT_URL;
+            if (!(typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID)) {
+              window.location.href = LOGOUT_URL;
+            }
             return;
           } else {
             // User chose to stay; do nothing
@@ -1402,7 +1406,9 @@
             return;
           }
         }
-        window.location.href = LOGOUT_URL;
+        if (!(typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID)) {
+          window.location.href = LOGOUT_URL;
+        }
       });
     }
     const cacheRefreshBtn = document.getElementById('cache-refresh');

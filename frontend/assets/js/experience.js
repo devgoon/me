@@ -1,4 +1,9 @@
 // assets/js/experience.js
+// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
+if (typeof require === 'function') {
+  require('./fetch-utils.js');
+}
+// `fetch-utils.js` is loaded globally from HTML; per-file sync loaders removed.
 // Fetches experience data from /api/experience and renders it into the page.
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
@@ -23,16 +28,12 @@
     // Use centralized apiFetch (with retries/backoff) when available, otherwise fall back
     async function loadExperienceFromApi() {
       try {
-        const res =
-          typeof apiFetch !== 'undefined'
-            ? await apiFetch(
-                '/api/experience?skipAI=1',
-                { method: 'GET' },
-                { timeoutMs: 20000, maxAttempts: 5, baseDelay: 1000 }
-              )
-            : typeof window !== 'undefined' && window.fetchWithTimeout
-            ? await window.fetchWithTimeout('/api/experience?skipAI=1', { method: 'GET' }, 20000)
-            : await fetch('/api/experience?skipAI=1', { method: 'GET' });
+        // Use centralized apiFetch (required). Remove defensive fallbacks.
+        const res = await apiFetch(
+          '/api/experience?skipAI=1',
+          { method: 'GET' },
+          { timeoutMs: 15000, maxAttempts: 5, baseDelay: 1000 }
+        );
 
         if (!res || !res.ok) throw new Error('Non-OK response ' + (res && res.status));
         const data = await res.json().catch(function () {

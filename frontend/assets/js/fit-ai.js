@@ -1,4 +1,9 @@
 // Lightweight Fit UI (no React) — uses window.fitAnalyzer when available
+// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
+if (typeof require === 'function') {
+  require('./fetch-utils.js');
+}
+// `fetch-utils.js` is loaded globally from HTML; per-file sync loaders removed.
 /**
  * @fileoverview Fit AI UI interactions and DOM helpers.
  * @module frontend/assets/js/fit-ai.js
@@ -180,24 +185,15 @@
           : 'Determining fit…'
       }</div></article>`;
       try {
-        const fetchImpl =
-          (typeof apiFetch !== 'undefined' && apiFetch) ||
-          (typeof fetchWithTimeout !== 'undefined' &&
-            function (u, o, opts) {
-              return fetchWithTimeout(u, o, opts && opts.timeoutMs);
-            }) ||
-          function (u, o, opts) {
-            return fetch(u, o);
-          };
-        let res;
-        res = await fetchImpl(
+        // Use centralized apiFetch (required). Remove defensive fallbacks.
+        const res = await apiFetch(
           '/api/fit',
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jobDescription: jd }),
           },
-          { timeoutMs: 30000 }
+          { timeoutMs: 15000, maxAttempts: 5, baseDelay: 1000 }
         );
         if (!res.ok) throw new Error('Fit API error');
         const ai = await res.json();

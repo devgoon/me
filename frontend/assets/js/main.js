@@ -2,6 +2,11 @@
  * @fileoverview Minimal main script for homepage interactions and chat toggle.
  * @module frontend/assets/js/main.js
  */
+// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
+if (typeof require === 'function') {
+  require('./fetch-utils.js');
+}
+// `fetch-utils.js` is loaded globally from HTML; per-file sync loaders removed.
 
 // Minimal main script to ensure homepage removes preloader and chat toggles
 (function () {
@@ -566,23 +571,15 @@ document.addEventListener('DOMContentLoaded', function () {
       typingIndicatorEl = null;
     };
     const callChatApi = async (prompt) => {
-      const fetchImpl =
-        (typeof apiFetch !== 'undefined' && apiFetch) ||
-        (typeof fetchWithTimeout !== 'undefined' &&
-          function (u, o, opts) {
-            return fetchWithTimeout(u, o, opts && opts.timeoutMs);
-          }) ||
-        function (u, o, opts) {
-          return fetch(u, o);
-        };
-      const response = await fetchImpl(
+      // Use centralized apiFetch (required). Remove defensive fallbacks.
+      const response = await apiFetch(
         '/api/chat',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: prompt }),
         },
-        { timeoutMs: 20000 }
+        { timeoutMs: 15000, maxAttempts: 5, baseDelay: 1000 }
       );
       if (!response.ok) {
         let details = '';

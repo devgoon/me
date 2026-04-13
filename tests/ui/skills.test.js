@@ -16,7 +16,8 @@ test('skills.js populates skill tag columns from API', async () => {
   `;
 
   // Mock fetch to return a skills payload
-  global.fetch = jest.fn().mockResolvedValue({
+  // Provide apiFetch (used by the frontend) which resolves like fetch
+  global.apiFetch = jest.fn().mockResolvedValue({
     ok: true,
     json: async () => ({ skills: { strong: ['Node.js', 'JS'], moderate: ['Go'] } }),
   });
@@ -39,7 +40,7 @@ test('skills.js populates skill tag columns from API', async () => {
   expect(cur.textContent).toMatch(/JS/);
   expect(bro.textContent).toMatch(/Go/);
 
-  delete global.fetch;
+  delete global.apiFetch;
 });
 
 test('skills.js falls back to window.SKILLS_DATA and shows warning', async () => {
@@ -51,8 +52,8 @@ test('skills.js falls back to window.SKILLS_DATA and shows warning', async () =>
     <div id="skill-tags-broader"></div>
   `;
 
-  // Mock fetch to fail
-  global.fetch = jest.fn().mockResolvedValue({ ok: false });
+  // Mock apiFetch to fail
+  global.apiFetch = jest.fn().mockResolvedValue({ ok: false });
   // Provide fallback data with object items
   window.SKILLS_DATA = { strong: [{ label: 'S1' }, { description: 'S2' }], moderate: ['M1'] };
 
@@ -69,6 +70,6 @@ test('skills.js falls back to window.SKILLS_DATA and shows warning', async () =>
   const note = document.querySelector('.skills-load-warning');
   expect(note).toBeTruthy();
 
-  delete global.fetch;
+  delete global.apiFetch;
   delete window.SKILLS_DATA;
 });

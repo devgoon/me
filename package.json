@@ -29,6 +29,9 @@
     "testMatch": [
       "<rootDir>/tests/**/*.test.js"
     ],
+    "setupFiles": [
+      "<rootDir>/tests/setupTests.js"
+    ],
     "collectCoverage": true,
     "collectCoverageFrom": [
       "api/**/*.js",
