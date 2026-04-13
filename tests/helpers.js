@@ -57,6 +57,13 @@ function mockFetchForPanel(sampleData) {
   return fetchMock;
 }
 
+// Ensure apiFetch is available in tests and delegates to global.fetch mock
+if (typeof global.apiFetch === 'undefined') {
+  global.apiFetch = function (url, opts, options) {
+    return global.fetch(url, opts);
+  };
+}
+
 async function waitForMessageContains(text, timeout = 2000) {
   const start = Date.now();
   while (Date.now() - start < timeout) {

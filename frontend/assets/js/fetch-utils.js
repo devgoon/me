@@ -31,9 +31,9 @@
   // apiFetch: retries on network errors and 5xx responses using exponential backoff
   async function apiFetch(url, opts, options) {
     options = options || {};
-    const maxAttempts = options.maxAttempts || 3;
-    const baseDelay = options.baseDelay || 500;
-    const timeoutMs = options.timeoutMs || 10000;
+    const maxAttempts = options.maxAttempts || 5;
+    const baseDelay = options.baseDelay || 1000;
+    const timeoutMs = options.timeoutMs || 15000;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {

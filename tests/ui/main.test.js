@@ -15,6 +15,12 @@ beforeEach(() => {
   global.AOS = { init: jest.fn(), refresh: jest.fn() };
   global.PureCounter = jest.fn();
   global.Waypoint = jest.fn().mockImplementation(() => ({}));
+  // Provide apiFetch shim that delegates to global.fetch so tests can set fetch per-case
+  if (typeof global.apiFetch === 'undefined') {
+    global.apiFetch = function (url, opts, options) {
+      return global.fetch(url, opts);
+    };
+  }
 });
 
 test('removes #preloader on window load', () => {

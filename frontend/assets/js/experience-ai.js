@@ -1,4 +1,9 @@
 // @ts-nocheck
+// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
+if (typeof require === 'function') {
+  require('./fetch-utils.js');
+}
+// `fetch-utils.js` is loaded globally from HTML; per-file sync loaders removed.
 /**
  * @fileoverview Experience AI UI utilities for rendering AI-generated experience summaries.
  * @module frontend/assets/js/experience-ai.js
@@ -211,15 +216,11 @@
     skillsList.innerHTML = `<article class="role-card" style="text-align:left;padding:24px">${spinnerSkillsHtml}</article>`;
     try {
       // Always request server-side cached payload (server stores in ai_response_cache)
-      const fetchImpl =
-        (typeof apiFetch !== 'undefined' && apiFetch) ||
-        (typeof fetchWithTimeout !== 'undefined' &&
-          function (u, o) {
-            return fetchWithTimeout(u, o, 10000);
-          }) ||
-        fetch;
-
-      const response = await fetchImpl('/api/experience', { method: 'GET' });
+      const response = await apiFetch(
+        '/api/experience',
+        { method: 'GET' },
+        { timeoutMs: 15000, maxAttempts: 5, baseDelay: 1000 }
+      );
       if (!response.ok) {
         throw new Error(`Request failed (${response.status})`);
       }

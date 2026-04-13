@@ -1,4 +1,9 @@
 // @ts-nocheck
+// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
+if (typeof require === 'function') {
+  require('./fetch-utils.js');
+}
+// `fetch-utils.js` is loaded globally from HTML; per-file sync loaders removed.
 /**
  * @fileoverview Authentication UI script used on the login page.
  * @module frontend/assets/js/auth.js
@@ -27,18 +32,13 @@
   }
   async function checkSession() {
     try {
-      const fetchImpl =
-        (typeof apiFetch !== 'undefined' && apiFetch) ||
-        (typeof fetchWithTimeout !== 'undefined' &&
-          function (u, o, opts) {
-            return fetchWithTimeout(u, o, opts && opts.timeoutMs);
-          }) ||
-        function (u, o, opts) {
-          return fetch(u, o);
-        };
-      let response;
+      // Use centralized apiFetch (required). Remove defensive fallbacks.
       const opts = { credentials: 'include' };
-      response = await fetchImpl('/api/auth/me', opts, { timeoutMs: 5000 });
+      const response = await apiFetch('/api/auth/me', opts, {
+        timeoutMs: 15000,
+        maxAttempts: 5,
+        baseDelay: 1000,
+      });
       if (response.ok) {
         if (!(typeof process !== 'undefined' && process.env && process.env.JEST_WORKER_ID)) {
           window.location.href = '/admin';
