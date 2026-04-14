@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function () {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: prompt }),
         },
-        { timeoutMs: 15000, maxAttempts: 5, baseDelay: 1000 }
+        { timeoutMs: 10000, maxAttempts: 7, baseDelay: 500 }
       );
       if (!response.ok) {
         let details = '';
