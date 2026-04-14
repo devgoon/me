@@ -219,7 +219,7 @@ if (typeof require === 'function') {
       const response = await apiFetch(
         '/api/experience',
         { method: 'GET' },
-        { timeoutMs: 15000, maxAttempts: 5, baseDelay: 1000 }
+        { timeoutMs: 10000, maxAttempts: 7, baseDelay: 500 }
       );
       if (!response.ok) {
         throw new Error(`Request failed (${response.status})`);

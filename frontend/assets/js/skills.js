@@ -55,7 +55,7 @@ if (typeof require === 'function') {
         const res = await apiFetch(
           '/api/skills',
           { method: 'GET', headers: { Accept: 'application/json' } },
-          { timeoutMs: 15000, maxAttempts: 5, baseDelay: 1000 }
+          { timeoutMs: 10000, maxAttempts: 7, baseDelay: 500 }
         );
 
         if (!res || !res.ok) throw new Error('Non-OK response ' + (res && res.status));

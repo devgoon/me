@@ -193,7 +193,7 @@ if (typeof require === 'function') {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jobDescription: jd }),
           },
-          { timeoutMs: 15000, maxAttempts: 5, baseDelay: 1000 }
+          { timeoutMs: 10000, maxAttempts: 7, baseDelay: 500 }
         );
         if (!res.ok) throw new Error('Fit API error');
         const ai = await res.json();
