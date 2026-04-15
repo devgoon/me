@@ -190,3 +190,25 @@ gh-sync-env:
 	printf "Proceed? Type 'yes' to continue: "; read ans; \
 	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
 	./scripts/gh-sync-env-to-gh.sh --env-file "$$ENV_FILE" --repo "$$REPO"
+
+.PHONY: e2e
+e2e:
+	@echo "Starting local app stack in background for e2e tests..."
+	@command -v nc >/dev/null 2>&1 || (echo "Error: 'nc' (netcat) is required to wait for ports"; exit 1)
+	@# Start the existing start target in the background
+	@$(MAKE) start & START_MAKE_PID=$$!; \
+	# Wait for the app port to be ready
+	until nc -z localhost 4280 >/dev/null 2>&1; do \
+		echo -n '.'; sleep 0.5; \
+	done; \
+	echo; echo "App is listening on http://localhost:4280"; \
+	# Run Playwright tests
+	if npm run test:e2e; then \
+		RESULT=0; \
+	else \
+		RESULT=$$?; \
+		echo "Playwright tests failed (exit $$RESULT)"; \
+	fi; \
+	# Stop local stack
+	@$(MAKE) stop || true; \
+	@exit $$RESULT
