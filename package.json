@@ -6,7 +6,8 @@
   "author": "Lodovico Minnocci",
   "license": "MIT",
   "scripts": {
-    "test": "npx jest --runInBand --testPathPattern=tests/",
+    "test": "npm run test:unit",
+    "test:unit": "npx jest --runInBand --testPathPattern=tests/",
     "build": "echo 'No UI build required'",
     "test:e2e": "npx playwright test",
     "test:e2e:headed": "npx playwright test --headed",
@@ -33,6 +34,7 @@
     "testMatch": [
       "<rootDir>/tests/**/*.test.js"
     ],
+    "testPathIgnorePatterns": ["<rootDir>/tests/e2e/"],
     "setupFiles": [
       "<rootDir>/tests/setupTests.js"
     ],
