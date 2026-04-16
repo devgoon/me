@@ -196,3 +196,57 @@ jobs:
           fi
 
           echo "API health endpoint looks healthy for $HOST"
+
+  e2e:
+    name: End-to-end tests
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Resolve Static Web App hostname
+        shell: bash
+        env:
+          STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
+          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          set -euo pipefail
+          if [ -z "${STATIC_WEB_APP_NAME:-}" ] || [ -z "${RESOURCE_GROUP:-}" ]; then
+            echo "Missing Static Web App variables; set AZURE_STATIC_WEB_APP_NAME and AZURE_RESOURCE_GROUP";
+            exit 1;
+          fi
+          HOST=$(az staticwebapp show --name "$STATIC_WEB_APP_NAME" --resource-group "$RESOURCE_GROUP" --query defaultHostname -o tsv)
+          if [ -z "$HOST" ]; then
+            echo "Failed to resolve Static Web App hostname"; exit 1;
+          fi
+          echo "Static Web App hostname: $HOST"
+          echo "HOST=$HOST" >> $GITHUB_ENV
+          echo "BASE_URL=https://$HOST" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run e2e (against deployed URL)
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+        run: |
+          set -e
+          echo "Using BASE_URL=${BASE_URL}"
+          make e2e
