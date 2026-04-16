@@ -3,15 +3,16 @@ const { test, expect } = require('@playwright/test');
 test.describe('Auth & Admin safety checks', () => {
   test('Unauthenticated admin API returns 401/403', async ({ request }) => {
     // `panel-data` is the admin API used by the admin UI
-    // First detect whether the target host enforces SWA auth redirects. If the
-    // login endpoint redirects (302) the deployment enforces auth and we expect
-    // admin APIs to deny unauthenticated access. Some preview hosts or emulators
-    // may not enforce auth and return 200 — tolerate that when auth is absent.
-    const loginCheck = await request.get('/.auth/login/aad?post_login_redirect_uri=/admin', { maxRedirects: 0 }).catch(() => null);
-    const enforcesAuth = !!(loginCheck && loginCheck.status() === 302);
-
+    // Query the admin API first — if it already returns 401/403, treat that as
+    // evidence that auth is enforced. Otherwise fall back to checking whether
+    // the host redirects the login endpoint (302) which also implies enforced auth.
     const res = await request.get('/api/panel-data');
     const status = res.status();
+
+    const loginCheck = await request.get('/.auth/login/aad?post_login_redirect_uri=/admin', { maxRedirects: 0 }).catch(() => null);
+    const loginRedirects = !!(loginCheck && loginCheck.status() === 302);
+
+    const enforcesAuth = loginRedirects || [401, 403].includes(status);
 
     if (enforcesAuth) {
       expect([401, 403]).toContain(status);
