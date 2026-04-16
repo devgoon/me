@@ -210,5 +210,5 @@ e2e:
 		echo "Playwright tests failed (exit $$RESULT)"; \
 	fi; \
 	# Stop local stack
-	@$(MAKE) stop || true; \
-	@exit $$RESULT
+	$(MAKE) stop || true; \
+	exit $$RESULT

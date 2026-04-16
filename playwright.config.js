@@ -42,7 +42,7 @@ module.exports = {
     const branch = getCiBranch();
     const isProd = shouldUseProd(branch);
     return {
-      baseURL: isProd ? prodBase || localBase : localBase,
+      baseURL: process.env.BASE_URL || localBase,
       headless: true,
       trace: 'on-first-retry',
     };
