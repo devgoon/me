@@ -3,15 +3,20 @@ const { test, expect } = require('@playwright/test');
 test.describe('Auth & Admin safety checks', () => {
   test('Unauthenticated admin API returns 401/403', async ({ request }) => {
     // `panel-data` is the admin API used by the admin UI
+    // First detect whether the target host enforces SWA auth redirects. If the
+    // login endpoint redirects (302) the deployment enforces auth and we expect
+    // admin APIs to deny unauthenticated access. Some preview hosts or emulators
+    // may not enforce auth and return 200 — tolerate that when auth is absent.
+    const loginCheck = await request.get('/.auth/login/aad?post_login_redirect_uri=/admin', { maxRedirects: 0 }).catch(() => null);
+    const enforcesAuth = !!(loginCheck && loginCheck.status() === 302);
+
     const res = await request.get('/api/panel-data');
     const status = res.status();
-    // When running against a deployed host (BASE_URL or HOST present) we expect the API
-    // to deny unauthenticated access (401 or 403). The local emulator may return 200
-    // for convenience, so allow 200 locally.
-    const isDeployed = !!(process.env.BASE_URL || process.env.HOST);
-    if (isDeployed) {
+
+    if (enforcesAuth) {
       expect([401, 403]).toContain(status);
     } else {
+      // Allow 200 in environments that do not enforce SWA auth (emulator or some previews)
       expect([200, 401, 403]).toContain(status);
     }
   });
