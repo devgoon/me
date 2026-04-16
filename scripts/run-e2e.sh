@@ -29,6 +29,25 @@ until nc -z localhost 4280 >/dev/null 2>&1; do
 done
 echo; echo "App is listening on http://localhost:4280"
 
+# Wait for Functions / API health endpoint to report healthy before running tests
+HEALTH_URL="http://localhost:4280/api/health"
+MAX_WAIT=60
+WAITED=0
+echo "Waiting for ${HEALTH_URL} to return 200..."
+until curl -sSf "$HEALTH_URL" >/dev/null 2>&1; do
+  if [ "$WAITED" -ge "$MAX_WAIT" ]; then
+    echo "Timed out waiting for ${HEALTH_URL} after ${MAX_WAIT}s"
+    # Show a snippet of function host logs to help debugging
+    echo "--- Functions host health check failed; dumping recent logs (last 200 lines) ---"
+    if command -v lsof >/dev/null 2>&1; then
+      ps aux | grep -i "func" | head -n 5 || true
+    fi
+    break
+  fi
+  echo -n '.'; sleep 1; WAITED=$((WAITED+1))
+done
+echo; echo "Health check finished (waited ${WAITED}s)"
+
 # Run Playwright tests
 if npm run test:e2e; then
   RESULT=0

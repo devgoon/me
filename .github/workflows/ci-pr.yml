@@ -1,4 +1,4 @@
-name: PR Quality Checks
+name: PR CI CHECKS
 
 on:
   pull_request:
@@ -9,10 +9,10 @@ permissions:
 
 jobs:
   make-check:
-    name: Make Check
+    name: CI CHECKS
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: CHECKOUT
         uses: actions/checkout@v4
 
       - name: Use Node.js 22
@@ -20,8 +20,8 @@ jobs:
         with:
           node-version: 22.18.0
 
-      - name: Install dependencies
+      - name: INSTALL DEPENDENCIES
         run: make install
 
-      - name: Checks
+      - name: CHECKS
         run: make check

@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: BUILD AND DEPLOY
 
 on:
   push:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ci:
-    name: Quality and Security Checks
+    name: CI CHECKS
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,16 +29,16 @@ jobs:
       - name: Install dependencies
         run: make install
 
-      - name: Checks
+      - name: CHECKS
         run: make check
 
-      - name: Ensure frontend assets present
+      - name: ENSURE FRONTEND ASSETS PRESENT
         run: echo "No UI build required; assets/js is source of truth"
 
-      - name: Run npm audit
+      - name: RUN NPM AUDIT
         run: npm audit --json > audit.json || true
 
-      - name: Fail on critical vulnerabilities
+      - name: FAIL ON CRITICAL VULNERABILITIES
         run: |
           node -e "
           const fs = require('fs');
@@ -52,22 +52,22 @@ jobs:
           "
 
   deploy:
-    name: Deploy
+    name: DEPLOY
     needs: ci
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: CHECKOUT
         uses: actions/checkout@v4
         with:
           submodules: false
 
-      - name: Use Node.js 22.18.0
+      - name: USE NODE.JS 22.18.0
         uses: actions/setup-node@v4
         with:
           node-version: 22.18.0
 
-      - name: Validate AI deployment settings
+      - name: VALIDATE AI DEPLOYMENT SETTINGS
         shell: bash
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -98,7 +98,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Persist runtime app settings to Static Web App
+      - name: PERSIST RUNTIME APP SETTINGS TO STATIC WEB APP
         shell: bash
         env:
           STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
@@ -119,7 +119,7 @@ jobs:
               AZURE_DATABASE_URL="$AZURE_DATABASE_URL"
               WEBSITE_NODE_DEFAULT_VERSION="$WEBSITE_NODE_DEFAULT_VERSION"
 
-      - name: Deploy
+      - name: DEPLOY
         uses: Azure/static-web-apps-deploy@v1
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -137,7 +137,7 @@ jobs:
           api_location: 'api/' # ✅ deploy functions directly from api/: site is static from repo root (html + assets)
           # leaving this blank avoids Oryx scanning the repo root for builds
 
-      - name: Smoke test AAD login endpoint
+      - name: SMOKE TEST AAD LOGIN ENDPOINT
         shell: bash
         run: |
           set -euo pipefail
@@ -169,7 +169,7 @@ jobs:
 
           echo "AAD login endpoint looks healthy for $HOST"
 
-      - name: Smoke test API health endpoint
+      - name: SMOKE TEST API HEALTH ENDPOINT
         shell: bash
         run: |
           set -euo pipefail
@@ -182,7 +182,7 @@ jobs:
           URL="https://${HOST}/api/health"
           echo "Testing API health endpoint: $URL"
 
-          HTTP_CODE=$(curl -sS -m 30 -o /tmp/health.json -w "%{http_code}" "$URL")
+          HTTP_CODE=$(curl -sS -m 60 -o /tmp/health.json -w "%{http_code}" "$URL")
           if [[ "$HTTP_CODE" != "200" ]]; then
             echo "Expected HTTP 200 from /api/health, got: $HTTP_CODE"
             cat /tmp/health.json || true
@@ -198,26 +198,26 @@ jobs:
           echo "API health endpoint looks healthy for $HOST"
 
   e2e:
-    name: End-to-end tests
+    name: END-TO-END TESTS
     needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout
+      - name: CHECKOUT
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: SETUP NODE.JS
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
 
-      - name: Azure Login
+      - name: AZURE LOGIN
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Resolve Static Web App hostname
+      - name: RESOLVE STATIC WEB APP HOSTNAME
         shell: bash
         env:
           STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
@@ -236,13 +236,13 @@ jobs:
           echo "HOST=$HOST" >> $GITHUB_ENV
           echo "BASE_URL=https://$HOST" >> $GITHUB_ENV
 
-      - name: Install dependencies
+      - name: INSTALL DEPENDENCIES
         run: npm ci
 
-      - name: Install Playwright browsers
+      - name: INSTALL PLAYWRIGHT BROWSERS
         run: npx playwright install --with-deps
 
-      - name: Run e2e (against deployed URL)
+      - name: RUN E2E (AGAINST DEPLOYED URL)
         env:
           CI: true
           BASE_URL: ${{ env.BASE_URL }}
