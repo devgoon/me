@@ -137,4 +137,25 @@ You can synchronize local environment keys into GitHub repository Secrets and Va
 make gh-sync-env REPO=devgoon/me ENV_FILE=.env.local
 ```
 
+## End-to-end tests (E2E)
+
+- Run the full Playwright e2e suite locally (starts the local app stack):
+
+```bash
+make e2e
+```
+
+- Run tests against a deployed preview (do NOT start the local stack):
+
+```bash
+# preferred: set HOST (CI uses this) or BASE_URL
+HOST=preview-app-name.azurestaticapps.net make e2e
+# or
+BASE_URL=https://preview.example.com make e2e
+```
+
+- Notes:
+  - `make e2e` will start the local SWA emulator and Azurite when no `BASE_URL`/`HOST` is provided. Ensure `nc` (netcat) is installed and `.env.local` contains any required storage settings (for example `AzureWebJobsStorage=UseDevelopmentStorage=true`) when running locally.
+  - In CI the deployment workflow sets `HOST`/`BASE_URL` after a successful deploy and the e2e job runs against the deployed site. The standalone e2e workflow has been removed so e2e only runs post-deploy (not on PRs/branch pushes).
+
 - The Make target will attempt to detect the repo if `REPO=` is not supplied, and it requires you to type `yes` to proceed.

@@ -1,4 +1,4 @@
-.PHONY: install lint spellcheck link-check unit-test coverage check start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
+.PHONY: e2e install lint spellcheck link-check unit-test coverage check start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
 
 install:
 	npm install
@@ -190,3 +190,5 @@ gh-sync-env:
 	printf "Proceed? Type 'yes' to continue: "; read ans; \
 	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
 	./scripts/gh-sync-env-to-gh.sh --env-file "$$ENV_FILE" --repo "$$REPO"
+e2e:
+	bash scripts/run-e2e.sh
