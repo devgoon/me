@@ -25,7 +25,8 @@
     "swiftui",
     "trustservercertificate",
     "valuenow",
-    "Wallingford"
+    "Wallingford",
+    "gitflow"
   ],
   "ignorePaths": [
     "**/node_modules/**",
@@ -36,6 +37,7 @@
     "db/**",
     "coverage/**",
     "api/coverage/**",
-    "tests/**"
+    "tests/**",
+    "playwright-report/**"
   ]
 }

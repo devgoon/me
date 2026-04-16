@@ -79,3 +79,4 @@ db/*.bacpac
 swa-dist/
 # Playwright HTML report
 playwright-report/
+test-results/
