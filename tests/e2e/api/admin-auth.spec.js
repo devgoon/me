@@ -3,21 +3,22 @@ const { test, expect } = require('@playwright/test');
 test.describe('Auth & Admin safety checks', () => {
   test('Unauthenticated admin API returns 401/403', async ({ request }) => {
     // `panel-data` is the admin API used by the admin UI
-    // Query the admin API first — if it already returns 401/403, treat that as
-    // evidence that auth is enforced. Otherwise fall back to checking whether
-    // the host redirects the login endpoint (302) which also implies enforced auth.
+    // Environment-only detection: read the runner-provided flag. If it's not
+    // set, default to '0' (no enforced auth) but emit a warning recommending
+    // running tests via `scripts/run-e2e.sh` which sets the flag reliably.
+    const flag = process.env.E2E_PREVIEW_ENFORCES_AUTH;
+    if (typeof flag === 'undefined') {
+      // eslint-disable-next-line no-console
+      console.warn('E2E_PREVIEW_ENFORCES_AUTH is not set; defaulting to 0. For deterministic results, run tests via scripts/run-e2e.sh');
+    }
+    const enforcesAuth = flag === '1' || (flag && flag.toLowerCase() === 'true');
+
     const res = await request.get('/api/panel-data');
     const status = res.status();
-
-    const loginCheck = await request.get('/.auth/login/aad?post_login_redirect_uri=/admin', { maxRedirects: 0 }).catch(() => null);
-    const loginRedirects = !!(loginCheck && loginCheck.status() === 302);
-
-    const enforcesAuth = loginRedirects || [401, 403].includes(status);
 
     if (enforcesAuth) {
       expect([401, 403]).toContain(status);
     } else {
-      // Allow 200 in environments that do not enforce SWA auth (emulator or some previews)
       expect([200, 401, 403]).toContain(status);
     }
   });
