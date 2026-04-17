@@ -7,20 +7,10 @@ printf "(env) BASE_URL='%s'\n" "${BASE_URL:-}"
 # If BASE_URL is provided (CI / deployed preview), don't start local stack.
 if [ -n "${BASE_URL:-}" ]; then
   echo "BASE_URL is set to ${BASE_URL}; running Playwright tests against remote host"
-  # Detect whether the preview enforces SWA auth so tests can adapt expectations.
-  # Check the admin API and the login redirect. Prefer the API response as truth.
-  TARGET="${BASE_URL%/}"
-  echo "Detecting preview auth behavior at ${TARGET}"
-  login_code=$(curl -s -o /dev/null -w "%{http_code}" "${TARGET}/.auth/login/aad?post_login_redirect_uri=/admin" || echo "000")
-  panel_code=$(curl -s -o /dev/null -w "%{http_code}" "${TARGET}/api/panel-data" || echo "000")
-  echo "login_code=${login_code} panel_code=${panel_code}"
-  if [ "${login_code}" = "302" ] || [ "${panel_code}" = "302" ] || [ "${panel_code}" = "401" ] || [ "${panel_code}" = "403" ]; then
-    export E2E_PREVIEW_ENFORCES_AUTH=1
-    echo "E2E_PREVIEW_ENFORCES_AUTH=1 (preview enforces auth)"
-  else
-    export E2E_PREVIEW_ENFORCES_AUTH=0
-    echo "E2E_PREVIEW_ENFORCES_AUTH=0 (preview may allow anonymous admin access)"
-  fi
+  # Expect the CI workflow to provide E2E_PREVIEW_ENFORCES_AUTH. Default to 0
+  # for backward compatibility if it's not present.
+  export E2E_PREVIEW_ENFORCES_AUTH=${E2E_PREVIEW_ENFORCES_AUTH:-0}
+  echo "E2E_PREVIEW_ENFORCES_AUTH=${E2E_PREVIEW_ENFORCES_AUTH}"
   if npm run test:e2e; then
     RESULT=0
   else
