@@ -246,6 +246,7 @@ jobs:
         env:
           CI: true
           BASE_URL: ${{ env.BASE_URL }}
+          E2E_PREVIEW_ENFORCES_AUTH: '1'
         run: |
           set -e
           echo "Using BASE_URL=${BASE_URL}"

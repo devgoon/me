@@ -13,13 +13,22 @@ test.describe('Auth & Admin safety checks', () => {
     }
     const enforcesAuth = flag === '1' || (flag && flag.toLowerCase() === 'true');
 
-    const res = await request.get('/api/panel-data');
+    // Request the admin API without following redirects so we can observe 302s.
+    let res;
+    try {
+      res = await request.get('/api/panel-data', { maxRedirects: 0 });
+    } catch (e) {
+      // If the request helper throws (some environments), fall back to a
+      // normal GET to obtain the final status code.
+      res = await request.get('/api/panel-data');
+    }
     const status = res.status();
 
     if (enforcesAuth) {
-      expect([401, 403]).toContain(status);
+      // Enforced auth: expect the admin API to deny or redirect unauthenticated requests.
+      expect([401, 403, 302]).toContain(status);
     } else {
-      expect([200, 401, 403]).toContain(status);
+      expect([200, 401, 403, 302]).toContain(status);
     }
   });
 
