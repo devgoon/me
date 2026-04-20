@@ -21,7 +21,9 @@ test.describe('Chat widget UI', () => {
           }
         }
         // wait for page to reflect AI mode
-        await page.waitForFunction(() => document.body && document.body.classList.contains('ai-mode'));
+        await page.waitForFunction(
+          () => document.body && document.body.classList.contains('ai-mode')
+        );
       }
     }
 
@@ -57,7 +59,9 @@ test.describe('Chat widget UI', () => {
             await expect(modal).toHaveAttribute('aria-hidden', 'true');
           }
         }
-        await page.waitForFunction(() => document.body && document.body.classList.contains('ai-mode'));
+        await page.waitForFunction(
+          () => document.body && document.body.classList.contains('ai-mode')
+        );
       }
     }
 

@@ -1,10 +1,7 @@
-// assets/js/experience.js
-// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
 if (typeof require === 'function') {
   require('./fetch-utils.js');
 }
-// `fetch-utils.js` is loaded globally from HTML; per-file sync loaders removed.
-// Fetches experience data from /api/experience and renders it into the page.
+
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
     const listEl = document.getElementById('experience-list');
@@ -12,7 +9,6 @@ if (typeof require === 'function') {
     if (!listEl) return;
 
     if (loadingEl) {
-      // show and set a snarky loading message if available
       loadingEl.style.display = '';
       try {
         if (typeof window !== 'undefined' && typeof window.getLoadingMessage === 'function') {
@@ -22,13 +18,8 @@ if (typeof require === 'function') {
         /* ignore */
       }
     }
-
-    // Experience loading placeholder now shows plain text; chat bubble removed
-
-    // Use centralized apiFetch (with retries/backoff) when available, otherwise fall back
     async function loadExperienceFromApi() {
       try {
-        // Use centralized apiFetch (required). Remove defensive fallbacks.
         const res = await apiFetch(
           '/api/experience?skipAI=1',
           { method: 'GET' },
@@ -48,13 +39,49 @@ if (typeof require === 'function') {
     }
 
     (async function () {
+      try {
+        let defaults = null;
+        try {
+          const resp = await fetch('/_shared/default-data.json', { cache: 'no-store' });
+          if (resp && resp.ok) {
+            const json = await resp.json();
+            if (json && json.experience && Array.isArray(json.experience.experiences)) {
+              defaults = json.experience;
+              console.log('[experience] loaded default data from /_shared/default-data.json');
+            } else if (json && Array.isArray(json.experiences)) {
+              defaults = json;
+              console.log('[experience] loaded default data from /_shared/default-data.json');
+            }
+          }
+        } catch (err) {
+          console.error(
+            '[experience] failed to load defaults from /_shared/default-data.json',
+            err
+          );
+        }
+
+        if (defaults) {
+          renderExperience(defaults.experiences || defaults.experience || [], listEl);
+        }
+      } catch (err) {
+        console.warn(
+          '[experience] failed to render defaults',
+          err && err.message ? err.message : err
+        );
+      }
+
       const experiences = await loadExperienceFromApi();
       if (loadingEl) loadingEl.style.display = 'none';
       if (!experiences) {
         if (loadingEl) loadingEl.textContent = 'Unable to load experience.';
-        renderExperience([], listEl);
+        console.log('[experience] keeping default data (API unavailable)');
         return;
       }
+      console.info(
+        '[experience] API returned, overriding defaults with',
+        (experiences || []).length,
+        'items'
+      );
       renderExperience(experiences || [], listEl);
     })();
 
@@ -70,7 +97,6 @@ if (typeof require === 'function') {
 
     function renderExperience(experiences, container) {
       container.innerHTML = '';
-      // Sort so current work experiences appear first
       var sorted = (Array.isArray(experiences) ? experiences.slice() : []).sort(function (a, b) {
         if (!!a.isCurrent === !!b.isCurrent) return 0;
         return a.isCurrent ? -1 : 1;

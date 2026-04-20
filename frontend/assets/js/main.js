@@ -2,13 +2,10 @@
  * @fileoverview Minimal main script for homepage interactions and chat toggle.
  * @module frontend/assets/js/main.js
  */
-// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
 if (typeof require === 'function') {
   require('./fetch-utils.js');
 }
-// `fetch-utils.js` is loaded globally from HTML; per-file sync loaders removed.
 
-// Minimal main script to ensure homepage removes preloader and chat toggles
 (function () {
   'use strict';
   function select(sel) {
@@ -44,8 +41,6 @@ if (typeof require === 'function') {
   if (chatOverlay) chatOverlay.addEventListener('click', closeChat);
 })();
 
-// Dynamic loading of hero company badges removed — keep static badges in HTML
-
 // Handle images in the Certifications section without using inline event handlers
 document.addEventListener('DOMContentLoaded', function () {
   try {
@@ -79,9 +74,6 @@ document.addEventListener('DOMContentLoaded', function () {
  */
 (function () {
   'use strict';
-  /**
-   * Easy selector helper function
-   */
   const select = (el, all = false) => {
     el = el.trim();
     if (all) {
@@ -90,9 +82,6 @@ document.addEventListener('DOMContentLoaded', function () {
       return document.querySelector(el);
     }
   };
-  /**
-   * Easy event listener function
-   */
   const on = (type, el, listener, all = false) => {
     let selectEl = select(el, all);
     if (selectEl) {
@@ -103,9 +92,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   };
-  /**
-   * Easy on scroll event listener
-   */
   const onscroll = (el, listener) => {
     el.addEventListener('scroll', listener);
   };
@@ -264,9 +250,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   });
-  /**
-   * Navbar links active state on scroll
-   */
   let navbarlinks = select('#navbar .scrollto', true);
   const navbarlinksActive = () => {
     let position = window.scrollY + 200;
@@ -283,9 +266,6 @@ document.addEventListener('DOMContentLoaded', function () {
   };
   window.addEventListener('load', navbarlinksActive);
   onscroll(document, navbarlinksActive);
-  /**
-   * Scrolls to an element with header offset
-   */
   const scrollto = (el) => {
     let elementPos = select(el).offsetTop;
     window.scrollTo({
@@ -293,9 +273,6 @@ document.addEventListener('DOMContentLoaded', function () {
       behavior: 'smooth',
     });
   };
-  /**
-   * Back to top button
-   */
   let backtotop = select('.back-to-top');
   if (backtotop) {
     // Hide the floating back-to-top on admin pages
@@ -327,17 +304,11 @@ document.addEventListener('DOMContentLoaded', function () {
       onscroll(document, toggleBacktotop);
     }
   }
-  /**
-   * Mobile nav toggle
-   */
   on('click', '.mobile-nav-toggle', function (_e) {
     select('body').classList.toggle('mobile-nav-active');
     this.classList.toggle('bi-list');
     this.classList.toggle('bi-x');
   });
-  /**
-   * Scroll with offset on links with a class name .scrollto
-   */
   on(
     'click',
     '.scrollto',
@@ -356,9 +327,6 @@ document.addEventListener('DOMContentLoaded', function () {
     },
     true
   );
-  /**
-   * Scroll with offset on page load with hash links in the url
-   */
   window.addEventListener('load', () => {
     if (window.location.hash) {
       if (select(window.location.hash)) {
@@ -366,18 +334,12 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   });
-  /**
-   * Preloader
-   */
   let preloader = select('#preloader');
   if (preloader) {
     window.addEventListener('load', () => {
       preloader.remove();
     });
   }
-  /**
-   * Hero type effect
-   */
   const typed = select('.typed');
   if (typed) {
     let typed_strings = typed.getAttribute('data-typed-items');
@@ -390,9 +352,6 @@ document.addEventListener('DOMContentLoaded', function () {
       backDelay: 2000,
     });
   }
-  /**
-   * Skills animation
-   */
   let skillsContent = select('.skills-content');
   if (skillsContent) {
     new Waypoint({
@@ -406,9 +365,6 @@ document.addEventListener('DOMContentLoaded', function () {
       },
     });
   }
-  /**
-   * Portfolio isotope and filter
-   */
   window.addEventListener('load', () => {
     let portfolioContainer = select('.portfolio-container');
     if (portfolioContainer) {
@@ -436,17 +392,8 @@ document.addEventListener('DOMContentLoaded', function () {
       );
     }
   });
-  /**
-   * Initiate portfolio lightbox
-   */
   GLightbox({ selector: '.portfolio-lightbox' });
-  /**
-   * Initiate portfolio details lightbox
-   */
   GLightbox({ selector: '.portfolio-details-lightbox', width: '90%', height: '90vh' });
-  /**
-   * Portfolio details slider
-   */
   new Swiper('.portfolio-details-slider', {
     speed: 400,
     loop: true,
@@ -460,9 +407,6 @@ document.addEventListener('DOMContentLoaded', function () {
       clickable: true,
     },
   });
-  /**
-   * Testimonials slider
-   */
   new Swiper('.testimonials-slider', {
     speed: 600,
     loop: true,
@@ -477,9 +421,6 @@ document.addEventListener('DOMContentLoaded', function () {
       clickable: true,
     },
   });
-  /**
-   * Animation on scroll
-   */
   window.addEventListener('load', () => {
     AOS.init({
       duration: 1000,
@@ -488,13 +429,7 @@ document.addEventListener('DOMContentLoaded', function () {
       mirror: false,
     });
   });
-  /**
-   * Initiate Pure Counter
-   */
   new PureCounter();
-  /**
-   * Ask AI slide-in chat
-   */
   // Bind chat handlers after the DOM is ready so elements inserted after scripts are available
   document.addEventListener('DOMContentLoaded', function () {
     const chatToggle = select('#ask-ai-toggle');
@@ -571,7 +506,6 @@ document.addEventListener('DOMContentLoaded', function () {
       typingIndicatorEl = null;
     };
     const callChatApi = async (prompt) => {
-      // Use centralized apiFetch (required). Remove defensive fallbacks.
       const response = await apiFetch(
         '/api/chat',
         {

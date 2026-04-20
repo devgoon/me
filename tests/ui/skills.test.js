@@ -15,12 +15,32 @@ test('skills.js populates skill tag columns from API', async () => {
     <div id="skill-tags-broader"></div>
   `;
 
-  // Mock fetch to return a skills payload
-  // Provide apiFetch (used by the frontend) which resolves like fetch
-  global.apiFetch = jest.fn().mockResolvedValue({
-    ok: true,
-    json: async () => ({ skills: { strong: ['Node.js', 'JS'], moderate: ['Go'] } }),
+  global.fetch = jest.fn().mockImplementation((url) => {
+    if (String(url) === '/_shared/default-data.json') {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          skills: { strong: [{ label: 'FallbackNode' }], moderate: ['FallbackGo'] },
+        }),
+      });
+    }
+    throw new Error('Unexpected fetch url: ' + url);
   });
+
+  // Provide apiFetch (used by the frontend) which resolves after a short delay
+  global.apiFetch = window.apiFetch = jest.fn().mockImplementation(
+    () =>
+      new Promise((res) =>
+        setTimeout(
+          () =>
+            res({
+              ok: true,
+              json: async () => ({ skills: { strong: ['Node.js', 'JS'], moderate: ['Go'] } }),
+            }),
+          50
+        )
+      )
+  );
 
   // Require the script which attaches DOMContentLoaded listener
   require('../../frontend/assets/js/skills.js');
@@ -28,22 +48,29 @@ test('skills.js populates skill tag columns from API', async () => {
   // Simulate DOMContentLoaded
   document.dispatchEvent(new Event('DOMContentLoaded'));
 
-  // Wait for async work
+  // Allow microtasks so defaults render immediately
   await new Promise((r) => setTimeout(r, 0));
 
   const cur = document.getElementById('skill-tags-current');
   const bro = document.getElementById('skill-tags-broader');
   expect(cur).toBeTruthy();
   expect(bro).toBeTruthy();
-  // Now the columns should contain rendered tags
+  // Defaults should be rendered first (before API resolves)
+  expect(cur.textContent).toMatch(/FallbackNode/);
+  expect(bro.textContent).toMatch(/FallbackGo/);
+
+  // Wait for API override and verify API-rendered values appear
+  await new Promise((r) => setTimeout(r, 80));
   expect(cur.textContent).toMatch(/Node.js/);
   expect(cur.textContent).toMatch(/JS/);
   expect(bro.textContent).toMatch(/Go/);
 
+  delete global.fetch;
   delete global.apiFetch;
+  delete window.apiFetch;
 });
 
-test('skills.js falls back to window.SKILLS_DATA and shows warning', async () => {
+test('skills.js keeps JSON defaults and shows warning when API is unavailable', async () => {
   document.body.innerHTML = `
     <div class="skills">
       <h2 class="section-title">Skills</h2>
@@ -52,10 +79,18 @@ test('skills.js falls back to window.SKILLS_DATA and shows warning', async () =>
     <div id="skill-tags-broader"></div>
   `;
 
-  // Mock apiFetch to fail
-  global.apiFetch = jest.fn().mockResolvedValue({ ok: false });
-  // Provide fallback data with object items
-  window.SKILLS_DATA = { strong: [{ label: 'S1' }, { description: 'S2' }], moderate: ['M1'] };
+  global.fetch = jest.fn().mockImplementation((url) => {
+    if (String(url) === '/_shared/default-data.json') {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          skills: { strong: [{ label: 'S1' }, { description: 'S2' }], moderate: ['M1'] },
+        }),
+      });
+    }
+    throw new Error('Unexpected fetch url: ' + url);
+  });
+  global.apiFetch = window.apiFetch = jest.fn().mockResolvedValue({ ok: false });
 
   require('../../frontend/assets/js/skills.js');
   document.dispatchEvent(new Event('DOMContentLoaded'));
@@ -70,6 +105,7 @@ test('skills.js falls back to window.SKILLS_DATA and shows warning', async () =>
   const note = document.querySelector('.skills-load-warning');
   expect(note).toBeTruthy();
 
+  delete global.fetch;
   delete global.apiFetch;
-  delete window.SKILLS_DATA;
+  delete window.apiFetch;
 });

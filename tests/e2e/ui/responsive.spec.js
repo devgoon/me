@@ -11,7 +11,9 @@ test('Mobile menu and critical elements usable at small viewport', async ({ page
     if (pre && pre.parentNode) pre.parentNode.removeChild(pre);
     const backdrop = document.querySelector('.modal-backdrop');
     if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
-    try { document.body.classList.remove('modal-open'); } catch (e) {}
+    try {
+      document.body.classList.remove('modal-open');
+    } catch (e) {}
   });
   const toggle = page.locator('.mobile-nav-toggle');
   if (await toggle.count()) {
