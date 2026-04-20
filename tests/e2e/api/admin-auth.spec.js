@@ -9,7 +9,9 @@ test.describe('Auth & Admin safety checks', () => {
     const flag = process.env.E2E_PREVIEW_ENFORCES_AUTH;
     if (typeof flag === 'undefined') {
       // eslint-disable-next-line no-console
-      console.warn('E2E_PREVIEW_ENFORCES_AUTH is not set; defaulting to 0. For deterministic results, run tests via scripts/run-e2e.sh');
+      console.warn(
+        'E2E_PREVIEW_ENFORCES_AUTH is not set; defaulting to 0. For deterministic results, run tests via scripts/run-e2e.sh'
+      );
     }
     const enforcesAuth = flag === '1' || (flag && flag.toLowerCase() === 'true');
 
@@ -32,9 +34,11 @@ test.describe('Auth & Admin safety checks', () => {
     }
   });
 
-  test('Auth login endpoint redirects (deployed) or returns 200 (emulator)', async ({ request }) => {
+  test('Auth login endpoint redirects (deployed) or returns 200 (emulator)', async ({
+    request,
+  }) => {
     const url = '/.auth/login/aad?post_login_redirect_uri=/admin';
-    const res = await request.get(url, { maxRedirects: 0 }).catch(e => {
+    const res = await request.get(url, { maxRedirects: 0 }).catch((e) => {
       // Some environments may throw on strict redirect handling; fallback to a normal GET
       return request.get(url);
     });

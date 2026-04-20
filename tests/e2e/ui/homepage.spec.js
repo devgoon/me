@@ -11,7 +11,9 @@ test('Homepage loads and shows primary regions', async ({ page }) => {
     if (pre && pre.parentNode) pre.parentNode.removeChild(pre);
     const backdrop = document.querySelector('.modal-backdrop');
     if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
-    try { document.body.classList.remove('modal-open'); } catch (e) {}
+    try {
+      document.body.classList.remove('modal-open');
+    } catch (e) {}
   });
   // Main structural elements
   await expect(page.locator('nav')).toBeVisible();

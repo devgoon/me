@@ -14,7 +14,9 @@ test.skip('Primary nav links navigate to pages (classic mode)', async ({ page })
     if (pressed === 'true') {
       await aiToggle.click();
       // wait briefly for classic mode to apply
-      await page.waitForFunction(() => !document.body.classList.contains('ai-mode'), { timeout: 5000 }).catch(() => {});
+      await page
+        .waitForFunction(() => !document.body.classList.contains('ai-mode'), { timeout: 5000 })
+        .catch(() => {});
     }
   }
 
@@ -26,7 +28,9 @@ test.skip('Primary nav links navigate to pages (classic mode)', async ({ page })
     if (pre && pre.parentNode) pre.parentNode.removeChild(pre);
     const backdrop = document.querySelector('.modal-backdrop');
     if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
-    try { document.body.classList.remove('modal-open'); } catch (e) {}
+    try {
+      document.body.classList.remove('modal-open');
+    } catch (e) {}
   });
 
   const links = [

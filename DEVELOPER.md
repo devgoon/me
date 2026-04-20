@@ -155,6 +155,7 @@ BASE_URL=https://preview.example.com make e2e
 ```
 
 - Notes:
+
   - `make e2e` will start the local SWA emulator and Azurite when no `BASE_URL`/`HOST` is provided. Ensure `nc` (netcat) is installed and `.env.local` contains any required storage settings (for example `AzureWebJobsStorage=UseDevelopmentStorage=true`) when running locally.
   - In CI the deployment workflow sets `HOST`/`BASE_URL` after a successful deploy and the e2e job runs against the deployed site. The standalone e2e workflow has been removed so e2e only runs post-deploy (not on PRs/branch pushes).
 

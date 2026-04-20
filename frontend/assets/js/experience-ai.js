@@ -196,6 +196,50 @@ if (typeof require === 'function') {
     ].join('');
   }
   async function loadData() {
+    // First, try to load placeholder/default experience data so the UI isn't empty while the API responds.
+    try {
+      let defaults = null;
+      try {
+        const res = await fetch('/_shared/default-data.json', { cache: 'no-store' });
+        if (res && res.ok) {
+          const json = await res.json();
+          defaults = json && json.experience ? json.experience : null;
+          if (defaults) {
+            console.log('[experience] loaded default data from /_shared/default-data.json');
+          } else {
+            console.warn(
+              '[experience] defaults file loaded but json.experience was missing or invalid'
+            );
+          }
+        } else {
+          console.warn(
+            '[experience] failed to load defaults from /_shared/default-data.json',
+            res && res.status
+          );
+        }
+      } catch (err) {
+        console.error('[experience] failed to load defaults from /_shared/default-data.json', err);
+      }
+
+      if (defaults) {
+        try {
+          renderExperience(defaults.experiences || []);
+          renderSkills(defaults.skills || { strong: [], moderate: [], gap: [] });
+        } catch (err) {
+          console.warn(
+            '[experience] failed to render default data',
+            err && err.message ? err.message : err
+          );
+        }
+      }
+    } catch (err) {
+      console.warn(
+        '[experience] error while loading defaults',
+        err && err.message ? err.message : err
+      );
+    }
+
+    // Show loading spinners while we request the live payload
     const spinnerExperienceHtml = `
             <div class="typing-dots" role="status" aria-live="polite" aria-busy="true">
               <span class="dot" aria-hidden="true"></span>
@@ -212,8 +256,16 @@ if (typeof require === 'function') {
               <span class="visually-hidden">Analyzing skills and interests…</span>
             </div>
           `;
-    experienceList.innerHTML = `<article class="role-card" style="text-align:left;padding:24px">${spinnerExperienceHtml}</article>`;
-    skillsList.innerHTML = `<article class="role-card" style="text-align:left;padding:24px">${spinnerSkillsHtml}</article>`;
+    // Append spinners (don't wipe out defaults if present)
+    experienceList.insertAdjacentHTML(
+      'afterbegin',
+      `<article class="role-card" style="text-align:left;padding:24px">${spinnerExperienceHtml}</article>`
+    );
+    skillsList.insertAdjacentHTML(
+      'afterbegin',
+      `<article class="role-card" style="text-align:left;padding:24px">${spinnerSkillsHtml}</article>`
+    );
+
     try {
       // Always request server-side cached payload (server stores in ai_response_cache)
       const response = await apiFetch(
@@ -234,8 +286,15 @@ if (typeof require === 'function') {
         errorNode.textContent =
           'The API is a bit cold. Please try refreshing the page in a few moments.';
       }
-      experienceList.innerHTML = '';
-      skillsList.innerHTML = '';
+      // If API fails, keep the defaults (do not clear), but remove spinners if they remain
+      try {
+        const spinners = experienceList.querySelectorAll('.typing-dots');
+        spinners.forEach((s) => s.parentElement && s.parentElement.remove());
+      } catch (e) {}
+      try {
+        const spinners2 = skillsList.querySelectorAll('.typing-dots');
+        spinners2.forEach((s) => s.parentElement && s.parentElement.remove());
+      } catch (e) {}
     }
   }
   // Ensure we don't attach duplicate handlers if the script is evaluated multiple times (tests)

@@ -22,13 +22,8 @@ if (typeof require === 'function') {
         /* ignore */
       }
     }
-
-    // Experience loading placeholder now shows plain text; chat bubble removed
-
-    // Use centralized apiFetch (with retries/backoff) when available, otherwise fall back
     async function loadExperienceFromApi() {
       try {
-        // Use centralized apiFetch (required). Remove defensive fallbacks.
         const res = await apiFetch(
           '/api/experience?skipAI=1',
           { method: 'GET' },
@@ -48,13 +43,52 @@ if (typeof require === 'function') {
     }
 
     (async function () {
+      // Render defaults first so the page isn't empty while API responds
+      try {
+        let defaults = null;
+        try {
+          const resp = await fetch('/_shared/default-data.json', { cache: 'no-store' });
+          if (resp && resp.ok) {
+            const json = await resp.json();
+            if (json && json.experience && Array.isArray(json.experience.experiences)) {
+              defaults = json.experience;
+              console.log('[experience] loaded default data from /_shared/default-data.json');
+            } else (
+              json &&
+              (Array.isArray(json.experiences) || Array.isArray(json.experience))
+            ) 
+          }
+        } catch (err) {
+          console.error(
+            '[experience] failed to load defaults from /_shared/default-data.json',
+            err
+          );
+          // canonical frontend defaults unavailable
+        }
+
+        if (defaults) {
+          renderExperience(defaults.experiences || defaults.experience || [], listEl);
+        }
+      } catch (err) {
+        console.warn(
+          '[experience] failed to render defaults',
+          err && err.message ? err.message : err
+        );
+      }
+
+      // Then fetch live data and override defaults when available
       const experiences = await loadExperienceFromApi();
       if (loadingEl) loadingEl.style.display = 'none';
       if (!experiences) {
         if (loadingEl) loadingEl.textContent = 'Unable to load experience.';
-        renderExperience([], listEl);
+        console.log('[experience] keeping default data (API unavailable)');
         return;
       }
+      console.info(
+        '[experience] API returned, overriding defaults with',
+        (experiences || []).length,
+        'items'
+      );
       renderExperience(experiences || [], listEl);
     })();
 

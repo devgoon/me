@@ -17,6 +17,7 @@
     "coverage": "jest --coverage --coverageReporters=text --coverageReporters=text-summary --runInBand",
     "coverage:api": "cd api && npm run coverage",
     "coverage:assets": "cd frontend/assets && npm run coverage || true",
+    "update-default-data": "node scripts/update-default-data.js",
     "lint": "npx eslint@8 \"api/**/*.js\" \"frontend/assets/js/**/*.js\" --ext .js --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.js\"",
     "lint:fix": "npx eslint@8 \"api/**/*.js\" \"frontend/assets/js/**/*.js\" --ext .js --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.js\" --fix"
   },
@@ -34,7 +35,9 @@
     "testMatch": [
       "<rootDir>/tests/**/*.test.js"
     ],
-    "testPathIgnorePatterns": ["<rootDir>/tests/e2e/"],
+    "testPathIgnorePatterns": [
+      "<rootDir>/tests/e2e/"
+    ],
     "setupFiles": [
       "<rootDir>/tests/setupTests.js"
     ],

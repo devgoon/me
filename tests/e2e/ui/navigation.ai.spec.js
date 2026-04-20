@@ -21,7 +21,9 @@ test.skip('Primary nav links navigate to pages (AI mode)', async ({ page }) => {
           await expect(modal).toHaveAttribute('aria-hidden', 'true');
         }
       }
-      await page.waitForFunction(() => document.body && document.body.classList.contains('ai-mode'));
+      await page.waitForFunction(
+        () => document.body && document.body.classList.contains('ai-mode')
+      );
     }
   }
   // Prevent mode switch and overlays from intercepting pointer events during nav clicks
@@ -32,7 +34,9 @@ test.skip('Primary nav links navigate to pages (AI mode)', async ({ page }) => {
     if (pre && pre.parentNode) pre.parentNode.removeChild(pre);
     const backdrop = document.querySelector('.modal-backdrop');
     if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
-    try { document.body.classList.remove('modal-open'); } catch (e) {}
+    try {
+      document.body.classList.remove('modal-open');
+    } catch (e) {}
   });
   // Try a few primary links; tolerate either text or href-based navigation
   const links = [
