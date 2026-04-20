@@ -1,6 +1,3 @@
-// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
-
-// This uses a conditional require so browsers aren't affected.
 if (typeof require === 'function') {
   try {
     require('./fetch-utils.js');
@@ -44,14 +41,11 @@ if (typeof require === 'function') {
       }
     }
 
-    // apiFetch is required; defensive fallbacks removed.
-
     let skillsApiError = null;
 
     async function loadSkillsFromApi() {
       skillsApiError = null;
       try {
-        // Use centralized apiFetch (required). Remove defensive fallbacks.
         const res = await apiFetch(
           '/api/skills',
           { method: 'GET', headers: { Accept: 'application/json' } },
@@ -76,7 +70,6 @@ if (typeof require === 'function') {
       var cur = document.getElementById('skill-tags-current');
       var bro = document.getElementById('skill-tags-broader');
 
-      // First: render default skills immediately so UI isn't empty while API responds.
       try {
         let defaults = null;
         try {
@@ -99,7 +92,6 @@ if (typeof require === 'function') {
         console.warn('[skills] failed to render defaults', err && err.message ? err.message : err);
       }
 
-      // Now fetch API and override defaults when live data arrives
       var data = await loadSkillsFromApi();
       if (data) {
         console.info(
@@ -111,7 +103,6 @@ if (typeof require === 'function') {
         render('skill-tags-current', Array.isArray(data.strong) ? data.strong : []);
         render('skill-tags-broader', Array.isArray(data.moderate) ? data.moderate : []);
       } else {
-        // API failed; keep defaults and show warning
         console.error('[skills] API load failed', skillsApiError);
         console.log('[skills] keeping default skills (API unavailable)');
         try {
@@ -133,8 +124,6 @@ if (typeof require === 'function') {
         }
       }
     }
-    // end of mainSkills
-    // end of mainSkills
     if (typeof document !== 'undefined' && document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', onDomReady);
     } else {
@@ -143,7 +132,6 @@ if (typeof require === 'function') {
       } catch (e) {}
     }
   }
-  // `fetch-utils.js` is loaded globally from HTML; simply initialize.
   try {
     mainSkills();
   } catch (e) {}

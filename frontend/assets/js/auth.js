@@ -1,9 +1,7 @@
 // @ts-nocheck
-// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
 if (typeof require === 'function') {
   require('./fetch-utils.js');
 }
-// `fetch-utils.js` is loaded globally from HTML; per-file sync loaders removed.
 /**
  * @fileoverview Authentication UI script used on the login page.
  * @module frontend/assets/js/auth.js
@@ -32,7 +30,6 @@ if (typeof require === 'function') {
   }
   async function checkSession() {
     try {
-      // Use centralized apiFetch (required). Remove defensive fallbacks.
       const opts = { credentials: 'include' };
       const response = await apiFetch('/api/auth/me', opts, {
         timeoutMs: 15000,

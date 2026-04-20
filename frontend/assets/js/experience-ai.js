@@ -1,9 +1,7 @@
 // @ts-nocheck
-// Ensure the frontend fetch helper is loaded so `apiFetch` is present in test/node environments
 if (typeof require === 'function') {
   require('./fetch-utils.js');
 }
-// `fetch-utils.js` is loaded globally from HTML; per-file sync loaders removed.
 /**
  * @fileoverview Experience AI UI utilities for rendering AI-generated experience summaries.
  * @module frontend/assets/js/experience-ai.js
@@ -15,7 +13,6 @@ if (typeof require === 'function') {
   if (!experienceList || !skillsList) {
     return;
   }
-  // Caching moved to server-side `ai_response_cache`; always fetch live payload
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, '&amp;')
@@ -77,7 +74,6 @@ if (typeof require === 'function') {
     return [];
   }
   function renderExperience(experiences) {
-    // Sort experiences: current items first, then most-recent `startDate` first, then `endDate`.
     const sorted = (experiences || []).slice().sort((a, b) => {
       if (!!a.isCurrent !== !!b.isCurrent) return a.isCurrent ? -1 : 1;
 
@@ -154,20 +150,16 @@ if (typeof require === 'function') {
     `;
   }
   function renderSkills(skills) {
-    // Normalize arrays
     const strong = skills.strong || [];
     const moderate = skills.moderate || [];
     const gaps = skills.gaps || skills.gap || [];
 
-    // gaps may be strings or objects. Partition into "interested" and "not interested"
     const interested = [];
     const notInterested = [];
     gaps.forEach((g) => {
       if (!g) return;
-      // object: prefer description/whyItsAGap
       const text =
         typeof g === 'string' ? g : g.description || g.whyItsAGap || g.text || g.label || '';
-      // Determine explicit interest flags (support camelCase and snake_case)
       const isTrue =
         g &&
         (g.interested === true ||
@@ -183,7 +175,6 @@ if (typeof require === 'function') {
       } else if (isFalse) {
         notInterested.push(text);
       } else {
-        // default: treat string gaps or unspecified as not interested
         if (typeof g === 'string') notInterested.push(text);
       }
     });
@@ -196,7 +187,6 @@ if (typeof require === 'function') {
     ].join('');
   }
   async function loadData() {
-    // First, try to load placeholder/default experience data so the UI isn't empty while the API responds.
     try {
       let defaults = null;
       try {
@@ -239,7 +229,6 @@ if (typeof require === 'function') {
       );
     }
 
-    // Show loading spinners while we request the live payload
     const spinnerExperienceHtml = `
             <div class="typing-dots" role="status" aria-live="polite" aria-busy="true">
               <span class="dot" aria-hidden="true"></span>
@@ -256,7 +245,6 @@ if (typeof require === 'function') {
               <span class="visually-hidden">Analyzing skills and interests…</span>
             </div>
           `;
-    // Append spinners (don't wipe out defaults if present)
     experienceList.insertAdjacentHTML(
       'afterbegin',
       `<article class="role-card" style="text-align:left;padding:24px">${spinnerExperienceHtml}</article>`
@@ -267,7 +255,6 @@ if (typeof require === 'function') {
     );
 
     try {
-      // Always request server-side cached payload (server stores in ai_response_cache)
       const response = await apiFetch(
         '/api/experience',
         { method: 'GET' },
@@ -277,7 +264,6 @@ if (typeof require === 'function') {
         throw new Error(`Request failed (${response.status})`);
       }
       const data = await response.json();
-      // Server maintains cache in `ai_response_cache`; client does not persist.
       renderExperience(data.experiences || []);
       renderSkills(data.skills || { strong: [], moderate: [], gap: [] });
     } catch (error) {
@@ -286,7 +272,6 @@ if (typeof require === 'function') {
         errorNode.textContent =
           'The API is a bit cold. Please try refreshing the page in a few moments.';
       }
-      // If API fails, keep the defaults (do not clear), but remove spinners if they remain
       try {
         const spinners = experienceList.querySelectorAll('.typing-dots');
         spinners.forEach((s) => s.parentElement && s.parentElement.remove());
@@ -297,19 +282,13 @@ if (typeof require === 'function') {
       } catch (e) {}
     }
   }
-  // Ensure we don't attach duplicate handlers if the script is evaluated multiple times (tests)
   const clickHandler = function (event) {
     let button = null;
     try {
-      // event.target can be a Text node in some jsdom cases; normalize to an Element
       let target = event.target;
       if (target && typeof target.closest !== 'function') {
         target = target.parentElement || target;
       }
-      // debug info for jsdom event targets (removed once stable)
-      try {
-        console.debug('[exp-ai] click target', target && target.nodeName);
-      } catch (e) {}
       button =
         target && typeof target.closest === 'function'
           ? target.closest('.ai-context-toggle')
@@ -318,7 +297,6 @@ if (typeof require === 'function') {
         return;
       }
     } catch (err) {
-      // If anything goes wrong reading the event, don't break the page
       return;
     }
     const targetId = button.getAttribute('data-target');
@@ -333,16 +311,6 @@ if (typeof require === 'function') {
     button.setAttribute('aria-expanded', String(!isExpanded));
     button.textContent = isExpanded ? '✨ Show AI Context' : '✨ Hide AI Context';
     panel.hidden = isExpanded;
-    try {
-      // debug state after toggle
-
-      console.debug('[exp-ai] toggled', {
-        id: targetId,
-        aria: button.getAttribute('aria-expanded'),
-        text: button.textContent,
-        hidden: panel.hidden,
-      });
-    } catch (e) {}
   };
   if (document.__experienceAiClickHandler) {
     document.removeEventListener('click', document.__experienceAiClickHandler);
