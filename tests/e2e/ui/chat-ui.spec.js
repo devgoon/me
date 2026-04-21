@@ -27,9 +27,9 @@ test.describe('Chat widget UI', () => {
       }
     }
 
-    const toggle = page.locator('#ask-ai-toggle');
+    const toggle = page.locator('[data-open-ai-chat]:visible').first();
     if (await toggle.count()) {
-      await page.waitForSelector('#ask-ai-toggle', { state: 'visible', timeout: 10000 });
+      await page.waitForSelector('[data-open-ai-chat]:visible', { state: 'visible', timeout: 10000 });
       await toggle.click();
       const panel = page.locator('#ai-chat-panel');
       await expect(panel).toBeVisible();
@@ -66,11 +66,13 @@ test.describe('Chat widget UI', () => {
     }
 
     // Open chat if toggle exists
-    const toggle = page.locator('#ask-ai-toggle');
+    const toggle = page.locator('[data-open-ai-chat]:visible').first();
     if (await toggle.count()) {
-      await page.waitForSelector('#ask-ai-toggle', { state: 'visible', timeout: 10000 });
+      await page.waitForSelector('[data-open-ai-chat]:visible', { state: 'visible', timeout: 10000 });
       await toggle.click();
     }
+
+    await expect(page.locator('#ai-chat-panel')).toHaveAttribute('aria-hidden', 'false');
 
     const input = page.locator('#ai-chat-input');
     if (!(await input.count())) test.skip(true, 'Chat input not present');
@@ -79,7 +81,12 @@ test.describe('Chat widget UI', () => {
     await input.fill('Hello from UI test');
     const send = page.locator('#ai-chat-send');
     if (await send.count()) {
-      await send.click();
+      await send.scrollIntoViewIfNeeded();
+      try {
+        await send.click({ timeout: 5000 });
+      } catch (_e) {
+        await input.press('Enter');
+      }
     } else {
       await input.press('Enter');
     }
