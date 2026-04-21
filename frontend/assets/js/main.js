@@ -26,7 +26,8 @@ if (typeof require === 'function') {
   var chatPanel = select('#ai-chat-panel');
   var chatOverlay = select('#ai-chat-overlay');
   var chatClose = select('#ai-chat-close');
-  function openChat() {
+  function openChat(event) {
+    if (event && typeof event.preventDefault === 'function') event.preventDefault();
     document.body.classList.add('ai-chat-open');
     if (chatPanel) chatPanel.setAttribute('aria-hidden', 'false');
     if (chatOverlay) chatOverlay.setAttribute('aria-hidden', 'false');
@@ -402,7 +403,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
     };
-    const openChat = () => {
+    const openChat = (event) => {
+      if (event && typeof event.preventDefault === 'function') event.preventDefault();
       document.body.classList.add('ai-chat-open');
       if (chatPanel) chatPanel.setAttribute('aria-hidden', 'false');
       if (chatOverlay) chatOverlay.setAttribute('aria-hidden', 'false');
