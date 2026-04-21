@@ -8,16 +8,6 @@ if (typeof require === 'function') {
     const loadingEl = document.getElementById('experience-loading');
     if (!listEl) return;
 
-    if (loadingEl) {
-      loadingEl.style.display = '';
-      try {
-        if (typeof window !== 'undefined' && typeof window.getLoadingMessage === 'function') {
-          loadingEl.textContent = window.getLoadingMessage();
-        }
-      } catch (e) {
-        /* ignore */
-      }
-    }
     async function loadExperienceFromApi() {
       try {
         const res = await apiFetch(
