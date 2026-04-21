@@ -26,40 +26,6 @@ h6 {
   font-family: 'Raleway', sans-serif;
 }
 
-.mode-switch {
-  position: fixed;
-  top: 12px;
-  right: 14px;
-  z-index: 10000;
-  display: inline-flex;
-  border: 1px solid #30363d;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(13, 17, 23, 0.88);
-  backdrop-filter: blur(4px);
-}
-
-.mode-switch-btn {
-  border: 0;
-  background: transparent;
-  color: #8b949e;
-  font-size: 0.8rem;
-  font-weight: 700;
-  line-height: 1;
-  padding: 9px 12px;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.mode-switch-btn[aria-pressed='true'] {
-  background: #1f6feb;
-  color: #fff;
-}
-
-.mode-switch-btn:hover {
-  color: #e6edf3;
-}
-
 /*--------------------------------------------------------------
 # Back to top button
 --------------------------------------------------------------*/
@@ -612,38 +578,6 @@ h6 {
   flex-wrap: wrap;
   gap: 15px;
   margin-top: 28px;
-}
-
-body.traditional-mode .ai-only {
-  display: none !important;
-}
-
-.ai-only {
-  display: none;
-}
-
-body.ai-mode .ai-only {
-  display: inline-flex !important;
-}
-
-/* Hide or visually disable the hero Experience button when AI mode is active. */
-body.ai-mode #hero-experience {
-  display: none !important; /* hide by default in AI view */
-}
-
-body.ai-mode #header,
-body.ai-mode .mobile-nav-toggle {
-  display: none !important;
-}
-
-@media (min-width: 991px) {
-  body.ai-mode #main {
-    margin-left: 0;
-  }
-
-  body.ai-mode #hero {
-    padding-left: 0;
-  }
 }
 
 .btn-hero-primary {

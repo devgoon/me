@@ -36,21 +36,7 @@
   - data-site-mode="ai"          => show AI hero buttons, hide left vertical nav
   - data-site-mode="traditional" => hide AI hero buttons, show left vertical nav
 -->
-  <body data-site-mode="traditional">
-    <div class="mode-switch" role="group" aria-label="Site mode">
-      <button
-        id="mode-toggle-traditional"
-        class="mode-switch-btn"
-        type="button"
-        aria-pressed="true"
-      >
-        Classic
-      </button>
-      <button id="mode-toggle-ai" class="mode-switch-btn" type="button" aria-pressed="false">
-        AI
-      </button>
-    </div>
-
+  <body>
     <!-- ======= Mobile nav toggle button ======= -->
     <i class="bi bi-list mobile-nav-toggle d-lg-none"></i>
     <!-- ======= Header ======= -->
@@ -130,18 +116,18 @@
         <div class="hero-actions" data-aos="fade-up" data-aos-delay="400">
           <button
             id="ask-ai-toggle"
-            class="btn-hero-primary ai-only"
+            class="btn-hero-primary"
             type="button"
             aria-label="Open Ask AI chat"
           >
             <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
             <span>Ask AI About Me</span>
           </button>
-          <a id="hero-experience" class="btn-hero-primary ai-only" href="experience.html">
+          <a id="hero-experience" class="btn-hero-primary" href="experience.html" style="display: none">
             <i class="bi bi-briefcase" aria-hidden="true"></i>
             <span>Experience</span>
           </a>
-          <a class="btn-hero-primary ai-only" href="fit.html">
+          <a class="btn-hero-primary" href="fit.html">
             <i class="bi bi-check2-circle" aria-hidden="true"></i>
             <span>Fit Check</span>
           </a>
@@ -159,52 +145,6 @@
       </div>
     </section>
     <!-- End Hero -->
-
-    <!-- Experimental AI modal -->
-    <div
-      id="ai-experimental-modal"
-      class="modal"
-      aria-hidden="true"
-      role="dialog"
-      aria-modal="true"
-      style="display: none"
-    >
-      <div class="modal-dialog" role="document" style="max-width: 640px; margin: 6rem auto">
-        <div class="modal-content" style="padding: 1.25rem">
-          <h2 class="modal-title">Try AI (experimental)</h2>
-          <p>
-            These AI features are experimental. Responses may be verbose or vary in tone. I'm
-            actively tuning prompts and performance to improve results.
-          </p>
-          <p>
-            Click <strong>Proceed</strong> to enable AI mode. You can switch back to Classic mode at
-            any time.
-          </p>
-          <div
-            class="modal-footer"
-            style="
-              display: flex;
-              gap: 0.5rem;
-              justify-content: flex-end;
-              margin-top: 1rem;
-              padding: 0;
-              border-top: 0;
-            "
-          >
-            <button id="ai-experimental-back" type="button" class="btn btn-outline-light">
-              Go back to Classic view
-            </button>
-            <button id="ai-experimental-confirm" type="button" class="btn btn-primary">
-              Proceed
-            </button>
-          </div>
-        </div>
-      </div>
-      <div
-        class="modal-backdrop"
-        style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45)"
-      ></div>
-    </div>
 
     <main id="main">
       <!-- ======= About Section ======= -->
