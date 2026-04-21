@@ -22,7 +22,7 @@ if (typeof require === 'function') {
   });
 
   // Simple AI chat toggle handlers
-  var chatToggle = select('#ask-ai-toggle');
+  var chatToggles = document.querySelectorAll('#ask-ai-toggle, [data-open-ai-chat]');
   var chatPanel = select('#ai-chat-panel');
   var chatOverlay = select('#ai-chat-overlay');
   var chatClose = select('#ai-chat-close');
@@ -37,7 +37,11 @@ if (typeof require === 'function') {
     if (chatPanel) chatPanel.setAttribute('aria-hidden', 'true');
     if (chatOverlay) chatOverlay.setAttribute('aria-hidden', 'true');
   }
-  if (chatToggle) chatToggle.addEventListener('click', openChat);
+  if (chatToggles && chatToggles.length) {
+    chatToggles.forEach(function (el) {
+      el.addEventListener('click', openChat);
+    });
+  }
   if (chatClose) chatClose.addEventListener('click', closeChat);
   if (chatOverlay) chatOverlay.addEventListener('click', closeChat);
 })();
@@ -278,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
   new PureCounter();
   // Bind chat handlers after the DOM is ready so elements inserted after scripts are available
   document.addEventListener('DOMContentLoaded', function () {
-    const chatToggle = select('#ask-ai-toggle');
+    const chatToggles = select('#ask-ai-toggle, [data-open-ai-chat]', true);
     const chatPanel = select('#ai-chat-panel');
     const chatOverlay = select('#ai-chat-overlay');
     const chatClose = select('#ai-chat-close');
@@ -421,8 +425,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (chatPanel) chatPanel.setAttribute('aria-hidden', 'true');
       if (chatOverlay) chatOverlay.setAttribute('aria-hidden', 'true');
     };
-    if (chatToggle && chatPanel) {
-      chatToggle.addEventListener('click', openChat);
+    if (chatToggles && chatToggles.length && chatPanel) {
+      chatToggles.forEach((el) => el.addEventListener('click', openChat));
     }
     if (chatClose) {
       chatClose.addEventListener('click', closeChat);
