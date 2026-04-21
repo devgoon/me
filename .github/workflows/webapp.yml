@@ -1,8 +1,7 @@
 name: BUILD AND DEPLOY
 
 on:
-  push:
-    branches: [ai-portfolio]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -53,8 +52,11 @@ jobs:
 
   deploy:
     name: DEPLOY
+    if: github.event_name == 'pull_request'
     needs: ci
     runs-on: ubuntu-latest
+    outputs:
+      preview_url: ${{ steps.deploy_swa.outputs.static_web_app_url }}
 
     steps:
       - name: CHECKOUT
@@ -120,6 +122,7 @@ jobs:
               WEBSITE_NODE_DEFAULT_VERSION="$WEBSITE_NODE_DEFAULT_VERSION"
 
       - name: DEPLOY
+        id: deploy_swa
         uses: Azure/static-web-apps-deploy@v1
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -133,22 +136,23 @@ jobs:
           azure_static_web_apps_api_token: ${{ env.SWA_DEPLOY_TOKEN }}
           skip_app_build: true # ✅ prevents Oryx from rebuilding the static app
           action: upload
+          production_branch: 'main'
           app_location: 'frontend' # serve site from `frontend/` (assets/ present)
           api_location: 'api/' # ✅ deploy functions directly from api/: site is static from repo root (html + assets)
           # leaving this blank avoids Oryx scanning the repo root for builds
 
       - name: SMOKE TEST AAD LOGIN ENDPOINT
         shell: bash
+        env:
+          PREVIEW_URL: ${{ steps.deploy_swa.outputs.static_web_app_url }}
         run: |
           set -euo pipefail
 
-          HOST="${SITE_HOSTNAME:-lodovi.co}"
-          # Sanity-check host to avoid malformed-URL errors (skip if invalid)
-          if [[ ! "$HOST" =~ ^[A-Za-z0-9.-]+$ ]]; then
-            echo "Skipping AAD smoke test: SITE_HOSTNAME contains unexpected characters: $HOST"
-            exit 0
+          if [[ -z "${PREVIEW_URL:-}" ]]; then
+            echo "Missing preview URL from deploy step output"
+            exit 1
           fi
-          URL="https://${HOST}/.auth/login/aad?post_login_redirect_uri=/admin"
+          URL="${PREVIEW_URL}/.auth/login/aad?post_login_redirect_uri=/admin"
           echo "Testing auth endpoint: $URL"
 
           HEADERS=$(curl -sS -I -m 60 "$URL")
@@ -167,19 +171,19 @@ jobs:
             exit 1
           fi
 
-          echo "AAD login endpoint looks healthy for $HOST"
+          echo "AAD login endpoint looks healthy for ${PREVIEW_URL}"
 
       - name: SMOKE TEST API HEALTH ENDPOINT
         shell: bash
+        env:
+          PREVIEW_URL: ${{ steps.deploy_swa.outputs.static_web_app_url }}
         run: |
           set -euo pipefail
-          HOST="${SITE_HOSTNAME:-lodovi.co}"
-          # Sanity-check host to avoid malformed-URL errors (skip if invalid)
-          if [[ ! "$HOST" =~ ^[A-Za-z0-9.-]+$ ]]; then
-            echo "Skipping API health smoke test: SITE_HOSTNAME contains unexpected characters: $HOST"
-            exit 0
+          if [[ -z "${PREVIEW_URL:-}" ]]; then
+            echo "Missing preview URL from deploy step output"
+            exit 1
           fi
-          URL="https://${HOST}/api/health"
+          URL="${PREVIEW_URL}/api/health"
           echo "Testing API health endpoint: $URL"
 
           HTTP_CODE=$(curl -sS -m 60 -o /tmp/health.json -w "%{http_code}" "$URL")
@@ -195,10 +199,11 @@ jobs:
             exit 1
           fi
 
-          echo "API health endpoint looks healthy for $HOST"
+          echo "API health endpoint looks healthy for ${PREVIEW_URL}"
 
   e2e:
     name: END-TO-END TESTS
+    if: github.event_name == 'pull_request'
     needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -212,29 +217,18 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: AZURE LOGIN
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: RESOLVE STATIC WEB APP HOSTNAME
+      - name: RESOLVE PREVIEW BASE URL
         shell: bash
         env:
-          STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
-          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          PREVIEW_URL: ${{ needs.deploy.outputs.preview_url }}
         run: |
           set -euo pipefail
-          if [ -z "${STATIC_WEB_APP_NAME:-}" ] || [ -z "${RESOURCE_GROUP:-}" ]; then
-            echo "Missing Static Web App variables; set AZURE_STATIC_WEB_APP_NAME and AZURE_RESOURCE_GROUP";
-            exit 1;
+          if [[ -z "${PREVIEW_URL:-}" ]]; then
+            echo "Missing preview URL from deploy job output"
+            exit 1
           fi
-          HOST=$(az staticwebapp show --name "$STATIC_WEB_APP_NAME" --resource-group "$RESOURCE_GROUP" --query defaultHostname -o tsv)
-          if [ -z "$HOST" ]; then
-            echo "Failed to resolve Static Web App hostname"; exit 1;
-          fi
-          echo "Static Web App hostname: $HOST"
-          echo "HOST=$HOST" >> $GITHUB_ENV
-          echo "BASE_URL=https://$HOST" >> $GITHUB_ENV
+          echo "BASE_URL=${PREVIEW_URL}" >> "$GITHUB_ENV"
+          echo "Using preview URL: ${PREVIEW_URL}"
 
       - name: INSTALL DEPENDENCIES
         run: npm ci
