@@ -44,32 +44,32 @@
       <nav id="navbar" class="navbar nav-menu">
         <ul>
           <li>
-            <a href="#hero" class="nav-link scrollto active"
+            <a href="#hero" class="nav-link scrollto active" title="Home"
               ><i class="bx bx-home"></i> <span>Home</span></a
             >
           </li>
           <li>
-            <a href="#about" class="nav-link scrollto"
+            <a href="#about" class="nav-link scrollto" title="About"
               ><i class="bx bx-user"></i> <span>About</span></a
             >
           </li>
           <li>
-            <a href="#skills" class="nav-link scrollto"
+            <a href="#skills" class="nav-link scrollto" title="Skills"
               ><i class="bx bx-check-double"></i> <span>Skills</span></a
             >
           </li>
           <li>
-            <a href="#experience" class="nav-link scrollto"
+            <a href="#experience" class="nav-link scrollto" title="Experience"
               ><i class="bx bx-briefcase"></i> <span>Experience</span></a
             >
           </li>
           <li>
-            <a href="#certifications" class="nav-link scrollto"
+            <a href="#certifications" class="nav-link scrollto" title="Certifications"
               ><i class="bx bx-certification"></i> <span>Certifications</span></a
             >
           </li>
           <li>
-            <a href="#education" class="nav-link scrollto"
+            <a href="#education" class="nav-link scrollto" title="Education"
               ><i class="bx bx-book"></i> <span>Education</span></a
             >
           </li>
@@ -79,23 +79,27 @@
               href="#"
               class="nav-link"
               role="button"
+              title="Ask AI About Me"
               aria-label="Open Ask AI chat"
             >
               <i class="bi bi-chat-dots"></i> <span>Ask AI About Me</span>
             </a>
           </li>
           <li>
-            <a href="fit.html" class="nav-link"
+            <a href="#fit" class="nav-link scrollto" title="Fit Check"
               ><i class="bi bi-clipboard2-check"></i> <span>Fit Check</span></a
             >
           </li>
           <li data-feature="projects" style="display: none">
-            <a href="#projects" class="nav-link scrollto"
+            <a href="#projects" class="nav-link scrollto" title="Projects"
               ><i class="bx bx-code-alt"></i> <span>Projects</span></a
             >
           </li>
           <li>
-            <a href="assets/Lodovico-Resume-04-08-26.pdf" class="nav-link scrollto"
+            <a
+              href="assets/Lodovico-Resume-04-08-26.pdf"
+              class="nav-link scrollto"
+              title="Download Resume"
               ><i class="bi bi-box-arrow-down"></i> <span>Download Resume</span></a
             >
           </li>
@@ -286,6 +290,21 @@
         </div>
       </section>
       <!-- End Education Section -->
+
+      <!-- ======= Fit Section ======= -->
+      <section id="fit" class="fit section-bg">
+        <div class="container" data-aos="fade-up">
+          <div class="section-title">
+            <h2>Fit Check</h2>
+            <p>
+              Paste a job description and get an honest assessment of alignment, gaps, and what
+              transfers.
+            </p>
+          </div>
+          <div id="fit-app-root"></div>
+        </div>
+      </section>
+      <!-- End Fit Section -->
     </main>
 
     <!-- Vendor JS Files -->
@@ -303,6 +322,8 @@
     <script src="assets/js/skills.js"></script>
     <script src="assets/js/main.js"></script>
     <script src="assets/js/experience.js"></script>
+    <script src="assets/js/fit-analyzer.js"></script>
+    <script src="assets/js/fit-ai.js"></script>
 
     <div id="preloader"></div>
     <a
