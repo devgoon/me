@@ -145,12 +145,16 @@ if (typeof require === 'function') {
     const panel = ce(
       'div',
       { class: 'fit-panel' },
-      ce('label', { for: 'job-description', class: 'jd-label' }, 'Job description'),
-      ce('textarea', { id: 'job-description', class: 'jd-input', rows: 8 }),
+      ce('textarea', {
+        id: 'job-description',
+        class: 'jd-input',
+        rows: 8,
+        placeholder: 'Paste job description here',
+      }),
       ce(
         'div',
         { style: 'margin-top:8px' },
-        ce('button', { id: 'analyze-btn', class: 'analyze-btn' }, 'Determine Fit')
+        ce('button', { id: 'analyze-btn', class: 'analyze-btn' }, "See If We're A Match")
       ),
       ce(
         'div',
@@ -175,7 +179,7 @@ if (typeof require === 'function') {
       const jd = qs('#job-description').value.trim();
       if (!jd) return alert('Paste a job description first');
       let analysis = null;
-      status.innerHTML = `<article class="role-card" style="text-align:left;padding:12px"><div class="loading" aria-busy="true" aria-live="polite">${
+      status.innerHTML = `<article class="role-card" style="text-align:left;padding:12px"><div class="fit-loading" aria-busy="true" aria-live="polite">${
         typeof window !== 'undefined' && typeof window.getLoadingMessage === 'function'
           ? window.getLoadingMessage()
           : 'Determining fit…'
