@@ -29,7 +29,10 @@ test.describe('Chat widget UI', () => {
 
     const toggle = page.locator('[data-open-ai-chat]:visible').first();
     if (await toggle.count()) {
-      await page.waitForSelector('[data-open-ai-chat]:visible', { state: 'visible', timeout: 10000 });
+      await page.waitForSelector('[data-open-ai-chat]:visible', {
+        state: 'visible',
+        timeout: 10000,
+      });
       await toggle.click();
       const panel = page.locator('#ai-chat-panel');
       await expect(panel).toBeVisible();
@@ -68,7 +71,10 @@ test.describe('Chat widget UI', () => {
     // Open chat if toggle exists
     const toggle = page.locator('[data-open-ai-chat]:visible').first();
     if (await toggle.count()) {
-      await page.waitForSelector('[data-open-ai-chat]:visible', { state: 'visible', timeout: 10000 });
+      await page.waitForSelector('[data-open-ai-chat]:visible', {
+        state: 'visible',
+        timeout: 10000,
+      });
       await toggle.click();
     }
 

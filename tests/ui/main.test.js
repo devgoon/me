@@ -33,13 +33,13 @@ test('removes #preloader on window load', () => {
 
 test('chat open/close toggles body class and aria-hidden', () => {
   document.body.innerHTML = `
-    <button id="ask-ai-toggle"></button>
+    <button id="ask-ai-toggle-nav" data-open-ai-chat="true"></button>
     <div id="ai-chat-panel" aria-hidden="true"></div>
     <div id="ai-chat-overlay" aria-hidden="true"></div>
     <button id="ai-chat-close"></button>
   `;
   require('../../frontend/assets/js/main.js');
-  const toggle = document.getElementById('ask-ai-toggle');
+  const toggle = document.getElementById('ask-ai-toggle-nav');
   const panel = document.getElementById('ai-chat-panel');
   const overlay = document.getElementById('ai-chat-overlay');
   // open
