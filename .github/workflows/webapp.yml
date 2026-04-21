@@ -73,59 +73,13 @@ jobs:
         with:
           node-version: 22.18.0
 
-      - name: VALIDATE AI DEPLOYMENT SETTINGS
-        shell: bash
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
-          AI_MODEL: ${{ vars.AI_MODEL }}
-          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-        run: |
-          set -euo pipefail
-          if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
-            echo "Missing required secret: ANTHROPIC_API_KEY"
-            exit 1
-          fi
-          if [[ -z "${AZURE_DATABASE_URL:-}" ]]; then
-            echo "Missing required secret: AZURE_DATABASE_URL"
-            exit 1
-          fi
-          if [[ -z "${AI_MODEL:-}" ]]; then
-            echo "Missing required variable: AI_MODEL"
-            exit 1
-          fi
-          if [[ -z "${RESOURCE_GROUP:-}" ]]; then
-            echo "Missing required variable: AZURE_RESOURCE_GROUP"
-            exit 1
-          fi
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: PERSIST RUNTIME APP SETTINGS TO STATIC WEB APP
-        shell: bash
-        env:
-          STATIC_WEB_APP_NAME: ${{ vars.AZURE_STATIC_WEB_APP_NAME }}
-          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
-          AI_MODEL: ${{ vars.AI_MODEL }}
-        run: |
-          set -euo pipefail
-          echo "Setting Static Web App runtime settings for $STATIC_WEB_APP_NAME ($RESOURCE_GROUP)"
-          az staticwebapp appsettings set \
-            --name "$STATIC_WEB_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --setting-names \
-              AI_MODEL="$AI_MODEL" \
-              ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
-              AZURE_DATABASE_URL="$AZURE_DATABASE_URL"
-
       - name: DEPLOY
         id: deploy
         uses: Azure/static-web-apps-deploy@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           skip_app_build: true
