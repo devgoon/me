@@ -1,4 +1,4 @@
-.PHONY: e2e install lint spellcheck link-check unit-test coverage check start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
+.PHONY: e2e install lint spellcheck link-check unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
 
 install:
 	npm install
@@ -40,6 +40,12 @@ check:
 	@$(MAKE) coverage
 	@echo "==> [5/5] Code coverage complete"
 	@echo "==> Quality checks complete"
+
+evals:
+	@echo "Running eval runner (fit + chat)"
+	npm run test:evals
+	@echo "Running eval Jest suite"
+	npm run test:evals:jest
 
 start:
 	@mkdir -p .azurite

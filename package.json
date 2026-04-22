@@ -8,6 +8,9 @@
   "scripts": {
     "test": "npm run test:unit",
     "test:unit": "npx jest --runInBand --testPathPattern=tests/",
+    "test:evals": "node scripts/run-evals.js",
+    "test:evals:jest": "npx jest --runInBand --testPathPattern=tests/evals/ --coverage=false",
+    "evals:export:chat-cache": "node scripts/export-chat-cache-evals.js",
     "build": "echo 'No UI build required'",
     "test:e2e": "npx playwright test",
     "test:e2e:headed": "npx playwright test --headed",

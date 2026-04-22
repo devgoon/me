@@ -110,4 +110,46 @@ make check
 make unit-test
 ```
 
+- Run starter prompt/output evals for fit + chat analysis:
+
+```bash
+npm run test:evals
+```
+
+- Run eval tests through Jest (included under `tests/evals`):
+
+```bash
+npm run test:evals:jest
+```
+
+- Optional: evaluate real model outputs from a JSON file keyed by case id:
+
+```bash
+EVAL_MODEL_OUTPUTS_PATH=./path/to/model-outputs.json npm run test:evals
+```
+
+- Optional: evaluate chat outputs from a JSON file keyed by chat case id:
+
+```bash
+EVAL_CHAT_OUTPUTS_PATH=./path/to/chat-model-outputs.json npm run test:evals
+```
+
+- Export draft eval cases from chat cache history (`ai_response_cache`):
+
+```bash
+npm run evals:export:chat-cache -- --limit 100 --min-hits 2
+```
+
+- Optional: include only non-invalidated cache entries:
+
+```bash
+npm run evals:export:chat-cache -- --only-active
+```
+
+- Optional: choose a custom output path:
+
+```bash
+npm run evals:export:chat-cache -- --out tests/evals/fixtures/chat-eval-cases.generated.json
+```
+
 Implementation details are in `docs/DESIGN.md`.

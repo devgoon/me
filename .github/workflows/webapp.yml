@@ -36,6 +36,9 @@ jobs:
       - name: Checks
         run: make check
 
+      - name: Prompt and response evals
+        run: make evals
+
       - name: Ensure frontend assets present
         run: echo "No UI build required; assets/js is source of truth"
 
