@@ -38,6 +38,7 @@
     "coverage/**",
     "api/coverage/**",
     "tests/**",
-    "playwright-report/**"
+    "playwright-report/**",
+    "scripts/**"
   ]
 }

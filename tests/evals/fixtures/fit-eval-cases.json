@@ -1,0 +1,72 @@
+[
+  {
+    "id": "strong-fit-backend",
+    "description": "Backend role closely aligned with existing Node.js and API strengths",
+    "jobDescription": "Senior backend engineer role building Node.js APIs, improving observability, and mentoring engineers.",
+    "expectations": {
+      "minScore": 80,
+      "allowedVerdicts": ["FIT"],
+      "mustContainMismatches": false,
+      "forbiddenTerms": ["Swift", "iOS"]
+    },
+    "modelResponse": {
+      "score": 88,
+      "verdict": "FIT",
+      "reasons": [
+        "Strong Node and API delivery history",
+        "Clear focus on reliability and observability",
+        "Has led cross-team engineering collaboration"
+      ],
+      "mismatches": [],
+      "suggestedMessage": "Thanks for sharing this role. My strongest experience is building and operating Node APIs with strong observability practices, and this looks like a strong match."
+    }
+  },
+  {
+    "id": "marginal-platform-gap",
+    "description": "Mostly aligned role with a meaningful domain gap",
+    "jobDescription": "Platform engineer role with Kubernetes and Terraform ownership. Some Node.js service work.",
+    "expectations": {
+      "minScore": 65,
+      "allowedVerdicts": ["MARGINAL", "FIT"],
+      "mustContainMismatches": true,
+      "forbiddenTerms": []
+    },
+    "modelResponse": {
+      "score": 71,
+      "verdict": "MARGINAL",
+      "reasons": [
+        "Good overlap on backend service development in Node",
+        "Can contribute to platform reliability work"
+      ],
+      "mismatches": [
+        "Kubernetes depth is not a core strength today",
+        "Terraform ownership appears to be a ramp-up area"
+      ],
+      "suggestedMessage": "I can add value quickly on backend platform reliability work, and I want to be transparent that deep Kubernetes and Terraform ownership is currently a growth area for me."
+    }
+  },
+  {
+    "id": "no-fit-ios-native",
+    "description": "Role is heavily focused on an explicit known gap",
+    "jobDescription": "Senior iOS engineer building native Swift mobile apps with UIKit and SwiftUI.",
+    "expectations": {
+      "minScore": 75,
+      "allowedVerdicts": ["NO FIT", "MARGINAL"],
+      "mustContainMismatches": true,
+      "forbiddenTerms": ["perfect fit", "expert in Swift"]
+    },
+    "modelResponse": {
+      "score": 22,
+      "verdict": "NO FIT",
+      "reasons": [
+        "Primary background is backend and web systems rather than native iOS",
+        "This role centers on Swift and iOS frameworks"
+      ],
+      "mismatches": [
+        "Native iOS app development is an explicit gap",
+        "Swift is not a current strength"
+      ],
+      "suggestedMessage": "I want to be direct: this role is centered on native iOS and Swift, which are not my core strengths, so I am likely not the right fit for this position."
+    }
+  }
+]

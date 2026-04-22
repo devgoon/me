@@ -36,6 +36,9 @@ jobs:
       - name: Checks
         run: make check
 
+      - name: Prompt and response evals
+        run: make evals
+
       - name: Ensure frontend assets present
         run: echo "No UI build required; assets/js is source of truth"
 
@@ -60,7 +63,7 @@ jobs:
     needs: ci
     runs-on: ubuntu-latest
     outputs:
-      deployed_url: ${{ steps.deploy.outputs.static_web_app_url }}
+      deployed_url: ${{ steps.capture-url.outputs.url }}
 
     steps:
       - name: Checkout
@@ -76,6 +79,23 @@ jobs:
       - name: Deploy
         id: deploy
         uses: Azure/static-web-apps-deploy@v1
+        if: github.event_name == 'pull_request'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          skip_app_build: true
+          action: upload
+          app_location: 'frontend'
+          api_location: 'api/'
+          deployment_environment: 'staging'
+
+      - name: Deploy (main)
+        id: deploy-main
+        uses: Azure/static-web-apps-deploy@v1
+        if: github.event_name == 'push'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AZURE_DATABASE_URL: ${{ secrets.AZURE_DATABASE_URL }}
@@ -87,12 +107,23 @@ jobs:
           app_location: 'frontend'
           api_location: 'api/'
 
+      - name: Capture deployed URL
+        id: capture-url
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "url=${{ steps.deploy.outputs.static_web_app_url }}" >> $GITHUB_OUTPUT
+          else
+            echo "url=${{ steps.deploy-main.outputs.static_web_app_url }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Smoke test AAD login endpoint
         shell: bash
+        env:
+          BASE_URL: ${{ steps.capture-url.outputs.url }}
         run: |
           set -euo pipefail
 
-          BASE_URL='${{ steps.deploy.outputs.static_web_app_url }}'
           if [[ -z "$BASE_URL" ]]; then
             echo "Deploy step did not return static_web_app_url"
             exit 1
@@ -121,10 +152,11 @@ jobs:
 
       - name: Smoke test API health endpoint
         shell: bash
+        env:
+          BASE_URL: ${{ steps.capture-url.outputs.url }}
         run: |
           set -euo pipefail
 
-          BASE_URL='${{ steps.deploy.outputs.static_web_app_url }}'
           if [[ -z "$BASE_URL" ]]; then
             echo "Deploy step did not return static_web_app_url"
             exit 1

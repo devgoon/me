@@ -49,6 +49,37 @@ make check     # spellcheck, lint, unit tests, link check, coverage
 make start
 ```
 
+## Prompt eval workflow
+
+Use these commands to validate prompt/output quality for both fit and chat behavior.
+
+- Run the full eval pipeline via Make:
+
+```bash
+make evals
+```
+
+- Equivalent npm commands:
+
+```bash
+npm run test:evals
+npm run test:evals:jest
+```
+
+- Export draft chat eval cases from historical cache rows in `ai_response_cache`:
+
+```bash
+npm run evals:export:chat-cache -- --limit 100 --min-hits 1
+```
+
+- Output file for generated draft cases:
+
+  - `tests/evals/fixtures/chat-eval-cases.generated.json`
+
+- Notes:
+  - Generated cases are draft fixtures; review them before using in CI policy checks.
+  - The export script includes basic redaction for email, phone-like strings, and URLs.
+
 ## DB helpers and Make targets
 
 Scripts that work with Azure SQL live in the `scripts/` folder and produce artifacts under `db/`:
