@@ -26,8 +26,8 @@ unit-test:
 
 	@echo "==> Merging coverage summaries"
 	@node scripts/merge-coverage.js || true
-	@echo "==> Running eval tests with coverage"
-	@npx jest --coverage --testPathPattern=tests/evals/ --runInBand || true
+	@echo "==> Running eval tests (no coverage)"
+	@npm run test:evals:jest || true
 
 coverage:
 	@npm run coverage
