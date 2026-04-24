@@ -19,15 +19,14 @@ spellcheck:
 	npx cspell "**/*.{html,css,js,ts}" "api/**/*.js" --verbose
 
 unit-test:
-	@echo "==> Running UI tests (frontend-react) with coverage"
-	@npm --prefix frontend-react run test:run -- --coverage || true
+	@echo "==> Running UI tests (frontend-react)"
+	@npm --prefix frontend-react run test:run || true
 	@echo "==> Running API tests with coverage"
 	@npm run coverage:api || true
 	@echo "==> Running eval tests with coverage"
 	@npx jest --coverage --testPathPattern=tests/evals/ --runInBand || true
 
 coverage:
-	@echo "Running repository tests with coverage (console summary)"yes
 	@npm run coverage
 
 check:
