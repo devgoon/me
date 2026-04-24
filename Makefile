@@ -22,7 +22,7 @@ unit-test:
 	@echo "==> Running UI tests (frontend-react)"
 	@npm --prefix frontend-react run test:run || true
 	@echo "==> Running API tests with coverage"
-	@npm run coverage:api || true
+	@npx jest --coverage --testPathPattern=tests/api/ --runInBand || true
 	@echo "==> Running eval tests with coverage"
 	@npx jest --coverage --testPathPattern=tests/evals/ --runInBand || true
 
