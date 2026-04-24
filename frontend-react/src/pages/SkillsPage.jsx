@@ -36,10 +36,18 @@ const DEFAULT_MODERATE_SKILLS = [
 ];
 
 function SkillsPage() {
-  const [skills, setSkills] = useState({ strong: DEFAULT_STRONG_SKILLS, moderate: DEFAULT_MODERATE_SKILLS });
+  const [skills, setSkills] = useState({
+    strong: DEFAULT_STRONG_SKILLS,
+    moderate: DEFAULT_MODERATE_SKILLS,
+  });
   const skillsQuery = useQuery({
     queryKey: ['skills'],
-    queryFn: () => apiRequestJson('/api/skills', { method: 'GET' }, { timeoutMs: 8000, maxAttempts: 5, baseDelay: 500 }),
+    queryFn: () =>
+      apiRequestJson(
+        '/api/skills',
+        { method: 'GET' },
+        { timeoutMs: 8000, maxAttempts: 5, baseDelay: 500 }
+      ),
     ...tanstackRetryOptions({ maxAttempts: 5, baseDelay: 500 }),
   });
 
@@ -65,10 +73,14 @@ function SkillsPage() {
 
   useEffect(() => {
     if (!skillsQuery.data) return;
-    setSkills({
-      strong: skillsQuery.data.skills?.strong || DEFAULT_STRONG_SKILLS,
-      moderate: skillsQuery.data.skills?.moderate || DEFAULT_MODERATE_SKILLS,
-    });
+    const data = skillsQuery.data;
+    const t = setTimeout(() => {
+      setSkills({
+        strong: data.skills?.strong || DEFAULT_STRONG_SKILLS,
+        moderate: data.skills?.moderate || DEFAULT_MODERATE_SKILLS,
+      });
+    }, 0);
+    return () => clearTimeout(t);
   }, [skillsQuery.data]);
 
   return (
