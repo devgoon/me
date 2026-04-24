@@ -2,7 +2,7 @@
   "name": "me",
   "version": "1.0.0",
   "description": "Personal website for Lodovico Minnocci",
-  "main": "frontend-legacy/index.html",
+  "main": "frontend-react/index.html",
   "author": "Lodovico Minnocci",
   "license": "MIT",
   "scripts": {

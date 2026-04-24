@@ -3,7 +3,6 @@ module.exports = [
     ignores: [
       'node_modules/',
       'db/',
-      'frontend-legacy/',
       'assets/vendor/',
       '.azurite/',
       'azurite_storage/',

@@ -9,5 +9,5 @@ coverage
 **/*.min.js
 **/vendor/
 public/
-frontend-legacy/assets/vendor/
+frontend-react/assets/vendor/
 api/node_modules
