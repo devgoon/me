@@ -19,6 +19,11 @@ import {
   savePanelData,
 } from './adminService.js';
 
+function redirectTo(path) {
+  if (import.meta.env?.VITEST) return;
+  window.location.href = path;
+}
+
 export function useAdminPage() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
@@ -84,7 +89,7 @@ export function useAdminPage() {
       try {
         const auth = await fetchAuthMe();
         if (!auth.ok) {
-          window.location.href = '/auth';
+          redirectTo('/auth');
           return;
         }
 

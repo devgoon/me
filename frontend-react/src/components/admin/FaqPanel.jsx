@@ -12,10 +12,8 @@ function FaqPanel({ adminData, prependListItem, removeListItem, updateListItem }
     <Stack spacing={2}>
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
         spacing={1.25}
-        sx={{ pb: 0.5 }}
+        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.5 }}
       >
         <Typography variant="h6" fontWeight={700}>FAQ</Typography>
         <Button variant="outlined" size="small" onClick={() => prependListItem('faq', defaultFaq())}>
@@ -28,10 +26,8 @@ function FaqPanel({ adminData, prependListItem, removeListItem, updateListItem }
           <Stack spacing={2}>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
-              alignItems={{ xs: 'flex-start', sm: 'center' }}
-              justifyContent="space-between"
               spacing={1}
-              sx={{ pb: 0.25 }}
+              sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.25 }}
             >
               <Typography variant="subtitle1" fontWeight={600}>FAQ {index + 1}</Typography>
               <Button variant="outlined" color="error" size="small" onClick={() => removeListItem('faq', index)}>

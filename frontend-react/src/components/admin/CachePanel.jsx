@@ -15,10 +15,8 @@ function CachePanel({ loadCacheReport, cacheSearch, setCacheSearch, filteredCach
     <Stack spacing={2}>
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
         spacing={1.25}
-        sx={{ pb: 0.5 }}
+        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.5 }}
       >
         <Typography variant="h6" fontWeight={700}>Cache Report</Typography>
         <Button variant="outlined" size="small" onClick={loadCacheReport}>

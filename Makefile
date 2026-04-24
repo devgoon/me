@@ -51,7 +51,8 @@ start:
 	@mkdir -p .azurite
 	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
 	AZURITE_PID=$$!; \
-	trap 'kill $$AZURITE_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
+	REACT_WATCH_PID=""; \
+	trap 'kill $$AZURITE_PID $$REACT_WATCH_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
 	# Load .env.local into environment for child processes (single source of truth)
 	if [ -f .env.local ]; then \
 		set -a; . .env.local; set +a; \
@@ -63,6 +64,9 @@ start:
 	# Build and serve React frontend by default.
 	echo "Building React frontend (frontend-react/dist)..."; \
 	npm --prefix frontend-react run build; \
+	echo "Watching React frontend for changes (frontend-react/dist)..."; \
+	npm --prefix frontend-react run build:watch >/dev/null 2>&1 & \
+	REACT_WATCH_PID=$$!; \
 	echo "Starting local SWA emulator from frontend-react/dist with api/"; \
 	npx @azure/static-web-apps-cli@latest start frontend-react/dist --api-location api --port 4280
 

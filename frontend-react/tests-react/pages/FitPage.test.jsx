@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import FitPage from '../../src/pages/FitPage.jsx';
 
 vi.mock('../../src/lib/api.js', () => ({
@@ -9,9 +9,25 @@ vi.mock('../../src/lib/api.js', () => ({
 
 import { apiFetch } from '../../src/lib/api.js';
 
+const originalScheduleUrl = import.meta.env.VITE_SCHEDULE_MEETING_URL;
+
+const mockFitResponse = (overrides = {}) => ({
+  verdict: 'Good Match',
+  score: 88,
+  suggestedMessage: 'Proceed',
+  mismatches: ['No Kubernetes operator experience'],
+  reasons: ['Strong platform engineering background'],
+  ...overrides,
+});
+
 describe('FitPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    import.meta.env.VITE_SCHEDULE_MEETING_URL = '';
+  });
+
+  afterEach(() => {
+    import.meta.env.VITE_SCHEDULE_MEETING_URL = originalScheduleUrl;
   });
 
   it('does not submit when job description is empty', async () => {
@@ -19,27 +35,164 @@ describe('FitPage', () => {
 
     render(<FitPage />);
 
-    await user.click(screen.getByRole('button', { name: 'Analyze Fit' }));
+    await user.click(screen.getByRole('button', { name: "See if We're a match" }));
 
     expect(apiFetch).not.toHaveBeenCalled();
   });
 
-  it('submits and renders fit result', async () => {
+  it('shows loading state while analyzing', async () => {
+    const user = userEvent.setup();
+    let resolve;
+    apiFetch.mockReturnValue(new Promise((r) => { resolve = r; }));
+
+    render(<FitPage />);
+
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
+    await user.click(screen.getByRole('button', { name: "See if We're a match" }));
+
+    expect(screen.getByRole('button', { name: 'Analyzing...' })).toBeDisabled();
+
+    resolve({ ok: true, json: async () => mockFitResponse() });
+  });
+
+  it('shows error when API fails', async () => {
+    const user = userEvent.setup();
+    apiFetch.mockResolvedValue({ ok: false });
+
+    render(<FitPage />);
+
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
+    await user.click(screen.getByRole('button', { name: "See if We're a match" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+  });
+
+  it('submits and renders all result sections', async () => {
     const user = userEvent.setup();
     apiFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ verdict: 'Good Match', score: 88, suggestedMessage: 'Proceed' }),
+      json: async () => mockFitResponse(),
     });
 
     render(<FitPage />);
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A strong React role');
-    await user.click(screen.getByRole('button', { name: 'Analyze Fit' }));
+    await user.click(screen.getByRole('button', { name: "See if We're a match" }));
 
     await waitFor(() => {
       expect(screen.getByText('Good Match')).toBeInTheDocument();
       expect(screen.getByText(/Score:/)).toBeInTheDocument();
-      expect(screen.getByText(/Recommendation:/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+      expect(screen.getByText("WHERE I DON'T FIT")).toBeInTheDocument();
+      expect(screen.getByText('WHAT TRANSFERS')).toBeInTheDocument();
+      expect(screen.getByText('RECOMMENDATION')).toBeInTheDocument();
+      expect(screen.getByText('Proceed')).toBeInTheDocument();
+      expect(screen.getByText('No Kubernetes operator experience')).toBeInTheDocument();
+      expect(screen.getByText('Strong platform engineering background')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Schedule a meeting' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('normalizes gaps/transfers from legacy mismatches/reasons fields', async () => {
+    const user = userEvent.setup();
+    apiFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        verdict: 'FIT',
+        score: 90,
+        suggestedMessage: 'Great fit',
+        mismatches: ['Legacy gap field'],
+        reasons: ['Legacy transfer field'],
+      }),
+    });
+
+    render(<FitPage />);
+
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
+    await user.click(screen.getByRole('button', { name: "See if We're a match" }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Legacy gap field')).toBeInTheDocument();
+      expect(screen.getByText('Legacy transfer field')).toBeInTheDocument();
+    });
+  });
+
+  it('shows empty state text when gaps and transfers are empty', async () => {
+    const user = userEvent.setup();
+    apiFetch.mockResolvedValue({
+      ok: true,
+      json: async () => mockFitResponse({ mismatches: [], reasons: [] }),
+    });
+
+    render(<FitPage />);
+
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
+    await user.click(screen.getByRole('button', { name: "See if We're a match" }));
+
+    await waitFor(() => {
+      expect(screen.getByText('No JD-specific gaps identified.')).toBeInTheDocument();
+      expect(screen.getByText('No direct transfer highlights found.')).toBeInTheDocument();
+    });
+  });
+
+  it('shows schedule meeting link when verdict is FIT', async () => {
+    import.meta.env.VITE_SCHEDULE_MEETING_URL = 'https://calendar.app.google/test-schedule';
+    const user = userEvent.setup();
+    apiFetch.mockResolvedValue({
+      ok: true,
+      json: async () => mockFitResponse({ verdict: 'FIT', score: 92 }),
+    });
+
+    render(<FitPage />);
+
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A strong role');
+    await user.click(screen.getByRole('button', { name: "See if We're a match" }));
+
+    await waitFor(() => {
+      const scheduleLink = screen.getByRole('link', { name: 'Schedule a meeting' });
+      expect(scheduleLink).toBeInTheDocument();
+      expect(scheduleLink).toHaveAttribute('href', 'https://calendar.app.google/test-schedule');
+    });
+  });
+
+  it('does not show schedule meeting link for MARGINAL verdict', async () => {
+    import.meta.env.VITE_SCHEDULE_MEETING_URL = 'https://calendar.app.google/test-schedule';
+    const user = userEvent.setup();
+    apiFetch.mockResolvedValue({
+      ok: true,
+      json: async () => mockFitResponse({ verdict: 'MARGINAL', score: 71 }),
+    });
+
+    render(<FitPage />);
+
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role with partial overlap');
+    await user.click(screen.getByRole('button', { name: "See if We're a match" }));
+
+    await waitFor(() => {
+      expect(screen.getByText('MARGINAL')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Schedule a meeting' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('does not show schedule meeting link when schedule URL is not configured', async () => {
+    import.meta.env.VITE_SCHEDULE_MEETING_URL = '';
+    const user = userEvent.setup();
+    apiFetch.mockResolvedValue({
+      ok: true,
+      json: async () => mockFitResponse({ verdict: 'FIT' }),
+    });
+
+    render(<FitPage />);
+
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
+    await user.click(screen.getByRole('button', { name: "See if We're a match" }));
+
+    await waitFor(() => {
+      expect(screen.getByText('FIT')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Schedule a meeting' })).not.toBeInTheDocument();
     });
   });
 });
+

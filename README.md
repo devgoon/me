@@ -54,6 +54,7 @@ Environment (local)
   - `ADMIN_DATABASE_ADO` — Admin-only ADO-style connection string used by Makefile DB admin tasks (`backup-db`, `dump-schema`, `restore-db`, `run-sql-file`).
   - `ANTHROPIC_API_KEY` — AI provider key (required for AI-backed endpoints; missing this will cause AI endpoints to return 500 errors)
   - `AI_MODEL` — model id (optional override)
+  - `VITE_SCHEDULE_MEETING_URL` — optional frontend booking URL shown when fit verdict is `FIT` (for example a Google Calendar appointment schedule URL). Must start with `VITE_`.
   - `FUNCTIONS_WORKER_RUNTIME=node`
 
 Start local dev stack
@@ -102,6 +103,8 @@ React frontend (migration work)
 - A React version of the UI is available in `frontend-react/`.
 - Start React dev server: `npm run react:dev`
 - Build React app: `npm run react:build`
+- `make start` now includes React build watch mode and rebuilds `frontend-react/dist` on file changes.
+- Build React app on file changes only: `npm run react:build:watch`
 - Preview React build: `npm run react:preview`
 
 Testing & quality checks

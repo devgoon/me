@@ -11,10 +11,8 @@ function SkillsPanel({ adminData, prependListItem, removeListItem, updateListIte
     <Stack spacing={2}>
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
         spacing={1.25}
-        sx={{ pb: 0.5 }}
+        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.5 }}
       >
         <Typography variant="h6" fontWeight={700}>Skills</Typography>
         <Button variant="outlined" size="small" onClick={() => prependListItem('skills', defaultSkill())}>
@@ -27,10 +25,8 @@ function SkillsPanel({ adminData, prependListItem, removeListItem, updateListIte
           <Stack spacing={2}>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
-              alignItems={{ xs: 'flex-start', sm: 'center' }}
-              justifyContent="space-between"
               spacing={1}
-              sx={{ pb: 0.25 }}
+              sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.25 }}
             >
               <Typography variant="subtitle1" fontWeight={600}>
                 {item.skillName || `Skill ${index + 1}`}

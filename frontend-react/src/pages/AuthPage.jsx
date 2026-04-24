@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import { Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import { apiFetch } from '../lib/api.js';
 
+function redirectTo(path) {
+  if (import.meta.env?.VITEST) return;
+  window.location.href = path;
+}
+
 function AuthPage() {
   const [message, setMessage] = useState('Checking sign-in status...');
 
@@ -13,7 +18,7 @@ function AuthPage() {
         if (response.ok) {
           if (active) {
             setMessage('Already signed in, redirecting to admin...');
-            window.location.href = '/admin';
+            redirectTo('/admin');
           }
           return;
         }

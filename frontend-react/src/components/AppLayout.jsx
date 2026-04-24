@@ -28,6 +28,8 @@ function AppLayout({ children }) {
           width: 240,
           flexShrink: 0,
           p: 3,
+          bgcolor: 'rgba(10, 16, 29, 0.72)',
+          backdropFilter: 'blur(14px)',
           borderRight: '1px solid',
           borderColor: 'divider',
           position: 'fixed',
@@ -37,7 +39,16 @@ function AppLayout({ children }) {
       >
         <Stack spacing={4}>
           {/* Logo */}
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 800,
+              fontSize: '1.25rem',
+              color: 'primary.light',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
             Vico
           </Typography>
 
@@ -129,6 +140,8 @@ function AppLayout({ children }) {
           flex: 1,
           ml: '240px',
           p: { xs: 2, sm: 3, md: 4 },
+          background:
+            'linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 16%)',
         }}
       >
         {children}

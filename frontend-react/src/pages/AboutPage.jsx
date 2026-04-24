@@ -6,7 +6,7 @@ function AboutPage() {
       <Box>
         <Card variant="outlined">
           <CardContent>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="flex-start">
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ alignItems: 'flex-start' }}>
               <Box
                 component="img"
                 src="/assets/img/profile-img.jpg"
@@ -21,7 +21,11 @@ function AboutPage() {
                 Cloud Architect & Developer
               </Typography>
               <Typography>
-                I build cloud-native systems at every scale — from startups to Fortune 500 infrastructure, and now autonomous vehicle software at Torc Robotics. I've led cloud, DevOps, and observability strategy across a wide range of domains. Clean architecture, observable systems, and shipping things that matter are what drive me.
+                Staff-level Software Engineer specializing in large-scale, highly available platform systems supporting latency-sensitive
+  workloads in production. Proven experience designing and operating distributed services, managing high-throughput
+  traffic, and owning reliability, performance, and operational health at scale. Experienced in applying GitHub Copilot as
+  a productivity multiplier in large production codebases, balancing acceleration with correctness, security, and long-
+  term maintainability.
               </Typography>
               <Box>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>

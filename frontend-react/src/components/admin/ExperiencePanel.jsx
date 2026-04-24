@@ -13,10 +13,8 @@ function ExperiencePanel({ adminData, prependListItem, removeListItem, updateLis
     <Stack spacing={2}>
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
         spacing={1.25}
-        sx={{ pb: 0.5 }}
+        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.5 }}
       >
         <Typography variant="h6" fontWeight={700}>Experience</Typography>
         <Button variant="outlined" size="small" onClick={() => prependListItem('experiences', defaultExperience())}>
@@ -29,10 +27,8 @@ function ExperiencePanel({ adminData, prependListItem, removeListItem, updateLis
           <Stack spacing={2}>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
-              alignItems={{ xs: 'flex-start', sm: 'center' }}
-              justifyContent="space-between"
               spacing={1}
-              sx={{ pb: 0.25 }}
+              sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.25 }}
             >
               <Typography variant="subtitle1" fontWeight={600}>
                 {item.companyName || `Experience ${index + 1}`}
@@ -59,7 +55,7 @@ function ExperiencePanel({ adminData, prependListItem, removeListItem, updateLis
             <Divider />
             <Typography variant="subtitle2" color="text.secondary">Achievement bullets</Typography>
             {(item.achievementBullets || []).map((bullet, bulletIndex) => (
-              <Stack key={`exp-${index}-bullet-${bulletIndex}`} direction="row" spacing={1} alignItems="flex-start">
+              <Stack key={`exp-${index}-bullet-${bulletIndex}`} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
                 <TextField
                   value={bullet || ''}
                   onChange={(e) => {

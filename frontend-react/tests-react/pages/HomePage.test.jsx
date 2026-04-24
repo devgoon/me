@@ -32,7 +32,7 @@ describe('HomePage', () => {
       expect(screen.getByText('API: ok')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('link', { name: 'See if we are a match' })).toHaveAttribute('href', '/fit');
+    expect(screen.getByRole('link', { name: "See If We're a Match" })).toHaveAttribute('href', '/fit');
   });
 
   it('shows fallback health status when API fails', async () => {

@@ -39,10 +39,8 @@ function AiPanel({ adminData, setAdminData }) {
 
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
         spacing={1.25}
-        sx={{ pb: 0.5 }}
+        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.5 }}
       >
         <Typography variant="subtitle1" fontWeight={600}>Instruction rules</Typography>
         <Button
@@ -67,10 +65,8 @@ function AiPanel({ adminData, setAdminData }) {
           <Stack spacing={2}>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
-              alignItems={{ xs: 'flex-start', sm: 'center' }}
-              justifyContent="space-between"
               spacing={1}
-              sx={{ pb: 0.25 }}
+              sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.25 }}
             >
               <Typography variant="subtitle1" fontWeight={600}>Rule {index + 1}</Typography>
               <Button

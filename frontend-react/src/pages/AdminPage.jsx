@@ -44,14 +44,13 @@ function AdminPage() {
       <Paper variant="outlined" sx={{ px: 3, py: 1.5, borderRadius: 2 }}>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
-          alignItems={{ sm: 'center' }}
-          justifyContent="space-between"
           spacing={1.5}
+          sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
         >
           <Typography variant="h5" fontWeight={700}>
             Admin Panel
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap">
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               size="small"

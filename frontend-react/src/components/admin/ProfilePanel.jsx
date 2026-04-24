@@ -137,7 +137,7 @@ function ProfilePanel({ adminData, targetTitleInput, setTargetTitleInput, setPro
             </Button>
           </Stack>
           {(p.targetTitles || []).map((title, index) => (
-            <Stack key={`${title}-${index}`} direction="row" alignItems="center" justifyContent="space-between">
+            <Stack key={`${title}-${index}`} direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="body2">{title}</Typography>
               <Button
                 variant="outlined"

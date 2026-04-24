@@ -91,7 +91,7 @@ function ChatBubble({ message }) {
       }}
     >
       {message.typing ? (
-        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ py: 0.25 }}>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', py: 0.25 }}>
           {[0, 1, 2].map((i) => (
             <Box
               key={i}
@@ -205,9 +205,15 @@ function ChatDialog({ open, onClose }) {
       {/* Header */}
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider', flexShrink: 0 }}
+        sx={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 2,
+          py: 1.5,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          flexShrink: 0,
+        }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Ask AI About Me
