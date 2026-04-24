@@ -1,24 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Alert,
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Divider,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
 import { apiRequestJson, tanstackRetryOptions } from '../lib/tanstackApi.js';
 
 function ExperiencePage() {
   const [error, setError] = useState('');
   const [experiences, setExperiences] = useState([]);
-  const [skills, setSkills] = useState({ strong: [], moderate: [], gaps: [] });
+  const [, setSkills] = useState({ strong: [], moderate: [], gaps: [] });
   const experienceQuery = useQuery({
     queryKey: ['experience', { skipAI: 1 }],
-    queryFn: () => apiRequestJson('/api/experience?skipAI=1', { method: 'GET' }, { timeoutMs: 30000, maxAttempts: 2, baseDelay: 500 }),
+    queryFn: () =>
+      apiRequestJson(
+        '/api/experience?skipAI=1',
+        { method: 'GET' },
+        { timeoutMs: 30000, maxAttempts: 2, baseDelay: 500 }
+      ),
     ...tanstackRetryOptions({ maxAttempts: 2, baseDelay: 500 }),
   });
 
@@ -30,7 +26,9 @@ function ExperiencePage() {
           const defaults = await defaultsRes.json();
           if (defaults?.experience?.experiences) {
             setExperiences(defaults.experience.experiences);
-            setSkills(defaults.experience.skills || defaults.skills || { strong: [], moderate: [] });
+            setSkills(
+              defaults.experience.skills || defaults.skills || { strong: [], moderate: [] }
+            );
           }
         }
       } catch {
@@ -41,14 +39,21 @@ function ExperiencePage() {
 
   useEffect(() => {
     if (!experienceQuery.data) return;
-    setExperiences(experienceQuery.data.experiences || []);
-    setSkills(experienceQuery.data.skills || { strong: [], moderate: [], gaps: [] });
-    setError('');
+    const data = experienceQuery.data;
+    const t = setTimeout(() => {
+      setExperiences(data.experiences || []);
+      setSkills(data.skills || { strong: [], moderate: [], gaps: [] });
+      setError('');
+    }, 0);
+    return () => clearTimeout(t);
   }, [experienceQuery.data]);
 
   useEffect(() => {
     if (!experienceQuery.isError) return;
-    setError(experienceQuery.error?.message || 'Failed to load experience data');
+    const t = setTimeout(() => {
+      setError(experienceQuery.error?.message || 'Failed to load experience data');
+    }, 0);
+    return () => clearTimeout(t);
   }, [experienceQuery.error, experienceQuery.isError]);
 
   const orderedExperiences = useMemo(() => {
@@ -75,7 +80,7 @@ function ExperiencePage() {
                   sx={{ flexWrap: 'wrap', alignItems: 'center' }}
                 >
                   <Typography variant="h2">{exp.companyName}</Typography>
-                  {(exp.isCurrent || !exp.endDate) ? (
+                  {exp.isCurrent || !exp.endDate ? (
                     <Chip label="Current" size="small" color="primary" variant="filled" />
                   ) : null}
                 </Stack>
@@ -94,7 +99,6 @@ function ExperiencePage() {
           </Card>
         ))}
       </Stack>
-      
     </Stack>
   );
 }
