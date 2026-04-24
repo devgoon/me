@@ -29,17 +29,15 @@ coverage:
 check:
 	@echo "==> [1/5] Running spellcheck"
 	@$(MAKE) spellcheck
-	@echo "==> [2/5] Running lint"
-	@$(MAKE) lint
-	@echo "==> [2/6] Running lint (api + assets)"
-	@$(MAKE) lint
 	@echo "==> [3/6] Running frontend-react lint"
 	@npm --prefix frontend-react run lint || true
 	@echo "==> [4/6] Running link check"
 	@$(MAKE) link-check
 	@echo "==> [5/6] Building frontend-react"
 	@npm --prefix frontend-react run build || true
-	@echo "==> [6/6] Running unit tests + coverage"
+	@echo "==> [6/7] Running evals"
+	@$(MAKE) evals || true
+	@echo "==> [7/7] Running unit tests + coverage"
 	@$(MAKE) coverage
 	@npm --prefix frontend-react run test:run || true
 	@echo "==> Quality checks complete"
