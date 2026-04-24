@@ -10,8 +10,8 @@ fi
 
 TARGET_DB="$1"
 
-if [ -z "${DATABASE_ADO:-}" ]; then
-  echo "DATABASE_ADO not set in .env.local; please set DATABASE_ADO (ADO-style connection string)" >&2
+if [ -z "${ADMIN_DATABASE_ADO:-}" ]; then
+  echo "ADMIN_DATABASE_ADO not set in .env.local; please set ADMIN_DATABASE_ADO (ADO-style connection string)" >&2
   exit 1
 fi
 
@@ -21,7 +21,7 @@ if ! command -v sqlpackage >/dev/null 2>&1; then
 fi
 
 # If a target DB name was provided, replace or add Initial Catalog in the ADO string
-CONN="${DATABASE_ADO}"
+CONN="${ADMIN_DATABASE_ADO}"
 if [ -n "${TARGET_DB}" ]; then
   if echo "$CONN" | grep -qi "Initial Catalog="; then
     CONN=$(echo "$CONN" | sed -E "s/(Initial Catalog=)[^;]*/\1${TARGET_DB}/I")
@@ -34,7 +34,9 @@ fi
 TS=$(date +%Y%m%d%H%M%S)
 OUT="db/backup-${TS}.bacpac"
 
-printf "About to export database using connection: %s\nOutput file: %s\n" "$CONN" "$OUT"
+SAFE_CONN=$(echo "$CONN" | sed -E 's/(Password=)[^;]*/\1********/Ig')
+
+printf "About to export database using connection: %s\nOutput file: %s\n" "$SAFE_CONN" "$OUT"
 read -rp "Proceed with export? Type 'yes' to continue: " CONFIRM
 if [ "$CONFIRM" != "yes" ]; then
   echo "Aborting."; exit 1

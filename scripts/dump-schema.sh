@@ -5,19 +5,19 @@ set -euo pipefail
 OUT_FILE=${1:-db/schema.sql}
 
 if [ ! -f .env.local ]; then
-  echo ".env.local not found; create .env.local with DATABASE_ADO set" >&2
+  echo ".env.local not found; create .env.local with ADMIN_DATABASE_ADO set" >&2
   exit 1
 fi
 
 # Load environment (handles quoted values)
 set -a; . .env.local; set +a
 
-if [ -z "${DATABASE_ADO:-}" ]; then
-  echo "DATABASE_ADO not found in .env.local; please add ADO-style connection string (wrap in quotes if it contains semicolons)" >&2
+if [ -z "${ADMIN_DATABASE_ADO:-}" ]; then
+  echo "ADMIN_DATABASE_ADO not found in .env.local; please add ADO-style connection string (wrap in quotes if it contains semicolons)" >&2
   exit 1
 fi
 
-DB_CONN="${DATABASE_ADO}"
+DB_CONN="${ADMIN_DATABASE_ADO}"
 
 # If connection string is in sqlserver://... format, convert to ADO-style Data Source string
 if [[ "$DB_CONN" =~ ^\s*sqlserver:// ]]; then
@@ -78,7 +78,7 @@ for p in "${PARTS[@]}"; do
 done
 
 if [ -z "$TARGET_DB" ]; then
-  echo "Could not parse target database name from DATABASE_ADO. Set Initial Catalog or DATABASE in .env.local or set TARGET_DB env var." >&2
+  echo "Could not parse target database name from ADMIN_DATABASE_ADO. Set Initial Catalog or DATABASE in .env.local or set TARGET_DB env var." >&2
   exit 1
 fi
 
@@ -99,7 +99,7 @@ done
 # Allow override via env var
 TARGET_SERVER="${TARGET_SERVER:-${TARGET_SERVER_ENV:-}}"
 if [ -z "$TARGET_SERVER" ]; then
-  echo "Could not parse target server name from DATABASE_ADO. Set Data Source/Server in .env.local or set TARGET_SERVER env var." >&2
+  echo "Could not parse target server name from ADMIN_DATABASE_ADO. Set Data Source/Server in .env.local or set TARGET_SERVER env var." >&2
   exit 1
 fi
 
@@ -119,9 +119,9 @@ for p in "${PARTS[@]}"; do
   esac
 done
 
-# Final source credentials: prefer parsed values from DATABASE_ADO, fall back to SOURCE_USER/SOURCE_PASS env vars
-SOURCE_USER_FINAL="${PARSED_USER:-${SOURCE_USER:-}}"
-SOURCE_PASS_FINAL="${PARSED_PASS:-${SOURCE_PASS:-}}"
+# Final source credentials from ADMIN_DATABASE_ADO.
+SOURCE_USER_FINAL="${PARSED_USER:-}"
+SOURCE_PASS_FINAL="${PARSED_PASS:-}"
 
 # Allow overriding target server/db via env vars
 TARGET_SERVER="${TARGET_SERVER:-${TARGET_SERVER_ENV:-}}"

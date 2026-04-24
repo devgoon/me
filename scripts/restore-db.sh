@@ -14,32 +14,48 @@ if [ ! -f "$BACPAC_PATH" ]; then
   exit 1
 fi
 
-# Try to derive server from .env.local DATABASE_ADO if available
+# Try to derive server and credentials from .env.local ADMIN_DATABASE_ADO
 SERVER=""
+CONN=""
+PARSED_USER=""
+PARSED_PASS=""
 if [ -f .env.local ]; then
   # shellcheck disable=SC1091
   set -a; . .env.local; set +a || true
 fi
 
-if [ -n "${DATABASE_ADO:-}" ]; then
+if [ -n "${ADMIN_DATABASE_ADO:-}" ]; then
+  CONN="$ADMIN_DATABASE_ADO"
   # Extract Data Source value from ADO string: Data Source=server;...
-  SERVER=$(printf "%s" "$DATABASE_ADO" | sed -n 's/.*Data Source=\([^;]*\).*/\1/p')
+  SERVER=$(printf "%s" "$CONN" | sed -n 's/.*Data Source=\([^;]*\).*/\1/p')
+
+  IFS=';' read -ra PARTS <<< "$CONN"
+  for p in "${PARTS[@]}"; do
+    p_trim=$(echo "$p" | awk '{$1=$1;print}')
+    [ -z "$p_trim" ] && continue
+    key=${p_trim%%=*}
+    val=${p_trim#*=}
+    key=$(echo "$key" | awk '{$1=$1;print}')
+    val=$(echo "$val" | awk '{$1=$1;print}')
+    case "$key" in
+      "User ID"|"UserID"|"user"|"User") PARSED_USER="$val" ;;
+      "Password"|"password") PARSED_PASS="$val" ;;
+    esac
+  done
 fi
 
 if [ -z "$SERVER" ]; then
-  echo "Target server not detected from .env.local. Set DATABASE_ADO or export TARGET_SERVER." >&2
+  echo "Target server not detected from .env.local. Set ADMIN_DATABASE_ADO." >&2
   echo "You can also set TARGET_SERVER env var before running this script." >&2
   exit 1
 fi
 
-# Ask for credentials if not provided
-if [ -z "${SOURCE_USER:-}" ]; then
-  read -rp "SQL admin user (for import) [lodovico]: " SOURCE_USER
-  SOURCE_USER=${SOURCE_USER:-lodovico}
-fi
-if [ -z "${SOURCE_PASS:-}" ]; then
-  read -rsp "SQL admin password: " SOURCE_PASS
-  echo
+# Use credentials from ADMIN_DATABASE_ADO (required)
+SOURCE_USER="${PARSED_USER:-}"
+SOURCE_PASS="${PARSED_PASS:-}"
+if [ -z "$SOURCE_USER" ] || [ -z "$SOURCE_PASS" ]; then
+  echo "ADMIN_DATABASE_ADO must include User ID and Password for restore operations." >&2
+  exit 1
 fi
 
 printf "About to import bacpac:\n  file: %s\n  server: %s\n  target db: %s\n  user: %s\n" "$BACPAC_PATH" "$SERVER" "$TARGET_DB" "$SOURCE_USER"

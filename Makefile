@@ -1,4 +1,4 @@
-.PHONY: e2e install lint spellcheck link-check unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
+.PHONY: e2e install lint spellcheck link-check unit-test coverage check evals start start-legacy stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
 
 install:
 	npm install
@@ -60,15 +60,30 @@ start:
 	if [ -z "$$DEBUG_DB" ]; then \
 		export DEBUG_DB=1; \
 	fi; \
-	# Prepare swa-dist locally (like CI) and start the emulator from swa-dist
-	# Start the SWA emulator directly from the frontend directory (no swa-dist copy)
+	# Build and serve React frontend by default.
+	echo "Building React frontend (frontend-react/dist)..."; \
+	npm --prefix frontend-react run build; \
+	echo "Starting local SWA emulator from frontend-react/dist with api/"; \
+	npx @azure/static-web-apps-cli@latest start frontend-react/dist --api-location api --port 4280
+
+start-legacy:
+	@mkdir -p .azurite
+	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
+	AZURITE_PID=$$!; \
+	trap 'kill $$AZURITE_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
+	if [ -f .env.local ]; then \
+		set -a; . .env.local; set +a; \
+	fi; \
+	if [ -z "$$DEBUG_DB" ]; then \
+		export DEBUG_DB=1; \
+	fi; \
 	echo "Starting local SWA emulator from frontend/ with api/"; \
 	npx @azure/static-web-apps-cli@latest start frontend --api-location api --port 4280
 
 stop:
 	@set -e; \
 	PIDS=""; \
-	for PORT in 4280 7071 10000 10001 10002; do \
+	for PORT in 4280 7071 10000 10001 10002 5173 4173; do \
 		FOUND=$$(lsof -tiTCP:$$PORT -sTCP:LISTEN || true); \
 		if [ -n "$$FOUND" ]; then \
 			PIDS="$$PIDS $$FOUND"; \
@@ -76,7 +91,7 @@ stop:
 	done; \
 	PIDS=$$(printf "%s\n" $$PIDS | tr ' ' '\n' | sed '/^$$/d' | sort -u | tr '\n' ' '); \
 	if [ -z "$$PIDS" ]; then \
-		echo "No local SWA/Functions/Azurite processes are listening on app ports."; \
+		echo "No local SWA/Functions/Azurite/Vite processes are listening on app ports."; \
 		exit 0; \
 	fi; \
 	echo "Stopping local app processes: $$PIDS"; \
@@ -120,7 +135,7 @@ stop:
 	done; \
 	if [ -n "$$STILL_RUNNING" ]; then \
 		LISTENERS=""; \
-		for PORT in 4280 7071 10000 10001 10002; do \
+		for PORT in 4280 7071 10000 10001 10002 5173 4173; do \
 			FOUND=$$(lsof -tiTCP:$$PORT -sTCP:LISTEN || true); \
 			if [ -n "$$FOUND" ]; then \
 				LISTENERS="$$LISTENERS $$FOUND"; \
@@ -141,8 +156,8 @@ backup-db: install-sqlcmd
 	@if [ -z "$(TARGET_DB)" ]; then \
 		echo "Usage: make backup-db TARGET_DB=database_name"; exit 1; \
 	fi
-	@echo "Backing up database '$(TARGET_DB)' to db/*.bacpac (requires DATABASE_ADO in .env.local)"
-	@if [ ! -f .env.local ]; then echo ".env.local not found; create .env.local with DATABASE_ADO set"; exit 1; fi; \
+	@echo "Backing up database '$(TARGET_DB)' to db/*.bacpac (requires ADMIN_DATABASE_ADO in .env.local)"
+	@if [ ! -f .env.local ]; then echo ".env.local not found; create .env.local with ADMIN_DATABASE_ADO set"; exit 1; fi; \
 	./scripts/backup-db.sh "$(TARGET_DB)" || (echo "backup script failed"; exit 1)
 
 run-sql-file:
@@ -162,7 +177,7 @@ install-sqlcmd:
 
 
 dump-schema: install-sqlcmd
-	@echo "Exporting database schema to db/schema.sql (requires DATABASE_ADO in .env.local)"
+	@echo "Exporting database schema to db/schema.sql (requires ADMIN_DATABASE_ADO in .env.local)"
 	@bash scripts/dump-schema.sh db/schema.sql
 
 restore-db: install-sqlcmd
@@ -173,7 +188,7 @@ restore-db: install-sqlcmd
 	printf "About to restore BACPAC '%s' into database '%s'\n" "$(BACPAC)" "$(TARGET_DB)"; \
 	printf "This is destructive. Proceed? Type 'yes' to continue: "; read ans; \
 	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
-	@echo "Restoring BACPAC '$(BACPAC)' into database '$(TARGET_DB)' (server from .env.local DATABASE_ADO)"; \
+	@echo "Restoring BACPAC '$(BACPAC)' into database '$(TARGET_DB)' (server from .env.local ADMIN_DATABASE_ADO)"; \
 	./scripts/restore-db.sh "$(BACPAC)" "$(TARGET_DB)"
 
 gh-sync-env:
