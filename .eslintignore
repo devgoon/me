@@ -1,0 +1,5 @@
+frontend-legacy/
+.vscode/
+node_modules/
+coverage/
+.cache/

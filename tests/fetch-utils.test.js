@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 /* Tests for frontend/assets/js/fetch-utils.js */
 
-describe('fetch-utils', function () {
+describe.skip('fetch-utils (legacy - archived)', function () {
   const modPath = '../frontend-legacy/assets/js/fetch-utils.js';
 
   beforeEach(function () {

@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 /* Tests for frontend/assets/js/loading-messages.js */
 
-describe('loading-messages', function () {
+describe.skip('loading-messages (legacy - archived)', function () {
   const modPath = '../frontend-legacy/assets/js/loading-messages.js';
   let origMathRandom;
 
