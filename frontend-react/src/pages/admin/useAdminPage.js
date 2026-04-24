@@ -125,41 +125,62 @@ export function useAdminPage() {
   }
 
   useEffect(() => {
+    let t;
+    const schedule = (fn) => {
+      if (t) clearTimeout(t);
+      t = setTimeout(fn, 0);
+      return t;
+    };
+
     if (bootstrapQuery.isPending) {
-      setLoading(true);
-      return;
+      schedule(() => setLoading(true));
+      return () => clearTimeout(t);
     }
 
     if (bootstrapQuery.isError) {
-      setStatus(bootstrapQuery.error?.message || 'Unable to load admin data');
-      setLoading(false);
-      return;
+      schedule(() => {
+        setStatus(bootstrapQuery.error?.message || 'Unable to load admin data');
+        setLoading(false);
+      });
+      return () => clearTimeout(t);
     }
 
     if (bootstrapQuery.data?.unauthorized) {
       redirectTo('/auth');
-      setLoading(false);
-      return;
+      schedule(() => setLoading(false));
+      return () => clearTimeout(t);
     }
 
     if (bootstrapQuery.data?.data) {
-      setAdminData(normalizeAdminIncoming(bootstrapQuery.data.data));
+      schedule(() => setAdminData(normalizeAdminIncoming(bootstrapQuery.data.data)));
     }
-    setLoading(false);
+    schedule(() => setLoading(false));
+    return () => clearTimeout(t);
   }, [bootstrapQuery.data, bootstrapQuery.error, bootstrapQuery.isError, bootstrapQuery.isPending]);
 
   useEffect(() => {
     if (activeTab !== 'cache') return;
     if (cacheReportQuery.isFetching) return;
+    let t;
+    const schedule = (fn) => {
+      if (t) clearTimeout(t);
+      t = setTimeout(fn, 0);
+      return t;
+    };
     if (cacheReportQuery.isError) {
-      setStatus(cacheReportQuery.error?.message || 'Failed to load cache report');
-      setCacheRows([]);
-      return;
+      schedule(() => {
+        setStatus(cacheReportQuery.error?.message || 'Failed to load cache report');
+        setCacheRows([]);
+      });
+      return () => clearTimeout(t);
     }
     if (cacheReportQuery.data) {
-      setCacheRows(cacheReportQuery.data);
-      setStatus('Cache report loaded');
+      schedule(() => {
+        setCacheRows(cacheReportQuery.data);
+        setStatus('Cache report loaded');
+      });
     }
+    return () => clearTimeout(t);
   }, [
     activeTab,
     cacheReportQuery.data,
