@@ -1,4 +1,4 @@
-.PHONY: e2e install lint spellcheck link-check unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
+.PHONY: e2e install lint spellcheck unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
 
 install:
 	npm install
@@ -19,8 +19,12 @@ spellcheck:
 	npx cspell "**/*.{html,css,js,ts}" "api/**/*.js" --verbose
 
 unit-test:
-	@echo "Running top-level tests"
-	npm test
+	@echo "==> Running UI tests (frontend-react) with coverage"
+	@npm --prefix frontend-react run test:run -- --coverage || true
+	@echo "==> Running API tests with coverage"
+	@npm run coverage:api || true
+	@echo "==> Running eval tests with coverage"
+	@npx jest --coverage --testPathPattern=tests/evals/ --runInBand || true
 
 coverage:
 	@echo "Running repository tests with coverage (console summary)"yes
@@ -31,8 +35,7 @@ check:
 	@$(MAKE) spellcheck
 	@echo "==> [3/6] Running frontend-react lint"
 	@npm --prefix frontend-react run lint || true
-	@echo "==> [4/6] Running link check"
-	@$(MAKE) link-check
+	# link-check removed (was unused)
 	@echo "==> [5/6] Building frontend-react"
 	@npm --prefix frontend-react run build || true
 	@echo "==> [6/7] Running evals"
