@@ -19,7 +19,13 @@ describe('ExperiencePage', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: false });
     apiRequestJson.mockResolvedValue({
       experiences: [
-        { id: '1', companyName: 'Acme', title: 'Engineer', bulletPoints: ['Did things'], isCurrent: true },
+        {
+          id: '1',
+          companyName: 'Acme',
+          title: 'Engineer',
+          bulletPoints: ['Did things'],
+          isCurrent: true,
+        },
       ],
       skills: { strong: ['React'], moderate: ['Node'] },
     });

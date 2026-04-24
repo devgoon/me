@@ -10,7 +10,7 @@ const navItems = [
   { to: '/experience', label: 'Experience' },
   { to: '/certifications', label: 'Certifications' },
   { to: '/education', label: 'Education' },
-  { to: '/fit', label: 'See If We\'re A Match' },
+  { to: '/fit', label: "See If We're A Match" },
   { href: '/assets/Lodovico-Resume-04-08-26.pdf', label: 'Download Resume', external: true },
 ];
 
@@ -53,12 +53,8 @@ function AppLayout({ children }) {
           </Typography>
 
           {/* Navigation Links */}
-          <Stack
-            spacing={1.5}
-            aria-label="Main navigation"
-            component="nav"
-          >
-            {navItems.map((item) => (
+          <Stack spacing={1.5} aria-label="Main navigation" component="nav">
+            {navItems.map((item) =>
               item.external ? (
                 <MuiLink
                   key={item.label}
@@ -97,7 +93,7 @@ function AppLayout({ children }) {
                   {item.label}
                 </MuiLink>
               )
-            ))}
+            )}
           </Stack>
 
           {/* Social Links */}

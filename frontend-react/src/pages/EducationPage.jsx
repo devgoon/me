@@ -1,4 +1,16 @@
-import { Card, CardContent, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper } from '@mui/material';
+import {
+  Card,
+  CardContent,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+  Paper,
+} from '@mui/material';
 
 // Education data
 const EDUCATION = [
@@ -31,9 +43,7 @@ function EducationPage() {
         <CardContent>
           <Stack spacing={2}>
             <Typography variant="h4">Education</Typography>
-            <Typography color="text.secondary">
-              Academic background and degrees
-            </Typography>
+            <Typography color="text.secondary">Academic background and degrees</Typography>
           </Stack>
         </CardContent>
       </Card>
@@ -45,10 +55,18 @@ function EducationPage() {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'action.hover' }}>
-                <TableCell><strong>Institution</strong></TableCell>
-                <TableCell><strong>Degree</strong></TableCell>
-                <TableCell><strong>Field of Study</strong></TableCell>
-                <TableCell><strong>Period</strong></TableCell>
+                <TableCell>
+                  <strong>Institution</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Degree</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Field of Study</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Period</strong>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

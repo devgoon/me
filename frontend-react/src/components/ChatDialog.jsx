@@ -49,9 +49,7 @@ function renderMarkdown(text) {
 
   const applyInline = (str) => {
     const parts = str.split(/\*\*(.*?)\*\*/g);
-    return parts.map((part, i) =>
-      i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-    );
+    return parts.map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
   };
 
   lines.forEach((line, i) => {
@@ -180,10 +178,7 @@ function ChatDialog({ open, onClose }) {
         error?.name === 'AbortError'
           ? 'The AI service timed out. Please try again in a moment.'
           : `I am having trouble reaching the AI service right now. ${error?.message ?? ''}`.trim();
-      setMessages((prev) => [
-        ...prev.filter((m) => !m.typing),
-        { role: 'assistant', text: msg },
-      ]);
+      setMessages((prev) => [...prev.filter((m) => !m.typing), { role: 'assistant', text: msg }]);
     } finally {
       setLoading(false);
     }

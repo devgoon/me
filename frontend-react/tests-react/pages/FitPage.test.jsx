@@ -45,7 +45,11 @@ describe('FitPage', () => {
   it('shows loading state while analyzing', async () => {
     const user = userEvent.setup();
     let resolve;
-    apiRequest.mockReturnValue(new Promise((r) => { resolve = r; }));
+    apiRequest.mockReturnValue(
+      new Promise((r) => {
+        resolve = r;
+      })
+    );
 
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
@@ -169,7 +173,10 @@ describe('FitPage', () => {
 
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
-    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role with partial overlap');
+    await user.type(
+      screen.getByPlaceholderText('Paste a job description'),
+      'A role with partial overlap'
+    );
     await user.click(screen.getByRole('button', { name: "See if We're a match" }));
 
     await waitFor(() => {
@@ -197,4 +204,3 @@ describe('FitPage', () => {
     });
   });
 });
-

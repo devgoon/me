@@ -1,4 +1,4 @@
-.PHONY: e2e install lint spellcheck link-check unit-test coverage check evals start start-legacy stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
+.PHONY: e2e install lint spellcheck link-check unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
 
 install:
 	npm install
@@ -12,18 +12,18 @@ install-ci:
 
 lint:
 	@# Auto-format with Prettier, then run ESLint autofix
-	@npx prettier --write "**/*.{js,json,md,css,html}"
-	@npx eslint "api/**/*.js" "frontend-legacy/assets/js/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
+	@npx prettier --write "**/*.{jsx,js,json,md,css,html}"
+	@npx eslint "api/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
 
 spellcheck:
-	npx cspell "**/*.{html,css,js,ts}" "frontend-legacy/assets/*.txt" "api/**/*.js" --verbose
+	npx cspell "**/*.{html,css,js,ts}" "api/**/*.js" --verbose
 
 unit-test:
 	@echo "Running top-level tests"
 	npm test
 
 coverage:
-	@echo "Running repository tests with coverage (console summary)"
+	@echo "Running repository tests with coverage (console summary)"yes
 	@npm run coverage
 
 check:
@@ -72,20 +72,6 @@ start:
 	REACT_WATCH_PID=$$!; \
 	echo "Starting local SWA emulator from frontend-react/dist with api/"; \
 	npx @azure/static-web-apps-cli@latest start frontend-react/dist --api-location api --port 4280
-
-start-legacy:
-	@mkdir -p .azurite
-	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
-	AZURITE_PID=$$!; \
-	trap 'kill $$AZURITE_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
-	if [ -f .env.local ]; then \
-		set -a; . .env.local; set +a; \
-	fi; \
-	if [ -z "$$DEBUG_DB" ]; then \
-		export DEBUG_DB=1; \
-	fi; \
-	echo "Starting local SWA emulator from frontend-legacy/ with api/"; \
-	npx @azure/static-web-apps-cli@latest start frontend-legacy --api-location api --port 4280
 
 stop:
 	@set -e; \

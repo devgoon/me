@@ -12,8 +12,12 @@ function AiPanel({ adminData, setAdminData }) {
 
   return (
     <Stack spacing={3}>
-      <Typography variant="h6" fontWeight={700}>AI Instructions</Typography>
-      <Typography variant="body2" color="text.secondary">Tell the AI how to behave.</Typography>
+      <Typography variant="h6" fontWeight={700}>
+        AI Instructions
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        Tell the AI how to behave.
+      </Typography>
 
       <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
         <Stack spacing={1}>
@@ -40,9 +44,15 @@ function AiPanel({ adminData, setAdminData }) {
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={1.25}
-        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.5 }}
+        sx={{
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          pb: 0.5,
+        }}
       >
-        <Typography variant="subtitle1" fontWeight={600}>Instruction rules</Typography>
+        <Typography variant="subtitle1" fontWeight={600}>
+          Instruction rules
+        </Typography>
         <Button
           variant="outlined"
           size="small"
@@ -51,7 +61,10 @@ function AiPanel({ adminData, setAdminData }) {
               ...prev,
               aiInstructions: {
                 ...prev.aiInstructions,
-                rules: [defaultRule(prev.aiInstructions.rules.length), ...(prev.aiInstructions.rules || [])],
+                rules: [
+                  defaultRule(prev.aiInstructions.rules.length),
+                  ...(prev.aiInstructions.rules || []),
+                ],
               },
             }))
           }
@@ -66,9 +79,15 @@ function AiPanel({ adminData, setAdminData }) {
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
-              sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.25 }}
+              sx={{
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                justifyContent: 'space-between',
+                pb: 0.25,
+              }}
             >
-              <Typography variant="subtitle1" fontWeight={600}>Rule {index + 1}</Typography>
+              <Typography variant="subtitle1" fontWeight={600}>
+                Rule {index + 1}
+              </Typography>
               <Button
                 variant="outlined"
                 color="error"

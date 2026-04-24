@@ -14,10 +14,20 @@ function GapsPanel({ adminData, prependListItem, removeListItem, updateListItem 
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={1.25}
-        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.5 }}
+        sx={{
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          pb: 0.5,
+        }}
       >
-        <Typography variant="h6" fontWeight={700}>Gaps</Typography>
-        <Button variant="outlined" size="small" onClick={() => prependListItem('gaps', defaultGap())}>
+        <Typography variant="h6" fontWeight={700}>
+          Gaps
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => prependListItem('gaps', defaultGap())}
+        >
           Add Gap
         </Button>
       </Stack>
@@ -31,10 +41,21 @@ function GapsPanel({ adminData, prependListItem, removeListItem, updateListItem 
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
-              sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.25 }}
+              sx={{
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                justifyContent: 'space-between',
+                pb: 0.25,
+              }}
             >
-              <Typography variant="subtitle1" fontWeight={600}>Gap {index + 1}</Typography>
-              <Button variant="outlined" color="error" size="small" onClick={() => removeListItem('gaps', index)}>
+              <Typography variant="subtitle1" fontWeight={600}>
+                Gap {index + 1}
+              </Typography>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={() => removeListItem('gaps', index)}
+              >
                 Remove
               </Button>
             </Stack>
@@ -52,10 +73,34 @@ function GapsPanel({ adminData, prependListItem, removeListItem, updateListItem 
               <MenuItem value="environment">Environment</MenuItem>
               <MenuItem value="role_type">Role type</MenuItem>
             </TextField>
-            <TextField label="Description" value={item.description || ''} onChange={(e) => updateListItem('gaps', index, 'description', e.target.value)} fullWidth multiline rows={2} size="small" />
-            <TextField label="Why this is a gap" value={item.whyItsAGap || ''} onChange={(e) => updateListItem('gaps', index, 'whyItsAGap', e.target.value)} fullWidth multiline rows={2} size="small" />
+            <TextField
+              label="Description"
+              value={item.description || ''}
+              onChange={(e) => updateListItem('gaps', index, 'description', e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              size="small"
+            />
+            <TextField
+              label="Why this is a gap"
+              value={item.whyItsAGap || ''}
+              onChange={(e) => updateListItem('gaps', index, 'whyItsAGap', e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              size="small"
+            />
             <FormControlLabel
-              control={<Checkbox size="small" checked={Boolean(item.interestedInLearning)} onChange={(e) => updateListItem('gaps', index, 'interestedInLearning', e.target.checked)} />}
+              control={
+                <Checkbox
+                  size="small"
+                  checked={Boolean(item.interestedInLearning)}
+                  onChange={(e) =>
+                    updateListItem('gaps', index, 'interestedInLearning', e.target.checked)
+                  }
+                />
+              }
               label="Interested in learning"
             />
           </Stack>

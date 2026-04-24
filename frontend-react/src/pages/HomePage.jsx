@@ -9,17 +9,22 @@ function HomePage() {
   const [chatOpen, setChatOpen] = useState(false);
   const healthQuery = useQuery({
     queryKey: ['health'],
-    queryFn: () => apiRequestJson('/api/health', { method: 'GET' }, { timeoutMs: 8000, maxAttempts: 5, baseDelay: 500 }),
+    queryFn: () =>
+      apiRequestJson(
+        '/api/health',
+        { method: 'GET' },
+        { timeoutMs: 8000, maxAttempts: 5, baseDelay: 500 }
+      ),
     ...tanstackRetryOptions({ maxAttempts: 5, baseDelay: 500 }),
   });
 
   const health = healthQuery.isPending
     ? 'Checking API...'
     : healthQuery.isError
-      ? 'API unavailable from this host'
-      : healthQuery.data?.status
-        ? `API: ${healthQuery.data.status}`
-        : 'API is reachable';
+    ? 'API unavailable from this host'
+    : healthQuery.data?.status
+    ? `API: ${healthQuery.data.status}`
+    : 'API is reachable';
 
   return (
     <Stack spacing={6}>
@@ -33,7 +38,8 @@ function HomePage() {
                   Lodovico (Vico) Minnocci
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
-                  Building cloud-native systems, from startups to Fortune 500s. Now driving innovation in autonomous vehicles.
+                  Building cloud-native systems, from startups to Fortune 500s. Now driving
+                  innovation in autonomous vehicles.
                 </Typography>
               </Stack>
 

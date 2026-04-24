@@ -9,7 +9,8 @@ const CERTIFICATIONS = [
     issue_date: '2023-01-15',
     expiration_date: '2025-01-15',
     credential_id: 'AZ-305',
-    verification_url: 'https://learn.microsoft.com/en-us/certifications/azure-solutions-architect-expert/',
+    verification_url:
+      'https://learn.microsoft.com/en-us/certifications/azure-solutions-architect-expert/',
     image: 'azure-cert-az305.png',
   },
   {
@@ -49,7 +50,8 @@ const CERTIFICATIONS = [
     issue_date: '2022-09-05',
     expiration_date: '2025-09-05',
     credential_id: 'SAA-C03',
-    verification_url: 'https://aws.amazon.com/certification/certified-solutions-architect-associate/',
+    verification_url:
+      'https://aws.amazon.com/certification/certified-solutions-architect-associate/',
     image: 'aws-cert-solutions-architect-associate.png',
   },
   {
@@ -65,7 +67,11 @@ const CERTIFICATIONS = [
 ];
 
 function CertificationBadge({ cert }) {
-  const tooltipText = `${cert.name}\nIssued: ${new Date(cert.issue_date).toLocaleDateString()}\n${cert.expiration_date ? `Expires: ${new Date(cert.expiration_date).toLocaleDateString()}` : 'No expiration'}`;
+  const tooltipText = `${cert.name}\nIssued: ${new Date(cert.issue_date).toLocaleDateString()}\n${
+    cert.expiration_date
+      ? `Expires: ${new Date(cert.expiration_date).toLocaleDateString()}`
+      : 'No expiration'
+  }`;
 
   return (
     <Tooltip title={tooltipText} arrow>

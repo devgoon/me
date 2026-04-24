@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiRequest } from '../../../src/lib/tanstackApi.js';
-import {
-  fetchPanelData,
-  savePanelData,
-} from '../../../src/pages/admin/adminService.js';
+import { fetchPanelData, savePanelData } from '../../../src/pages/admin/adminService.js';
 
 vi.mock('../../../src/lib/tanstackApi.js', () => ({
   apiRequest: vi.fn(),

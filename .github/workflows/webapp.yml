@@ -29,9 +29,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.18.0
+          cache: 'npm'
 
       - name: Install dependencies
-        run: make install
+        run: make install-ci
 
       - name: Checks
         run: make check

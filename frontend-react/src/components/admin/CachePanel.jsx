@@ -16,9 +16,15 @@ function CachePanel({ loadCacheReport, cacheSearch, setCacheSearch, filteredCach
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={1.25}
-        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', pb: 0.5 }}
+        sx={{
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          pb: 0.5,
+        }}
       >
-        <Typography variant="h6" fontWeight={700}>Cache Report</Typography>
+        <Typography variant="h6" fontWeight={700}>
+          Cache Report
+        </Typography>
         <Button variant="outlined" size="small" onClick={loadCacheReport}>
           Refresh
         </Button>
@@ -56,7 +62,14 @@ function CachePanel({ loadCacheReport, cacheSearch, setCacheSearch, filteredCach
             ) : (
               filteredCache.map((row, index) => (
                 <TableRow key={`cache-${index}`} hover>
-                  <TableCell sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <TableCell
+                    sx={{
+                      maxWidth: 300,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {row.question || ''}
                   </TableCell>
                   <TableCell>{row.model || ''}</TableCell>

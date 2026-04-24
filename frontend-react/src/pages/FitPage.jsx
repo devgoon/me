@@ -8,13 +8,13 @@ function normalizeFitResult(raw) {
   const gaps = Array.isArray(raw?.gaps)
     ? raw.gaps
     : Array.isArray(raw?.mismatches)
-      ? raw.mismatches
-      : [];
+    ? raw.mismatches
+    : [];
   const transfers = Array.isArray(raw?.transfers)
     ? raw.transfers
     : Array.isArray(raw?.reasons)
-      ? raw.reasons
-      : [];
+    ? raw.reasons
+    : [];
 
   return {
     verdict: raw?.verdict || 'Result',
@@ -43,7 +43,9 @@ function getScheduleMeetingUrl() {
 }
 
 function isSchedulableVerdict(verdict) {
-  const normalized = String(verdict || '').trim().toUpperCase();
+  const normalized = String(verdict || '')
+    .trim()
+    .toUpperCase();
   return normalized === 'FIT';
 }
 
@@ -168,7 +170,11 @@ function FitPage() {
         <Card variant="outlined" ref={resultRef}>
           <CardContent>
             <Stack spacing={2}>
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+              >
                 <Typography variant="h2">{result.verdict}</Typography>
                 <Button
                   type="button"
