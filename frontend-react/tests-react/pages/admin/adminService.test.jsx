@@ -1,27 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { apiFetch } from '../../../src/lib/api.js';
+import { apiRequest } from '../../../src/lib/tanstackApi.js';
 import {
   fetchPanelData,
   savePanelData,
 } from '../../../src/pages/admin/adminService.js';
 
-vi.mock('../../../src/lib/api.js', () => ({
-  apiFetch: vi.fn(),
+vi.mock('../../../src/lib/tanstackApi.js', () => ({
+  apiRequest: vi.fn(),
 }));
 
 describe('adminService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    apiFetch.mockResolvedValue({ ok: true, json: async () => ({}) });
+    apiRequest.mockResolvedValue({ ok: true, json: async () => ({}) });
   });
 
   it('calls panel-data GET with credentials', async () => {
     await fetchPanelData();
 
-    expect(apiFetch).toHaveBeenCalledWith(
+    expect(apiRequest).toHaveBeenCalledWith(
       '/api/panel-data',
       { method: 'GET', credentials: 'include' },
-      { timeoutMs: 15000 }
+      { timeoutMs: 15000, maxAttempts: 5, baseDelay: 500 }
     );
   });
 
@@ -33,7 +33,7 @@ describe('adminService', () => {
 
     await savePanelData(payload);
 
-    expect(apiFetch).toHaveBeenCalledWith(
+    expect(apiRequest).toHaveBeenCalledWith(
       '/api/panel-data',
       {
         method: 'POST',
@@ -41,7 +41,7 @@ describe('adminService', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       },
-      { timeoutMs: 15000 }
+      { timeoutMs: 15000, maxAttempts: 5, baseDelay: 500 }
     );
   });
 });

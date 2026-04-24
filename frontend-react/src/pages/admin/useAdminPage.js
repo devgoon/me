@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ADMIN_INITIAL_STATE } from '../../components/admin/state.js';
 import {
   normalizeAdminIncoming,
@@ -13,11 +14,15 @@ import {
   defaultRule,
 } from '../../components/admin/utils.js';
 import {
+  CACHE_API_OPTIONS,
+  PANEL_API_OPTIONS,
+  SAVE_API_OPTIONS,
   fetchAuthMe,
   fetchCacheReport,
   fetchPanelData,
   savePanelData,
 } from './adminService.js';
+import { ApiHttpError, tanstackRetryOptions } from '../../lib/tanstackApi.js';
 
 function redirectTo(path) {
   if (import.meta.env?.VITEST) return;
@@ -32,6 +37,43 @@ export function useAdminPage() {
   const [targetTitleInput, setTargetTitleInput] = useState('');
   const [cacheRows, setCacheRows] = useState([]);
   const [cacheSearch, setCacheSearch] = useState('');
+
+  const bootstrapQuery = useQuery({
+    queryKey: ['admin', 'bootstrap'],
+    queryFn: async () => {
+      const auth = await fetchAuthMe();
+      if (!auth.ok) {
+        return { unauthorized: true, data: null };
+      }
+
+      const response = await fetchPanelData();
+      if (!response.ok) throw new Error('Failed to load panel data');
+      const data = await response.json();
+      return { unauthorized: false, data };
+    },
+    ...tanstackRetryOptions(PANEL_API_OPTIONS),
+  });
+
+  const cacheReportQuery = useQuery({
+    queryKey: ['admin', 'cache-report'],
+    enabled: activeTab === 'cache',
+    queryFn: async () => {
+      const response = await fetchCacheReport();
+      if (!response.ok) throw new Error('Failed to load cache report');
+      const rows = await response.json();
+      return Array.isArray(rows) ? rows : [];
+    },
+    ...tanstackRetryOptions(CACHE_API_OPTIONS),
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (payload) => {
+      const response = await savePanelData(payload);
+      if (!response.ok) throw new ApiHttpError(response, 'Save failed');
+      return response;
+    },
+    ...tanstackRetryOptions(SAVE_API_OPTIONS),
+  });
 
   function setProfileField(field, value) {
     setAdminData((prev) => ({ ...prev, profile: { ...prev.profile, [field]: value } }));
@@ -65,10 +107,9 @@ export function useAdminPage() {
   async function loadCacheReport() {
     setStatus('Loading cache report...');
     try {
-      const response = await fetchCacheReport();
-      if (!response.ok) throw new Error('Failed to load cache report');
-      const rows = await response.json();
-      setCacheRows(Array.isArray(rows) ? rows : []);
+      const rows = await cacheReportQuery.refetch();
+      if (rows.error) throw rows.error;
+      setCacheRows(Array.isArray(rows.data) ? rows.data : []);
       setStatus('Cache report loaded');
     } catch (error) {
       setStatus(error.message || 'Failed to load cache report');
@@ -84,39 +125,55 @@ export function useAdminPage() {
   }
 
   useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const auth = await fetchAuthMe();
-        if (!auth.ok) {
-          redirectTo('/auth');
-          return;
-        }
+    if (bootstrapQuery.isPending) {
+      setLoading(true);
+      return;
+    }
 
-        const response = await fetchPanelData();
-        if (!response.ok) throw new Error('Failed to load panel data');
-        const data = await response.json();
-        if (!active) return;
+    if (bootstrapQuery.isError) {
+      setStatus(bootstrapQuery.error?.message || 'Unable to load admin data');
+      setLoading(false);
+      return;
+    }
 
-        setAdminData(normalizeAdminIncoming(data));
-      } catch (error) {
-        if (active) setStatus(error.message || 'Unable to load admin data');
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
+    if (bootstrapQuery.data?.unauthorized) {
+      redirectTo('/auth');
+      setLoading(false);
+      return;
+    }
+
+    if (bootstrapQuery.data?.data) {
+      setAdminData(normalizeAdminIncoming(bootstrapQuery.data.data));
+    }
+    setLoading(false);
+  }, [bootstrapQuery.data, bootstrapQuery.error, bootstrapQuery.isError, bootstrapQuery.isPending]);
+
+  useEffect(() => {
+    if (activeTab !== 'cache') return;
+    if (cacheReportQuery.isFetching) return;
+    if (cacheReportQuery.isError) {
+      setStatus(cacheReportQuery.error?.message || 'Failed to load cache report');
+      setCacheRows([]);
+      return;
+    }
+    if (cacheReportQuery.data) {
+      setCacheRows(cacheReportQuery.data);
+      setStatus('Cache report loaded');
+    }
+  }, [
+    activeTab,
+    cacheReportQuery.data,
+    cacheReportQuery.error,
+    cacheReportQuery.isError,
+    cacheReportQuery.isFetching,
+  ]);
 
   async function save() {
     setStatus('Saving...');
     const payload = sanitizeForSave(adminData);
     try {
       validateSalaryRange(payload);
-      const response = await savePanelData(payload);
-      if (!response.ok) throw new Error('Save failed');
+      await saveMutation.mutateAsync(payload);
       setStatus('Saved successfully');
     } catch (error) {
       setStatus(error.message || 'Save failed');

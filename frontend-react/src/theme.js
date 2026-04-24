@@ -213,7 +213,8 @@ const theme = createTheme({
     MuiTableHead: {
       styleOverrides: {
         root: {
-          background: 'linear-gradient(180deg, rgba(95, 168, 255, 0.1) 0%, rgba(95, 168, 255, 0.04) 100%)',
+          background:
+            'linear-gradient(180deg, rgba(95, 168, 255, 0.1) 0%, rgba(95, 168, 255, 0.04) 100%)',
         },
       },
     },

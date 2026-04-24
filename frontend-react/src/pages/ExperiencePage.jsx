@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Alert,
   Box,
@@ -9,21 +10,25 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { apiFetch } from '../lib/api.js';
+import { apiRequestJson, tanstackRetryOptions } from '../lib/tanstackApi.js';
 
 function ExperiencePage() {
   const [error, setError] = useState('');
   const [experiences, setExperiences] = useState([]);
   const [skills, setSkills] = useState({ strong: [], moderate: [], gaps: [] });
+  const experienceQuery = useQuery({
+    queryKey: ['experience', { skipAI: 1 }],
+    queryFn: () => apiRequestJson('/api/experience?skipAI=1', { method: 'GET' }, { timeoutMs: 30000, maxAttempts: 2, baseDelay: 500 }),
+    ...tanstackRetryOptions({ maxAttempts: 2, baseDelay: 500 }),
+  });
 
   useEffect(() => {
-    let active = true;
     (async () => {
       try {
         const defaultsRes = await fetch('/_shared/default-data.json', { cache: 'no-store' });
         if (defaultsRes.ok) {
           const defaults = await defaultsRes.json();
-          if (active && defaults?.experience?.experiences) {
+          if (defaults?.experience?.experiences) {
             setExperiences(defaults.experience.experiences);
             setSkills(defaults.experience.skills || defaults.skills || { strong: [], moderate: [] });
           }
@@ -31,28 +36,20 @@ function ExperiencePage() {
       } catch {
         // Defaults are optional.
       }
-
-      try {
-        const response = await apiFetch(
-          '/api/experience?skipAI=1',
-          { method: 'GET' },
-          { timeoutMs: 30000, maxAttempts: 2 }
-        );
-        if (!response.ok) throw new Error('Unable to load experience');
-        const payload = await response.json();
-        if (!active) return;
-        setExperiences(payload.experiences || []);
-        setSkills(payload.skills || { strong: [], moderate: [], gaps: [] });
-        setError('');
-      } catch (loadError) {
-        if (active) setError(loadError.message || 'Failed to load experience data');
-      }
     })();
-
-    return () => {
-      active = false;
-    };
   }, []);
+
+  useEffect(() => {
+    if (!experienceQuery.data) return;
+    setExperiences(experienceQuery.data.experiences || []);
+    setSkills(experienceQuery.data.skills || { strong: [], moderate: [], gaps: [] });
+    setError('');
+  }, [experienceQuery.data]);
+
+  useEffect(() => {
+    if (!experienceQuery.isError) return;
+    setError(experienceQuery.error?.message || 'Failed to load experience data');
+  }, [experienceQuery.error, experienceQuery.isError]);
 
   const orderedExperiences = useMemo(() => {
     return [...experiences].sort((a, b) => {
@@ -97,31 +94,7 @@ function ExperiencePage() {
           </Card>
         ))}
       </Stack>
-
-      <Card variant="outlined">
-        <CardContent>
-          <Stack spacing={2}>
-            <Typography variant="h2">Skills Snapshot</Typography>
-            <Typography variant="body2">
-              <strong>Strong:</strong> {(skills.strong || []).join(', ') || 'N/A'}
-            </Typography>
-            <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-              {(skills.strong || []).map((item) => (
-                <Chip key={`strong-${item}`} label={item} size="small" />
-              ))}
-            </Stack>
-            <Divider />
-            <Typography variant="body2">
-              <strong>Moderate:</strong> {(skills.moderate || []).join(', ') || 'N/A'}
-            </Typography>
-            <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-              {(skills.moderate || []).map((item) => (
-                <Chip key={`moderate-${item}`} label={item} size="small" variant="outlined" />
-              ))}
-            </Stack>
-          </Stack>
-        </CardContent>
-      </Card>
+      
     </Stack>
   );
 }

@@ -2,7 +2,7 @@
 /* Tests for frontend/assets/js/fetch-utils.js */
 
 describe('fetch-utils', function () {
-  const modPath = '../frontend/assets/js/fetch-utils.js';
+  const modPath = '../frontend-legacy/assets/js/fetch-utils.js';
 
   beforeEach(function () {
     jest.resetModules();

@@ -1,12 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AuthPage from '../../src/pages/AuthPage.jsx';
+import { createQueryWrapper } from '../queryTestUtils.jsx';
 
-vi.mock('../../src/lib/api.js', () => ({
-  apiFetch: vi.fn(),
+vi.mock('../../src/lib/tanstackApi.js', () => ({
+  apiRequest: vi.fn(),
+  tanstackRetryOptions: vi.fn(() => ({ retry: false, retryDelay: 0 })),
 }));
 
-import { apiFetch } from '../../src/lib/api.js';
+import { apiRequest } from '../../src/lib/tanstackApi.js';
 
 describe('AuthPage', () => {
   beforeEach(() => {
@@ -14,9 +16,9 @@ describe('AuthPage', () => {
   });
 
   it('shows sign in prompt when user is not authenticated', async () => {
-    apiFetch.mockResolvedValue({ ok: false });
+    apiRequest.mockResolvedValue({ ok: false });
 
-    render(<AuthPage />);
+    render(<AuthPage />, { wrapper: createQueryWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText('Sign in with Microsoft to continue.')).toBeInTheDocument();
@@ -29,9 +31,9 @@ describe('AuthPage', () => {
   });
 
   it('shows redirect message when user is already authenticated', async () => {
-    apiFetch.mockResolvedValue({ ok: true });
+    apiRequest.mockResolvedValue({ ok: true });
 
-    render(<AuthPage />);
+    render(<AuthPage />, { wrapper: createQueryWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText('Already signed in, redirecting to admin...')).toBeInTheDocument();

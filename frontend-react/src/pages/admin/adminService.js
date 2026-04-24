@@ -1,24 +1,37 @@
-import { apiFetch } from '../../lib/api.js';
+import { apiRequest } from '../../lib/tanstackApi.js';
 
 const AUTH_TIMEOUT_MS = 10000;
 const PANEL_TIMEOUT_MS = 15000;
 const CACHE_TIMEOUT_MS = 15000;
 const SAVE_TIMEOUT_MS = 15000;
 
+export const AUTH_API_OPTIONS = { timeoutMs: AUTH_TIMEOUT_MS, maxAttempts: 5, baseDelay: 500 };
+export const PANEL_API_OPTIONS = { timeoutMs: PANEL_TIMEOUT_MS, maxAttempts: 5, baseDelay: 500 };
+export const CACHE_API_OPTIONS = { timeoutMs: CACHE_TIMEOUT_MS, maxAttempts: 5, baseDelay: 500 };
+export const SAVE_API_OPTIONS = { timeoutMs: SAVE_TIMEOUT_MS, maxAttempts: 5, baseDelay: 500 };
+
 export async function fetchAuthMe() {
-  return apiFetch('/api/auth/me', { credentials: 'include' }, { timeoutMs: AUTH_TIMEOUT_MS });
+  return apiRequest('/api/auth/me', { credentials: 'include' }, AUTH_API_OPTIONS);
 }
 
 export async function fetchPanelData() {
-  return apiFetch('/api/panel-data', { method: 'GET', credentials: 'include' }, { timeoutMs: PANEL_TIMEOUT_MS });
+  return apiRequest(
+    '/api/panel-data',
+    { method: 'GET', credentials: 'include' },
+    PANEL_API_OPTIONS
+  );
 }
 
 export async function fetchCacheReport() {
-  return apiFetch('/api/cache-report', { method: 'GET', credentials: 'include' }, { timeoutMs: CACHE_TIMEOUT_MS });
+  return apiRequest(
+    '/api/cache-report',
+    { method: 'GET', credentials: 'include' },
+    CACHE_API_OPTIONS
+  );
 }
 
 export async function savePanelData(payload) {
-  return apiFetch(
+  return apiRequest(
     '/api/panel-data',
     {
       method: 'POST',
@@ -26,6 +39,6 @@ export async function savePanelData(payload) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     },
-    { timeoutMs: SAVE_TIMEOUT_MS }
+    SAVE_API_OPTIONS
   );
 }

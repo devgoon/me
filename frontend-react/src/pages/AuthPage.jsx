@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button, Card, CardContent, Stack, Typography } from '@mui/material';
-import { apiFetch } from '../lib/api.js';
+import { apiRequest, tanstackRetryOptions } from '../lib/tanstackApi.js';
 
 function redirectTo(path) {
   if (import.meta.env?.VITEST) return;
@@ -9,28 +10,26 @@ function redirectTo(path) {
 
 function AuthPage() {
   const [message, setMessage] = useState('Checking sign-in status...');
+  const authQuery = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: () => apiRequest('/api/auth/me', { credentials: 'include' }, { timeoutMs: 10000, maxAttempts: 5, baseDelay: 500 }),
+    ...tanstackRetryOptions({ maxAttempts: 5, baseDelay: 500 }),
+  });
 
   useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const response = await apiFetch('/api/auth/me', { credentials: 'include' }, { timeoutMs: 10000 });
-        if (response.ok) {
-          if (active) {
-            setMessage('Already signed in, redirecting to admin...');
-            redirectTo('/admin');
-          }
-          return;
-        }
-      } catch {
-        // No-op, fallback to sign-in prompt.
-      }
-      if (active) setMessage('Sign in with Microsoft to continue.');
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
+    if (authQuery.isPending) {
+      setMessage('Checking sign-in status...');
+      return;
+    }
+
+    if (authQuery.isSuccess && authQuery.data?.ok) {
+      setMessage('Already signed in, redirecting to admin...');
+      redirectTo('/admin');
+      return;
+    }
+
+    setMessage('Sign in with Microsoft to continue.');
+  }, [authQuery.data, authQuery.isPending, authQuery.isSuccess]);
 
   return (
     <Card variant="outlined" sx={{ maxWidth: 520, mx: 'auto' }}>

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Alert, Button, Card, CardContent, Stack, TextField, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { apiFetch } from '../lib/api.js';
+import { apiRequest, tanstackRetryOptions } from '../lib/tanstackApi.js';
 
 function normalizeFitResult(raw) {
   const gaps = Array.isArray(raw?.gaps)
@@ -61,6 +62,21 @@ function FitPage() {
     textTransform: 'uppercase',
   };
 
+  const fitMutation = useMutation({
+    mutationFn: async (description) => {
+      return apiRequest(
+        '/api/fit',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobDescription: description }),
+        },
+        { timeoutMs: 15000, maxAttempts: 5, baseDelay: 500 }
+      );
+    },
+    ...tanstackRetryOptions({ maxAttempts: 5, baseDelay: 500 }),
+  });
+
   useEffect(() => {
     if (!result || !resultRef.current) return;
     if (typeof resultRef.current.scrollIntoView === 'function') {
@@ -108,15 +124,7 @@ function FitPage() {
     setLoading(true);
     setError('');
     try {
-      const response = await apiFetch(
-        '/api/fit',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jobDescription }),
-        },
-        { timeoutMs: 15000 }
-      );
+      const response = await fitMutation.mutateAsync(jobDescription);
       if (!response.ok) throw new Error('Fit analysis failed');
       const payload = await response.json();
       setResult(normalizeFitResult(payload));

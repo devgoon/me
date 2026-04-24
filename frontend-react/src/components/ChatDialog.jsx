@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import {
   Box,
   Button,
@@ -12,7 +13,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
-import { apiFetch } from '../lib/api.js';
+import { apiRequest, tanstackRetryOptions } from '../lib/tanstackApi.js';
 
 const SUGGESTIONS = [
   'Do you have enterprise development experience?',
@@ -122,6 +123,19 @@ function ChatDialog({ open, onClose }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const historyRef = useRef(null);
+  const chatMutation = useMutation({
+    mutationFn: (text) =>
+      apiRequest(
+        '/api/chat',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+        },
+        { timeoutMs: 60000, maxAttempts: 1, baseDelay: 0 }
+      ),
+    ...tanstackRetryOptions({ maxAttempts: 1, baseDelay: 0 }),
+  });
 
   // Scroll to bottom whenever messages change
   useEffect(() => {
@@ -140,15 +154,7 @@ function ChatDialog({ open, onClose }) {
     setMessages((prev) => [...prev, { role: 'assistant', typing: true, text: '' }]);
 
     try {
-      const response = await apiFetch(
-        '/api/chat',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text }),
-        },
-        { timeoutMs: 60000, maxAttempts: 1, baseDelay: 0 }
-      );
+      const response = await chatMutation.mutateAsync(text);
 
       let answer = 'I could not generate a response right now.';
       if (response.ok) {

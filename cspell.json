@@ -26,7 +26,11 @@
     "trustservercertificate",
     "valuenow",
     "Wallingford",
-    "gitflow"
+    "gitflow",
+    "Retriable",
+    "Avenir",
+    "Segoe",
+    "Vite"
   ],
   "ignorePaths": [
     "**/node_modules/**",

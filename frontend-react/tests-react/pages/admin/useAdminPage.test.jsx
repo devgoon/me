@@ -2,8 +2,13 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAdminPage } from '../../../src/pages/admin/useAdminPage.js';
 import * as adminService from '../../../src/pages/admin/adminService.js';
+import { createQueryWrapper } from '../../queryTestUtils.jsx';
 
 vi.mock('../../../src/pages/admin/adminService.js', () => ({
+  AUTH_API_OPTIONS: { timeoutMs: 10000, maxAttempts: 5, baseDelay: 500 },
+  PANEL_API_OPTIONS: { timeoutMs: 15000, maxAttempts: 5, baseDelay: 500 },
+  CACHE_API_OPTIONS: { timeoutMs: 15000, maxAttempts: 5, baseDelay: 500 },
+  SAVE_API_OPTIONS: { timeoutMs: 15000, maxAttempts: 5, baseDelay: 500 },
   fetchAuthMe: vi.fn(),
   fetchCacheReport: vi.fn(),
   fetchPanelData: vi.fn(),
@@ -27,7 +32,7 @@ describe('useAdminPage', () => {
   });
 
   it('loads data via auth + GET and completes loading', async () => {
-    const { result } = renderHook(() => useAdminPage());
+    const { result } = renderHook(() => useAdminPage(), { wrapper: createQueryWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -38,7 +43,7 @@ describe('useAdminPage', () => {
   });
 
   it('saves sanitized admin payload and sets success status', async () => {
-    const { result } = renderHook(() => useAdminPage());
+    const { result } = renderHook(() => useAdminPage(), { wrapper: createQueryWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -72,7 +77,7 @@ describe('useAdminPage', () => {
   it('sets save failure status when save API fails', async () => {
     adminService.savePanelData.mockResolvedValue({ ok: false });
 
-    const { result } = renderHook(() => useAdminPage());
+    const { result } = renderHook(() => useAdminPage(), { wrapper: createQueryWrapper() });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);

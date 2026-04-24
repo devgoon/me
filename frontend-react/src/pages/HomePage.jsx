@@ -1,30 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { Button, Card, CardContent, Chip, Stack, Typography, Box } from '@mui/material';
-import { apiFetch } from '../lib/api.js';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequestJson, tanstackRetryOptions } from '../lib/tanstackApi.js';
 import ChatDialog from '../components/ChatDialog.jsx';
 
 function HomePage() {
-  const [health, setHealth] = useState('Checking API...');
   const [chatOpen, setChatOpen] = useState(false);
+  const healthQuery = useQuery({
+    queryKey: ['health'],
+    queryFn: () => apiRequestJson('/api/health', { method: 'GET' }, { timeoutMs: 8000, maxAttempts: 5, baseDelay: 500 }),
+    ...tanstackRetryOptions({ maxAttempts: 5, baseDelay: 500 }),
+  });
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const res = await apiFetch('/api/health', { method: 'GET' }, { timeoutMs: 8000 });
-        if (!res.ok) throw new Error('Health request failed');
-        const data = await res.json();
-        if (active) setHealth(data.status ? `API: ${data.status}` : 'API is reachable');
-      } catch {
-        if (active) setHealth('API unavailable from this host');
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const health = healthQuery.isPending
+    ? 'Checking API...'
+    : healthQuery.isError
+      ? 'API unavailable from this host'
+      : healthQuery.data?.status
+        ? `API: ${healthQuery.data.status}`
+        : 'API is reachable';
 
   return (
     <Stack spacing={6}>

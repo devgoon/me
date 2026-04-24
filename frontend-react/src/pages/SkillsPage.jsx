@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
-import { apiFetch } from '../lib/api.js';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequestJson, tanstackRetryOptions } from '../lib/tanstackApi.js';
 
 const DEFAULT_STRONG_SKILLS = [
   'Agile - Scrum',
@@ -36,16 +37,20 @@ const DEFAULT_MODERATE_SKILLS = [
 
 function SkillsPage() {
   const [skills, setSkills] = useState({ strong: DEFAULT_STRONG_SKILLS, moderate: DEFAULT_MODERATE_SKILLS });
+  const skillsQuery = useQuery({
+    queryKey: ['skills'],
+    queryFn: () => apiRequestJson('/api/skills', { method: 'GET' }, { timeoutMs: 8000, maxAttempts: 5, baseDelay: 500 }),
+    ...tanstackRetryOptions({ maxAttempts: 5, baseDelay: 500 }),
+  });
 
   useEffect(() => {
-    let skillsActive = true;
     (async () => {
       try {
         // Try to load from static JSON first
         const defaultsRes = await fetch('/_shared/default-data.json', { cache: 'no-store' });
         if (defaultsRes.ok) {
           const defaults = await defaultsRes.json();
-          if (skillsActive && defaults?.skills) {
+          if (defaults?.skills) {
             setSkills({
               strong: defaults.skills.strong || DEFAULT_STRONG_SKILLS,
               moderate: defaults.skills.moderate || DEFAULT_MODERATE_SKILLS,
@@ -55,26 +60,16 @@ function SkillsPage() {
       } catch {
         // Defaults are optional
       }
-
-      // Try to load from API
-      try {
-        const response = await apiFetch('/api/skills', { method: 'GET' }, { timeoutMs: 8000 });
-        if (!response.ok) throw new Error('Unable to load skills');
-        const payload = await response.json();
-        if (!skillsActive) return;
-        setSkills({
-          strong: payload.skills?.strong || DEFAULT_STRONG_SKILLS,
-          moderate: payload.skills?.moderate || DEFAULT_MODERATE_SKILLS,
-        });
-      } catch {
-        // Skills from static data are sufficient
-      }
     })();
-
-    return () => {
-      skillsActive = false;
-    };
   }, []);
+
+  useEffect(() => {
+    if (!skillsQuery.data) return;
+    setSkills({
+      strong: skillsQuery.data.skills?.strong || DEFAULT_STRONG_SKILLS,
+      moderate: skillsQuery.data.skills?.moderate || DEFAULT_MODERATE_SKILLS,
+    });
+  }, [skillsQuery.data]);
 
   return (
     <Stack spacing={4}>

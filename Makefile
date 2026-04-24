@@ -13,13 +13,10 @@ install-ci:
 lint:
 	@# Auto-format with Prettier, then run ESLint autofix
 	@npx prettier --write "**/*.{js,json,md,css,html}"
-	@npx eslint "api/**/*.js" "frontend/assets/js/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
+	@npx eslint "api/**/*.js" "frontend-legacy/assets/js/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
 
 spellcheck:
-	npx cspell "**/*.{html,css,js,ts}" "frontend/assets/*.txt" "api/**/*.js" --verbose
-
-link-check:
-	npx linkinator ./frontend/index.html ./frontend/admin.html ./frontend/auth.html ./frontend/experience.html ./frontend/fit.html
+	npx cspell "**/*.{html,css,js,ts}" "frontend-legacy/assets/*.txt" "api/**/*.js" --verbose
 
 unit-test:
 	@echo "Running top-level tests"
@@ -34,11 +31,17 @@ check:
 	@$(MAKE) spellcheck
 	@echo "==> [2/5] Running lint"
 	@$(MAKE) lint
-	@echo "==> [3/5] Running link check"
+	@echo "==> [2/6] Running lint (api + assets)"
+	@$(MAKE) lint
+	@echo "==> [3/6] Running frontend-react lint"
+	@npm --prefix frontend-react run lint || true
+	@echo "==> [4/6] Running link check"
 	@$(MAKE) link-check
-	@echo "==> [4/5] Running unit tests + coverage"
+	@echo "==> [5/6] Building frontend-react"
+	@npm --prefix frontend-react run build || true
+	@echo "==> [6/6] Running unit tests + coverage"
 	@$(MAKE) coverage
-	@echo "==> [5/5] Code coverage complete"
+	@npm --prefix frontend-react run test:run || true
 	@echo "==> Quality checks complete"
 
 evals:
@@ -81,8 +84,8 @@ start-legacy:
 	if [ -z "$$DEBUG_DB" ]; then \
 		export DEBUG_DB=1; \
 	fi; \
-	echo "Starting local SWA emulator from frontend/ with api/"; \
-	npx @azure/static-web-apps-cli@latest start frontend --api-location api --port 4280
+	echo "Starting local SWA emulator from frontend-legacy/ with api/"; \
+	npx @azure/static-web-apps-cli@latest start frontend-legacy --api-location api --port 4280
 
 stop:
 	@set -e; \

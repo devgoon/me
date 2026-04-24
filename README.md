@@ -88,9 +88,9 @@ make stop
 
 Open these pages in your browser once the emulator is running:
 
-- Admin UI: http://127.0.0.1:4280/admin.html (source: frontend/admin.html)
-- Experience UI: http://127.0.0.1:4280/experience.html (source: frontend/experience.html)
-- Fit / Analyzer: http://127.0.0.1:4280/fit.html (source: frontend/fit.html)
+- Admin UI: http://127.0.0.1:4280/admin.html (source: frontend-legacy/admin.html)
+- Experience UI: http://127.0.0.1:4280/experience.html (source: frontend-legacy/experience.html)
+- Fit / Analyzer: http://127.0.0.1:4280/fit.html (source: frontend-legacy/fit.html)
 
 Development notes
 

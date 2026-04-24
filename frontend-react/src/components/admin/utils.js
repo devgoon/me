@@ -43,8 +43,15 @@ export function sanitizeForSave(payload) {
   out.aiInstructions.rules = (out.aiInstructions.rules || []).filter((item) =>
     String(item.instruction || '').trim()
   );
-  out.education = (out.education || []).map((item) => ({ ...item, school: item.institution || '' }));
-  out.faq = (out.faq || []).map((item) => ({ ...item, q: item.question || '', a: item.answer || '' }));
+  out.education = (out.education || []).map((item) => ({
+    ...item,
+    school: item.institution || '',
+  }));
+  out.faq = (out.faq || []).map((item) => ({
+    ...item,
+    q: item.question || '',
+    a: item.answer || '',
+  }));
   return out;
 }
 

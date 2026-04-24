@@ -2,12 +2,14 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import HomePage from '../../src/pages/HomePage.jsx';
+import { createQueryWrapper } from '../queryTestUtils.jsx';
 
-vi.mock('../../src/lib/api.js', () => ({
-  apiFetch: vi.fn(),
+vi.mock('../../src/lib/tanstackApi.js', () => ({
+  apiRequestJson: vi.fn(),
+  tanstackRetryOptions: vi.fn(() => ({ retry: false, retryDelay: 0 })),
 }));
 
-import { apiFetch } from '../../src/lib/api.js';
+import { apiRequestJson } from '../../src/lib/tanstackApi.js';
 
 describe('HomePage', () => {
   beforeEach(() => {
@@ -15,15 +17,13 @@ describe('HomePage', () => {
   });
 
   it('renders and shows health status when API succeeds', async () => {
-    apiFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ status: 'ok' }),
-    });
+    apiRequestJson.mockResolvedValue({ status: 'ok' });
 
     render(
       <MemoryRouter>
         <HomePage />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: createQueryWrapper() }
     );
 
     expect(screen.getByText('Lodovico (Vico) Minnocci')).toBeInTheDocument();
@@ -36,12 +36,13 @@ describe('HomePage', () => {
   });
 
   it('shows fallback health status when API fails', async () => {
-    apiFetch.mockRejectedValue(new Error('boom'));
+    apiRequestJson.mockRejectedValue(new Error('boom'));
 
     render(
       <MemoryRouter>
         <HomePage />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: createQueryWrapper() }
     );
 
     await waitFor(() => {

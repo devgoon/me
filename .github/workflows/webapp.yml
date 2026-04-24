@@ -40,7 +40,10 @@ jobs:
         run: make evals
 
       - name: Ensure frontend assets present
-        run: echo "No UI build required; assets/js is source of truth"
+        run: |
+          echo "Building React frontend under frontend-react/dist..."
+          npm ci --prefix frontend-react
+          npm --prefix frontend-react run build
 
       - name: Run npm audit
         run: npm audit --json > audit.json || true
@@ -86,10 +89,11 @@ jobs:
           AI_MODEL: ${{ vars.AI_MODEL }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          skip_app_build: true
+          skip_app_build: false
           action: upload
-          app_location: 'frontend'
+          app_location: 'frontend-react'
           api_location: 'api/'
+          app_artifact_location: 'frontend-react/dist'
           deployment_environment: 'staging'
 
       - name: Deploy (main)
@@ -102,10 +106,11 @@ jobs:
           AI_MODEL: ${{ vars.AI_MODEL }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          skip_app_build: true
+          skip_app_build: false
           action: upload
-          app_location: 'frontend'
+          app_location: 'frontend-react'
           api_location: 'api/'
+          app_artifact_location: 'frontend-react/dist'
 
       - name: Capture deployed URL
         id: capture-url

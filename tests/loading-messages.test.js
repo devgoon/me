@@ -2,7 +2,7 @@
 /* Tests for frontend/assets/js/loading-messages.js */
 
 describe('loading-messages', function () {
-  const modPath = '../frontend/assets/js/loading-messages.js';
+  const modPath = '../frontend-legacy/assets/js/loading-messages.js';
   let origMathRandom;
 
   beforeEach(function () {

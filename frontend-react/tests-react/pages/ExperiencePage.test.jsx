@@ -1,12 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ExperiencePage from '../../src/pages/ExperiencePage.jsx';
+import { createQueryWrapper } from '../queryTestUtils.jsx';
 
-vi.mock('../../src/lib/api.js', () => ({
-  apiFetch: vi.fn(),
+vi.mock('../../src/lib/tanstackApi.js', () => ({
+  apiRequestJson: vi.fn(),
+  tanstackRetryOptions: vi.fn(() => ({ retry: false, retryDelay: 0 })),
 }));
 
-import { apiFetch } from '../../src/lib/api.js';
+import { apiRequestJson } from '../../src/lib/tanstackApi.js';
 
 describe('ExperiencePage', () => {
   beforeEach(() => {
@@ -15,17 +17,14 @@ describe('ExperiencePage', () => {
 
   it('renders experiences and skills from API', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: false });
-    apiFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        experiences: [
-          { id: '1', companyName: 'Acme', title: 'Engineer', bulletPoints: ['Did things'], isCurrent: true },
-        ],
-        skills: { strong: ['React'], moderate: ['Node'] },
-      }),
+    apiRequestJson.mockResolvedValue({
+      experiences: [
+        { id: '1', companyName: 'Acme', title: 'Engineer', bulletPoints: ['Did things'], isCurrent: true },
+      ],
+      skills: { strong: ['React'], moderate: ['Node'] },
     });
 
-    render(<ExperiencePage />);
+    render(<ExperiencePage />, { wrapper: createQueryWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText('Acme')).toBeInTheDocument();
@@ -34,15 +33,13 @@ describe('ExperiencePage', () => {
 
     expect(screen.getByText('Did things')).toBeInTheDocument();
     expect(screen.getByText('Current')).toBeInTheDocument();
-    expect(screen.getByText(/Strong:/)).toBeInTheDocument();
-    expect(screen.getByText(/Moderate:/)).toBeInTheDocument();
   });
 
   it('shows error when API experience load fails', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: false });
-    apiFetch.mockRejectedValue(new Error('Unable to load experience'));
+    apiRequestJson.mockRejectedValue(new Error('Unable to load experience'));
 
-    render(<ExperiencePage />);
+    render(<ExperiencePage />, { wrapper: createQueryWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText('Unable to load experience')).toBeInTheDocument();

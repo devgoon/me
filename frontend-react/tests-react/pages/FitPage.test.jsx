@@ -2,12 +2,14 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import FitPage from '../../src/pages/FitPage.jsx';
+import { createQueryWrapper } from '../queryTestUtils.jsx';
 
-vi.mock('../../src/lib/api.js', () => ({
-  apiFetch: vi.fn(),
+vi.mock('../../src/lib/tanstackApi.js', () => ({
+  apiRequest: vi.fn(),
+  tanstackRetryOptions: vi.fn(() => ({ retry: false, retryDelay: 0 })),
 }));
 
-import { apiFetch } from '../../src/lib/api.js';
+import { apiRequest } from '../../src/lib/tanstackApi.js';
 
 const originalScheduleUrl = import.meta.env.VITE_SCHEDULE_MEETING_URL;
 
@@ -33,19 +35,19 @@ describe('FitPage', () => {
   it('does not submit when job description is empty', async () => {
     const user = userEvent.setup();
 
-    render(<FitPage />);
+    render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.click(screen.getByRole('button', { name: "See if We're a match" }));
 
-    expect(apiFetch).not.toHaveBeenCalled();
+    expect(apiRequest).not.toHaveBeenCalled();
   });
 
   it('shows loading state while analyzing', async () => {
     const user = userEvent.setup();
     let resolve;
-    apiFetch.mockReturnValue(new Promise((r) => { resolve = r; }));
+    apiRequest.mockReturnValue(new Promise((r) => { resolve = r; }));
 
-    render(<FitPage />);
+    render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
     await user.click(screen.getByRole('button', { name: "See if We're a match" }));
@@ -57,9 +59,9 @@ describe('FitPage', () => {
 
   it('shows error when API fails', async () => {
     const user = userEvent.setup();
-    apiFetch.mockResolvedValue({ ok: false });
+    apiRequest.mockResolvedValue({ ok: false });
 
-    render(<FitPage />);
+    render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
     await user.click(screen.getByRole('button', { name: "See if We're a match" }));
@@ -71,12 +73,12 @@ describe('FitPage', () => {
 
   it('submits and renders all result sections', async () => {
     const user = userEvent.setup();
-    apiFetch.mockResolvedValue({
+    apiRequest.mockResolvedValue({
       ok: true,
       json: async () => mockFitResponse(),
     });
 
-    render(<FitPage />);
+    render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A strong React role');
     await user.click(screen.getByRole('button', { name: "See if We're a match" }));
@@ -97,7 +99,7 @@ describe('FitPage', () => {
 
   it('normalizes gaps/transfers from legacy mismatches/reasons fields', async () => {
     const user = userEvent.setup();
-    apiFetch.mockResolvedValue({
+    apiRequest.mockResolvedValue({
       ok: true,
       json: async () => ({
         verdict: 'FIT',
@@ -108,7 +110,7 @@ describe('FitPage', () => {
       }),
     });
 
-    render(<FitPage />);
+    render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
     await user.click(screen.getByRole('button', { name: "See if We're a match" }));
@@ -121,12 +123,12 @@ describe('FitPage', () => {
 
   it('shows empty state text when gaps and transfers are empty', async () => {
     const user = userEvent.setup();
-    apiFetch.mockResolvedValue({
+    apiRequest.mockResolvedValue({
       ok: true,
       json: async () => mockFitResponse({ mismatches: [], reasons: [] }),
     });
 
-    render(<FitPage />);
+    render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
     await user.click(screen.getByRole('button', { name: "See if We're a match" }));
@@ -140,12 +142,12 @@ describe('FitPage', () => {
   it('shows schedule meeting link when verdict is FIT', async () => {
     import.meta.env.VITE_SCHEDULE_MEETING_URL = 'https://calendar.app.google/test-schedule';
     const user = userEvent.setup();
-    apiFetch.mockResolvedValue({
+    apiRequest.mockResolvedValue({
       ok: true,
       json: async () => mockFitResponse({ verdict: 'FIT', score: 92 }),
     });
 
-    render(<FitPage />);
+    render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A strong role');
     await user.click(screen.getByRole('button', { name: "See if We're a match" }));
@@ -160,12 +162,12 @@ describe('FitPage', () => {
   it('does not show schedule meeting link for MARGINAL verdict', async () => {
     import.meta.env.VITE_SCHEDULE_MEETING_URL = 'https://calendar.app.google/test-schedule';
     const user = userEvent.setup();
-    apiFetch.mockResolvedValue({
+    apiRequest.mockResolvedValue({
       ok: true,
       json: async () => mockFitResponse({ verdict: 'MARGINAL', score: 71 }),
     });
 
-    render(<FitPage />);
+    render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role with partial overlap');
     await user.click(screen.getByRole('button', { name: "See if We're a match" }));
@@ -179,12 +181,12 @@ describe('FitPage', () => {
   it('does not show schedule meeting link when schedule URL is not configured', async () => {
     import.meta.env.VITE_SCHEDULE_MEETING_URL = '';
     const user = userEvent.setup();
-    apiFetch.mockResolvedValue({
+    apiRequest.mockResolvedValue({
       ok: true,
       json: async () => mockFitResponse({ verdict: 'FIT' }),
     });
 
-    render(<FitPage />);
+    render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
     await user.click(screen.getByRole('button', { name: "See if We're a match" }));
