@@ -4,6 +4,12 @@
 
 **Scope:** frontend static site + Azure Functions API (chat/fit/experience), Azure SQL Database (managed), ai_response_cache, prompt builders (`api/prompts.js`), and the Anthropic LLM provider.
 
+**Platform & Stack (concrete)**
+- Frontend: React 19, Vite, MUI (@mui/material), `@tanstack/react-query` v5
+- Tests: Vitest, @testing-library/react, @testing-library/user-event, Playwright (E2E)
+- API: Azure Functions (Node.js 22+), centralized prompts in `api/prompts.js`
+- DB: Azure SQL (connection via `AZURE_DATABASE_URL`)
+
 ---
 
 **Architecture (high-level)**
@@ -131,11 +137,17 @@ sequenceDiagram
 - Prompt length guard: code trims equivalents or other optional context when prompt size exceeds configured chars (to avoid token limits).
 - Sensitive fields: salary and contact details should NOT be included in prompts. Existing code was audited — `target_titles` is included per request, but `salary_min` / `salary_max` are not included. Redact any sensitive profile fields before logging or caching.
 
+Security & secrets (operational)
+- Do NOT commit secrets to git. Keep keys and connection strings in CI secret storage or local `.env` files that are gitignored. See `api/local.settings.json.example` and `.env.local.example` for examples.
+- If secrets were committed, rotate them immediately and consider a history-rewrite to remove them from Git history (see `docs/REMOVE_BACPAC.md`).
+
 ## Caching
 
 - Cache entries keyed by SHA-256(model + "|" + question).
 - On cache hit: update `cache_hit_count` and `last_accessed`.
 - Cache invalidation: manual invalidation endpoint exists (`/api/cache-report` usage); consider TTL-based expiry for long-term scaling.
+
+TODO: consider adding a configurable TTL for cached entries and document expected cache size and eviction policy.
 
 ## Database Schema (ER diagram)
 
@@ -288,6 +300,9 @@ Usage:
 
 - Used for conversational assistant UI (Ask AI). Prompts favor brevity; include only the most relevant profile snippets and FAQ items. The chat path is tolerant of conversational follow-ups and may pass dialog history plus a compact candidate context to the prompt builder.
 
+Cache canonicalization note
+- Cache keys are derived using SHA-256 over a deterministic compact of the model name + input data (see usage in `api/chat/index.js` and `api/experience/index.js`). If you change how context is compacted, or update data, it will invalidate existing cache entries.
+
 ### Experience (/api/experience)
 
 Context included:
@@ -322,6 +337,14 @@ Context included:
 Usage:
 
 - Used to evaluate candidate fit for a specific role. Prompt includes the job description and compares candidate skills/experiences. Responses are often structured (scores, recommended gaps, suggested interview questions) and are cached against a deterministic key composed of the model + compacted inputs.
+
+Testing & CI notes
+- Tests often set `process.env.AZURE_DATABASE_URL` and `process.env.ANTHROPIC_API_KEY` per-suite; prefer centralizing test fixture helpers to set and restore required env vars. See `docs/TESTING_ENV.md` for recommended envs and patterns.
+- In CI, provide `AZURE_DATABASE_URL` and `ANTHROPIC_API_KEY` as repository secrets; mock or stub network calls to external LLMs during unit tests to avoid flakiness and cost.
+
+Operational links
+- History cleanup guide: `docs/REMOVE_BACPAC.md`
+- Archiving helper and scripts: `scripts/archive-large-files.sh`, `scripts/prepare-history-rewrite.sh`, `scripts/README.md`
 
 ### Other prompts / internal calls
 

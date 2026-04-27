@@ -1,0 +1,15 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "ANTHROPIC_API_KEY": "sk-ant-...",
+    "AZURE_DATABASE_URL": "Data Source=[DBNAME].database.windows.net;Initial Catalog=lodovico;User ID=[USER];Password=[PASSWORD];Pooling=False;Connect Timeout=30;Encrypt=True;Authentication=SqlPassword;Application Name=vscode-mssql;Application Intent=ReadWrite;Command Timeout=30",
+    "AI_MODEL": "claude-haiku-4-5-20251001"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "*",
+    "WEBSITE_NODE_DEFAULT_VERSION": "22.13.0"
+  },
+  "ConnectionStrings": {}
+}
