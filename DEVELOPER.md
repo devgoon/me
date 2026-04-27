@@ -63,7 +63,6 @@ make evals
 
 ```bash
 npm run test:evals
-npm run test:evals:jest
 ```
 
 - Export draft chat eval cases from historical cache rows in `ai_response_cache`:
@@ -175,6 +174,18 @@ make gh-sync-env REPO=devgoon/me ENV_FILE=.env.local
 ```bash
 make e2e
 ```
+
+## UI tests (Vitest)
+
+- Run the repository-level UI tests (uses `vite.config.ui.js` and the frontend's devDependencies):
+
+```bash
+npm run test:ui
+```
+
+- The `Makefile` `unit-test` target now calls the repo `test:ui` script; running `make unit-test` will run evals, UI tests (with coverage) and API tests.
+
+- Note: the old `frontend-react/tests-react` bridge approach has been removed — if you need to run frontend tests from the `frontend-react` package directly, use the package's local scripts or re-create a bridge as needed.
 
 - Run tests against a deployed preview (do NOT start the local stack):
 

@@ -1,10 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useAdminPage } from '../../../frontend-react/src/pages/admin/useAdminPage.js';
-import * as adminService from '../../../frontend-react/src/pages/admin/adminService.js';
+import { useAdminPage } from '/frontend-react/src/pages/admin/useAdminPage.js';
+import * as adminService from '/frontend-react/src/pages/admin/adminService.js';
 import { createQueryWrapper } from '../../queryTestUtils.jsx';
 
-vi.mock('../../../frontend-react/src/pages/admin/adminService.js', () => ({
+vi.mock('/frontend-react/src/pages/admin/adminService.js', () => ({
   AUTH_API_OPTIONS: { timeoutMs: 10000, maxAttempts: 5, baseDelay: 500 },
   PANEL_API_OPTIONS: { timeoutMs: 15000, maxAttempts: 5, baseDelay: 500 },
   CACHE_API_OPTIONS: { timeoutMs: 15000, maxAttempts: 5, baseDelay: 500 },
