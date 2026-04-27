@@ -18,4 +18,4 @@ Recommendations:
 - Add an explicit `README.md` (this file) to explain purpose — done.
 
 History rewrite helper
-- `prepare-history-rewrite.sh` — prepares a mirror clone and prints the `git-filter-repo` and `bfg` commands needed to remove large files from history. Use with extreme caution and coordinate with your team. See `docs/REMOVE_BACPAC.md` for more details.
+- `prepare-history-rewrite.sh` — prepares a mirror clone and prints the `git-filter-repo` and `bfg` commands needed to remove large files from history. Use with extreme caution and coordinate with your team.
