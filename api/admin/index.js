@@ -3,9 +3,9 @@
  * @module api/admin/index.js
  */
 
-const { Client } = require('../db');
+const db = require('../db');
 
-const { getClientPrincipal } = require('../_shared/auth');
+const auth = require('../_shared/auth');
 const {
   beginRequest,
   endRequest,
@@ -138,7 +138,7 @@ function getDbClient() {
   if (!databaseUrl) {
     throw new Error('AZURE_DATABASE_URL is not configured');
   }
-  return new Client({
+  return new db.Client({
     connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false },
     connectionTimeoutMillis: DB_CONNECT_TIMEOUT_MS,
@@ -148,7 +148,7 @@ function getDbClient() {
 }
 
 function requireAuth(req) {
-  const principal = getClientPrincipal(req);
+  const principal = auth.getClientPrincipal(req);
   if (principal && principal.email) {
     return principal;
   }

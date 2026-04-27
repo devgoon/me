@@ -4,31 +4,24 @@ install:
 	npm install
 	cd api && npm install
 
-# CI-friendly install: install only runtime (non-dev) dependencies
-# Use `make install-ci` in CI to avoid devDependencies being installed.
-install-ci:
-	npm ci --omit=dev
-	cd api && npm ci --omit=dev
-
 lint:
 	@# Auto-format with Prettier, then run ESLint autofix
 	@npx prettier --write "**/*.{jsx,js,json,md,css,html}"
-	@npx eslint "api/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
+	@npx eslint "api/**/*.js" "frontend-react/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
 
 spellcheck:
-	npx cspell "**/*.{html,css,js,ts}" "api/**/*.js" --verbose
+	npx cspell "frontend-react/*.{html,css,jsx,js,tsx, ts}" "api/**/*.js" --verbose
 
 unit-test:
-	@echo "==> Running UI tests (frontend-react)"
-	@npm --prefix frontend-react run test:run -- --coverage || true
-	@echo "==> Running API tests with coverage"
-	@npx jest --coverage --testPathPattern=tests/api/ --runInBand || true
-
-	@echo "==> Merging coverage summaries"
-	@node scripts/merge-coverage.js || true
 	@echo "==> Running eval tests (no coverage)"
 	@npm run test:evals:jest || true
-
+	@echo "==> Running UI tests (frontend-react) with coverage"
+	@npm --prefix frontend-react run test:coverage || true
+	@echo "==> Running API tests with coverage"
+	@npx jest --coverage --testPathPattern=tests/api/ --runInBand || true
+	@echo "==> Merging coverage summaries"
+	@node scripts/merge-coverage.js || true
+	
 coverage:
 	@npm run coverage
 
@@ -51,7 +44,9 @@ evals:
 	npm run test:evals
 	@echo "Running eval Jest suite"
 	npm run test:evals:jest
-
+e2e:
+	bash scripts/run-e2e.sh
+	
 start:
 	@mkdir -p .azurite
 	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
@@ -206,5 +201,3 @@ gh-sync-env:
 	printf "Proceed? Type 'yes' to continue: "; read ans; \
 	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
 	./scripts/gh-sync-env-to-gh.sh --env-file "$$ENV_FILE" --repo "$$REPO"
-e2e:
-	bash scripts/run-e2e.sh

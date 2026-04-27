@@ -1,28 +1,27 @@
-vi.mock('../../api/db', () => ({ Client: vi.fn() }));
 const { Client } = require('../../api/db');
 /**
  * @fileoverview Tests for experience API endpoints.
  * @module tests/api/experience.test.js
  */
 
-let experienceHandler;
+const experienceHandler = require('../../api/experience/index');
 
-vi.mock('../../api/db', () => ({ Client: vi.fn() }));
+jest.mock('../../api/db', () => ({ Client: jest.fn() }));
+
 describe('experience API', () => {
   let client;
   const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     client = {
-      connect: vi.fn().mockResolvedValue(undefined),
-      query: vi.fn(),
-      end: vi.fn().mockResolvedValue(undefined),
+      connect: jest.fn().mockResolvedValue(undefined),
+      query: jest.fn(),
+      end: jest.fn().mockResolvedValue(undefined),
     };
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    Client.mockImplementation(() => client);
     client.queryWithRetry = client.query;
-    experienceHandler = require('../../api/experience/index');
   });
 
   afterAll(() => {
@@ -36,17 +35,17 @@ describe('experience API', () => {
     const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
 
     beforeEach(() => {
-      vi.clearAllMocks();
+      jest.clearAllMocks();
       process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
       // Do NOT set ANTHROPIC_API_KEY so callAnthropicForContexts returns {}
       delete process.env.ANTHROPIC_API_KEY;
 
       client = {
-        connect: vi.fn().mockResolvedValue(undefined),
-        query: vi.fn(),
-        end: vi.fn().mockResolvedValue(undefined),
+        connect: jest.fn().mockResolvedValue(undefined),
+        query: jest.fn(),
+        end: jest.fn().mockResolvedValue(undefined),
       };
-      require('../../api/db').Client = vi.fn(function () { return client; });
+      Client.mockImplementation(() => client);
       client.queryWithRetry = client.query;
     });
 
@@ -74,7 +73,7 @@ describe('experience API', () => {
         .mockResolvedValueOnce({ rows: [{ skill_name: 'Node.js', category: 'strong' }] }) // skills
         .mockResolvedValueOnce({ rows: [{ description: 'iOS', interest_in_learning: false }] }); // gaps
 
-      const context = { req: {}, res: null, log: { warn: vi.fn() } };
+      const context = { req: {}, res: null, log: { warn: jest.fn() } };
       await experienceHandler(context);
 
       const insertCalls = client.query.mock.calls.filter(
@@ -90,14 +89,14 @@ describe('experience API', () => {
     const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
 
     beforeEach(() => {
-      vi.clearAllMocks();
+      jest.clearAllMocks();
       process.env.AZURE_DATABASE_URL = 'server://test:test@localhost:5432/test';
       client = {
-        connect: vi.fn().mockResolvedValue(undefined),
-        query: vi.fn(),
-        end: vi.fn().mockResolvedValue(undefined),
+        connect: jest.fn().mockResolvedValue(undefined),
+        query: jest.fn(),
+        end: jest.fn().mockResolvedValue(undefined),
       };
-      require('../../api/db').Client = vi.fn(function () { return client; });
+      Client.mockImplementation(() => client);
       client.queryWithRetry = client.query;
     });
 
@@ -146,19 +145,19 @@ describe('experience API', () => {
     const originalAnthropicKey = process.env.ANTHROPIC_API_KEY;
 
     beforeEach(() => {
-      vi.clearAllMocks();
+      jest.clearAllMocks();
       process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
       process.env.ANTHROPIC_API_KEY = 'test-key';
 
       client = {
-        connect: vi.fn().mockResolvedValue(undefined),
-        query: vi.fn(),
-        end: vi.fn().mockResolvedValue(undefined),
+        connect: jest.fn().mockResolvedValue(undefined),
+        query: jest.fn(),
+        end: jest.fn().mockResolvedValue(undefined),
       };
-      require('../../api/db').Client = vi.fn(function () { return client; });
+      Client.mockImplementation(() => client);
       client.queryWithRetry = client.query;
 
-      global.fetch = vi.fn().mockResolvedValue(
+      global.fetch = jest.fn().mockResolvedValue(
         Promise.resolve({
           ok: true,
           json: async () => ({
@@ -197,7 +196,7 @@ describe('experience API', () => {
         .mockResolvedValueOnce({ rows: [] }) // certifications select
         .mockResolvedValueOnce({ rows: [] }); // cache select -> miss
 
-      const context = { req: {}, res: null, log: { warn: vi.fn(), debug: vi.fn() } };
+      const context = { req: {}, res: null, log: { warn: jest.fn(), debug: jest.fn() } };
       await experienceHandler(context);
 
       expect(context.res.status).toBe(200);
@@ -235,7 +234,7 @@ describe('experience API', () => {
         ],
       }); // gaps
 
-    const context = { req: {}, res: null, log: { warn: vi.fn() } };
+    const context = { req: {}, res: null, log: { warn: jest.fn() } };
     await experienceHandler(context);
 
     expect(context.res.status).toBe(200);
@@ -321,7 +320,7 @@ describe('experience callAnthropicForContexts', () => {
 
   test('parses top-level text field', async () => {
     const jsonText = JSON.stringify({ experiences: [{ id: 1, situation: 'S' }] });
-    global.fetch = vi
+    global.fetch = jest
       .fn()
       .mockResolvedValue({ ok: true, json: async () => ({ text: jsonText }) });
     const res = await helpers.callAnthropicForContexts({}, [{ id: 1 }], 'key', []);
@@ -331,7 +330,7 @@ describe('experience callAnthropicForContexts', () => {
 
   test('parses content array shape', async () => {
     const jsonText = JSON.stringify({ experiences: [{ id: 1, situation: 'T' }] });
-    global.fetch = vi.fn().mockResolvedValue({
+    global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ content: [{ type: 'text', text: jsonText }] }),
     });
@@ -341,14 +340,14 @@ describe('experience callAnthropicForContexts', () => {
   });
 
   test('throws on non-ok response', async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500, text: async () => 'err' });
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500, text: async () => 'err' });
     await expect(helpers.callAnthropicForContexts({}, [{ id: 1 }], 'key', [])).rejects.toThrow(
       /Anthropic API error/
     );
   });
 
   test('loadCandidateData throws when no profile found', async () => {
-    const client = { query: vi.fn().mockResolvedValue({ rows: [] }) };
+    const client = { query: jest.fn().mockResolvedValue({ rows: [] }) };
     client.queryWithRetry = client.query;
     await expect(helpers.loadCandidateData(client)).rejects.toThrow(/No candidate profile found/);
   });

@@ -21,7 +21,7 @@ function readVitestFinal(filePath) {
     for (const k of Object.keys(obj)) {
       const entry = obj[k];
       const stmts = entry.statementMap ? Object.keys(entry.statementMap).length : 0;
-      const coveredCount = entry.s ? Object.values(entry.s).filter(v => v > 0).length : 0;
+      const coveredCount = entry.s ? Object.values(entry.s).filter((v) => v > 0).length : 0;
       total += stmts;
       covered += coveredCount;
     }
@@ -77,7 +77,7 @@ function mergeSummaries(files) {
         covered: aggregated.lines.covered,
         pct: Number(aggregated.lines.pct.toFixed(2)),
       },
-      sources: files.filter(f => fs.existsSync(f)),
+      sources: files.filter((f) => fs.existsSync(f)),
     },
   };
 
@@ -86,7 +86,11 @@ function mergeSummaries(files) {
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, JSON.stringify(out, null, 2));
     console.log('Combined coverage written to', outPath);
-    console.log('Overall lines:', out.combined.lines.covered + '/' + out.combined.lines.total, `(${out.combined.lines.pct}%)`);
+    console.log(
+      'Overall lines:',
+      out.combined.lines.covered + '/' + out.combined.lines.total,
+      `(${out.combined.lines.pct}%)`
+    );
   } catch (e) {
     console.error('Failed to write combined coverage:', e.message);
     process.exit(2);
@@ -136,7 +140,7 @@ const out = {
       covered,
       pct: Number(pct.toFixed(2)),
     },
-    sources: [apiSummary, uiSummary, uiFinal].filter(f => fs.existsSync(f)),
+    sources: [apiSummary, uiSummary, uiFinal].filter((f) => fs.existsSync(f)),
   },
 };
 
@@ -145,7 +149,11 @@ try {
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(out, null, 2));
   console.log('Combined coverage written to', outPath);
-  console.log('Overall lines:', out.combined.lines.covered + '/' + out.combined.lines.total, `(${out.combined.lines.pct}%)`);
+  console.log(
+    'Overall lines:',
+    out.combined.lines.covered + '/' + out.combined.lines.total,
+    `(${out.combined.lines.pct}%)`
+  );
 } catch (e) {
   console.error('Failed to write combined coverage:', e.message);
   process.exit(2);

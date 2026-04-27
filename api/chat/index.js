@@ -248,7 +248,7 @@ async function getCache(client, model, question) {
     console.info(
       `chat.getCache: lookup hash=${hash} duration=${duration}ms rows=${result.rows.length}`
     );
-  } catch (e) {
+  } catch {
     /* ignore logging errors */
   }
   if (result.rows.length > 0) {
@@ -358,7 +358,7 @@ module.exports = async function (context, req) {
             console.info(
               `chat.connectWithRetry: connected on attempt=${attempt} duration=${dur}ms`
             );
-          } catch (e) {
+          } catch {
             /* ignore logging errors */
           }
           return;
@@ -370,7 +370,7 @@ module.exports = async function (context, req) {
                 err && err.message ? err.message : err
               }`
             );
-          } catch (logErr) {
+          } catch {
             /* ignore logging errors */
           }
           if (attempt >= maxAttempts) throw err;

@@ -120,7 +120,7 @@ module.exports = async function (context, req) {
         let data = null;
         try {
           data = await aiResp.json();
-        } catch (e) {
+        } catch {
           data = null;
         }
         // Extract text from common Anthropic response shapes

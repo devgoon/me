@@ -19,7 +19,6 @@
     "format:check": "prettier --check \"**/*.{js,json,md,css,html}\"",
     "coverage": "jest --coverage --coverageReporters=text --coverageReporters=text-summary --runInBand",
     "coverage:api": "cd api && npm run coverage",
-    "coverage:assets": "echo 'skipping legacy assets coverage'",
     "update-default-data": "node scripts/update-default-data.js",
     "lint": "npx eslint@8 \"api/**/*.js\" \"frontend-react/src/**/*.js\" \"frontend-react/src/**/*.jsx\" --ext .js,.jsx --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\"",
     "lint:fix": "npx eslint@8 \"api/**/*.js\" \"frontend-react/src/**/*.js\" \"frontend-react/src/**/*.jsx\" --ext .js,.jsx --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\" --fix",

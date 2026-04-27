@@ -3,7 +3,7 @@
  * @module api/auth/index.js
  */
 
-const { getClientPrincipal } = require('../_shared/auth');
+const auth = require('../_shared/auth');
 const {
   beginRequest,
   endRequest,
@@ -16,7 +16,7 @@ function text(value) {
 }
 
 async function handleMe(req) {
-  const principal = getClientPrincipal(req);
+  const principal = auth.getClientPrincipal(req);
   if (principal && principal.email) {
     return {
       status: 200,

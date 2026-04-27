@@ -1,5 +1,4 @@
 /**
- * @fileoverview TODO: Describe this file's purpose.
  * @module api/_shared/auth.js
  */
 

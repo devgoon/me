@@ -10,5 +10,12 @@
   },
   "engines": {
     "node": "22.x"
+  },
+  "scripts": {
+    "coverage": "cd .. && npx jest --coverage --testPathPattern=tests/api/ --runInBand",
+    "test:vitest": "vitest run --config=vitest.config.js"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.5"
   }
 }

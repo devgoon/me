@@ -7,6 +7,64 @@
 // Testing hook: tests may inject a fake mssql implementation via
 // `require('./db').__setMssqlMock(mock)`. This avoids brittle jest mocking.
 let __mssqlMock = undefined;
+// Testing hook: tests may inject a constructed client instance directly
+// via `require('./db').__setTestClient(client)` so that `new Client()`
+// returns the provided test client. This is useful for unit tests that
+// need to assert on query calls.
+let __testClient = null;
+// During test runs, provide a default no-op fake mssql implementation so
+// tests that don't explicitly mock the DB client won't attempt real
+// network connections. Individual tests may still override this with
+// `__setMssqlMock` if they need custom behavior.
+if (process.env.NODE_ENV === 'test') {
+  __mssqlMock = {
+    ConnectionPool: class {
+      constructor() {}
+      async connect() {
+        return undefined;
+      }
+      request() {
+        return new (class {
+          constructor() {
+            this._inputs = {};
+          }
+          input(name, _val) {
+            this._inputs[name] = true;
+          }
+          async query() {
+            return { recordset: [] };
+          }
+        })();
+      }
+      async close() {
+        return undefined;
+      }
+    },
+    Transaction: class {
+      constructor() {}
+      async begin() {
+        return undefined;
+      }
+      async commit() {
+        return undefined;
+      }
+      async rollback() {
+        return undefined;
+      }
+    },
+    Request: class {
+      constructor() {
+        this._inputs = {};
+      }
+      input(name, _val) {
+        this._inputs[name] = true;
+      }
+      async query() {
+        return { recordset: [] };
+      }
+    },
+  };
+}
 function __getMssql() {
   if (__mssqlMock) return __mssqlMock;
   return require('mssql');
@@ -14,6 +72,7 @@ function __getMssql() {
 
 class Client {
   constructor(options) {
+    if (__testClient) return __testClient;
     this._connectionString = (options && options.connectionString) || null;
     this._pool = null;
   }
@@ -136,6 +195,9 @@ module.exports = {
   Client,
   __setMssqlMock(m) {
     __mssqlMock = m;
+  },
+  __setTestClient(c) {
+    __testClient = c;
   },
   get sql() {
     try {

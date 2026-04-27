@@ -47,5 +47,7 @@ function safeParseJson(raw) {
 
 module.exports = {
   parseArray,
+  // Backwards-compatible alias used by tests and older modules
+  parsePgArray: parseArray,
   safeParseJson,
 };

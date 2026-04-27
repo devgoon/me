@@ -3,13 +3,18 @@
  * @module tests/api/auth.test.js
  */
 
-const actualAuth = require('../../api/_shared/auth');
+jest.mock('../../api/_shared/auth', () => {
+  const actual = jest.requireActual('../../api/_shared/auth');
+  return { ...actual, getClientPrincipal: jest.fn() };
+});
+const { getClientPrincipal } = require('../../api/_shared/auth');
+
 const authHandler = require('../../api/auth/index');
 
 function buildContext() {
   return {
     log: {
-      error: vi.fn(),
+      error: jest.fn(),
     },
     res: null,
   };
@@ -17,13 +22,11 @@ function buildContext() {
 
 describe('auth API', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    // Mock auth principal for API handler tests only
-    vi.spyOn(actualAuth, 'getClientPrincipal').mockImplementation(() => null);
+    jest.clearAllMocks();
   });
 
   test('returns 401 when principal is missing', async () => {
-    actualAuth.getClientPrincipal.mockReturnValue(null);
+    getClientPrincipal.mockReturnValue(null);
 
     const context = buildContext();
     await authHandler(context, {
@@ -37,7 +40,7 @@ describe('auth API', () => {
   });
 
   test('returns principal details when authenticated', async () => {
-    actualAuth.getClientPrincipal.mockReturnValue({
+    getClientPrincipal.mockReturnValue({
       userId: 'test-user',
       email: 'dev@lodovi.co',
       name: 'Dev User',
@@ -64,12 +67,9 @@ describe('auth API', () => {
 });
 
 // Consolidated shared auth helper tests (use actual implementations)
-// (use the previously required `actualAuth`)
+const actualAuth = jest.requireActual('../../api/_shared/auth');
 
 describe('auth helpers', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
   test('hash/verify password', () => {
     const pw = 's3cret!';
     const stored = actualAuth.hashPassword(pw);
@@ -115,7 +115,7 @@ const {
 
 describe('observability helpers', () => {
   test('beginRequest writes start event using context.log.info', () => {
-    const log = { info: vi.fn() };
+    const log = { info: jest.fn() };
     const context = { log };
     const req = { method: 'post', url: '/admin', headers: { 'x-request-id': 'rid-123' } };
     const meta = beginRequest(context, req, 'op.test');
@@ -128,7 +128,7 @@ describe('observability helpers', () => {
   });
 
   test('endRequest writes end event and includes statusCode', () => {
-    const log = { info: vi.fn() };
+    const log = { info: jest.fn() };
     const context = { log };
     const meta = {
       requestId: 'x',
@@ -146,7 +146,7 @@ describe('observability helpers', () => {
   });
 
   test('failRequest writes error event using context.log.error', () => {
-    const log = { error: vi.fn() };
+    const log = { error: jest.fn() };
     const context = { log };
     const meta = {
       requestId: 'e',
