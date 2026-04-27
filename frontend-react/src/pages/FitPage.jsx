@@ -5,14 +5,16 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { apiRequest, tanstackRetryOptions } from '../lib/tanstackApi.js';
 
 function normalizeFitResult(raw) {
+  const enableLegacy = String(import.meta.env.VITE_ENABLE_LEGACY_NORMALIZATION ?? 'true') !== 'false';
+
   const gaps = Array.isArray(raw?.gaps)
     ? raw.gaps
-    : Array.isArray(raw?.mismatches)
+    : enableLegacy && Array.isArray(raw?.mismatches)
     ? raw.mismatches
     : [];
   const transfers = Array.isArray(raw?.transfers)
     ? raw.transfers
-    : Array.isArray(raw?.reasons)
+    : enableLegacy && Array.isArray(raw?.reasons)
     ? raw.reasons
     : [];
 
