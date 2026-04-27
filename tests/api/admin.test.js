@@ -35,14 +35,12 @@ function attachCacheReportOverride(handler) {
           {
             question: 'What is AI?',
             model: 'claude-haiku-4-5-20251001',
-            model: 'claude-haiku-4-5-20251001',
             cache_hit_count: 5,
             last_accessed: '2026-03-09T12:00:00Z',
             is_cached: true,
           },
           {
             question: 'What is ML?',
-            model: 'claude-haiku-4-5-20251001',
             model: 'claude-haiku-4-5-20251001',
             cache_hit_count: 2,
             last_accessed: '2026-03-09T11:00:00Z',
@@ -54,10 +52,9 @@ function attachCacheReportOverride(handler) {
     };
     context.res = {
       status: 200,
-      body: [
+        body: [
         {
           question: 'What is AI?',
-          model: 'claude-haiku-4-5-20251001',
           model: 'claude-haiku-4-5-20251001',
           cache_hit_count: 5,
           last_accessed: '2026-03-09T12:00:00Z',
@@ -65,7 +62,6 @@ function attachCacheReportOverride(handler) {
         },
         {
           question: 'What is ML?',
-          model: 'claude-haiku-4-5-20251001',
           model: 'claude-haiku-4-5-20251001',
           cache_hit_count: 2,
           last_accessed: '2026-03-09T11:00:00Z',
@@ -192,14 +188,12 @@ describe('admin API', () => {
             {
               question: 'What is AI?',
               model: 'claude-haiku-4-5-20251001',
-              model: 'claude-haiku-4-5-20251001',
               cache_hit_count: 5,
               last_accessed: '2026-03-09T12:00:00Z',
               is_cached: true,
             },
             {
               question: 'What is ML?',
-              model: 'claude-haiku-4-5-20251001',
               model: 'claude-haiku-4-5-20251001',
               cache_hit_count: 2,
               last_accessed: '2026-03-09T11:00:00Z',
