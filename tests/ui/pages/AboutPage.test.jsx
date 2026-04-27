@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import AboutPage from '../../src/pages/AboutPage.jsx';
+import AboutPage from '../../../frontend-react/src/pages/AboutPage.jsx';
 
 describe('AboutPage', () => {
   it('renders the About page with correct heading', () => {

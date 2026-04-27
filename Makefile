@@ -16,7 +16,7 @@ unit-test:
 	@echo "==> Running eval tests (no coverage)"
 	@npm run test:evals || true
 	@echo "==> Running UI tests (frontend-react) with coverage"
-	@npm --prefix frontend-react run test:coverage || true
+	@npm run test:ui || true
 	@echo "==> Running API tests with coverage"
 	@npm --prefix api run coverage || true
 

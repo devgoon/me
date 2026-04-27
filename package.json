@@ -13,7 +13,6 @@
     "build": "echo 'No UI build required'",
     "format": "prettier --write \"**/*.{js,json,md,css,html}\"",
     "format:check": "prettier --check \"**/*.{js,json,md,css,html}\"",
-    "coverage:api": "npm --prefix api run test:vitest",
     "update-default-data": "node scripts/update-default-data.js",
     "lint": "npx eslint \"api/**/*.js\" \"frontend-react/src/**/*.{js,jsx}\" --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\"",
     "lint:fix": "npx eslint \"api/**/*.js\" \"frontend-react/src/**/*.{js,jsx}\" --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\" --fix",
@@ -21,6 +20,7 @@
     "react:build": "npm --prefix frontend-react run build",
     "react:build:watch": "npm --prefix frontend-react run build:watch",
     "react:preview": "npm --prefix frontend-react run preview"
+    ,"test:ui": "./frontend-react/node_modules/.bin/vitest run --config ./vite.config.ui.js --root . --coverage"
   },
   "devDependencies": {
     "cspell": "^10.0.0",

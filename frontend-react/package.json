@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage && node ../scripts/generate-ui-coverage-summary.js"
+    "test:coverage": "cd .. && ./frontend-react/node_modules/.bin/vitest run --config ./frontend-react/vite.config.js --root . --coverage && node ./scripts/generate-ui-coverage-summary.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -44,6 +44,7 @@
     "vitest": "^4.1.5"
   },
   "vitest": {
+    "root": "..",
     "coverage": {
       "provider": "v8",
       "reportsDirectory": "coverage",

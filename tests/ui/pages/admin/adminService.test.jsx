@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { apiRequest } from '../../../src/lib/tanstackApi.js';
-import { fetchPanelData, savePanelData } from '../../../src/pages/admin/adminService.js';
+import { apiRequest } from '../../../frontend-react/src/lib/tanstackApi.js';
+import {
+  fetchPanelData,
+  savePanelData,
+} from '../../../frontend-react/src/pages/admin/adminService.js';
 
-vi.mock('../../../src/lib/tanstackApi.js', () => ({
+vi.mock('../../../frontend-react/src/lib/tanstackApi.js', () => ({
   apiRequest: vi.fn(),
 }));
 

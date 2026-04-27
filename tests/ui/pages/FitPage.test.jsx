@@ -1,15 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import FitPage from '../../src/pages/FitPage.jsx';
-import { createQueryWrapper } from '../queryTestUtils.jsx';
+import FitPage from '../../../frontend-react/src/pages/FitPage.jsx';
+import { createQueryWrapper } from '../../queryTestUtils.jsx';
 
-vi.mock('../../src/lib/tanstackApi.js', () => ({
+vi.mock('../../../frontend-react/src/lib/tanstackApi.js', () => ({
   apiRequest: vi.fn(),
   tanstackRetryOptions: vi.fn(() => ({ retry: false, retryDelay: 0 })),
 }));
 
-import { apiRequest } from '../../src/lib/tanstackApi.js';
+import { apiRequest } from '../../../frontend-react/src/lib/tanstackApi.js';
 
 const originalScheduleUrl = import.meta.env.VITE_SCHEDULE_MEETING_URL;
 
