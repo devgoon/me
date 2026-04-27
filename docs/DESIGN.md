@@ -141,13 +141,21 @@ Security & secrets (operational)
 - Do NOT commit secrets to git. Keep keys and connection strings in CI secret storage or local `.env` files that are gitignored. See `api/local.settings.json.example` and `.env.local.example` for examples.
 - If secrets were committed, rotate them immediately and consider a history-rewrite to remove them from Git history (see `docs/REMOVE_BACPAC.md`).
 
-## Caching
+## Caching Strategy
 
-- Cache entries keyed by SHA-256(model + "|" + question).
-- On cache hit: update `cache_hit_count` and `last_accessed`.
-- Cache invalidation: manual invalidation endpoint exists (`/api/cache-report` usage); consider TTL-based expiry for long-term scaling.
+This section consolidates caching behavior, keys, invalidation, and operational guidance.
 
-TODO: consider adding a configurable TTL for cached entries and document expected cache size and eviction policy.
+- Keying: cache entries are derived from a deterministic compact of the inputs (model name + compacted context/job description) and hashed with SHA-256. See implementations in `api/chat/index.js` and `api/experience/index.js`.
+- What we store: `AI_RESPONSE_CACHE` rows include `hash` (PK), `question`, `model`, `response`, `cache_hit_count`, `last_accessed`, `updated_at`, `is_cached`.
+- On hit: code increments `cache_hit_count` and updates `last_accessed` to record usage.
+- What we don't cache: very small or empty LLM responses are not cached to avoid noise.
+- Invalidation: a manual invalidation/reporting endpoint exists (`/api/cache-report`) for operational inspection and manual invalidation.
+- TTL / Eviction: we currently rely on manual invalidation; consider adding a configurable TTL and an eviction policy (LRU or time-based) for long-term scaling.
+- Canonicalization: if you change how context is compacted before hashing, you must update cache key logic and consider invalidating existing cache entries to avoid stale/incorrect hits.
+
+Operational TODOs:
+- Add configurable `CACHE_TTL` and an eviction policy (document expected sizes and pruning strategy).
+- Add an admin endpoint to bulk-expire cached entries by pattern or date.
 
 ## Database Schema (ER diagram)
 
