@@ -5,18 +5,9 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { apiRequest, tanstackRetryOptions } from '../lib/tanstackApi.js';
 
 function normalizeFitResult(raw) {
-  // The API is the source-of-truth: prefer `mismatches`/`reasons` fields
-  // and fall back to `gaps`/`transfers` only if the API omits them.
-  const gaps = Array.isArray(raw?.mismatches)
-    ? raw.mismatches
-    : Array.isArray(raw?.gaps)
-    ? raw.gaps
-    : [];
-  const transfers = Array.isArray(raw?.reasons)
-    ? raw.reasons
-    : Array.isArray(raw?.transfers)
-    ? raw.transfers
-    : [];
+  // The API is the source-of-truth: use `mismatches` and `reasons` only.
+  const gaps = Array.isArray(raw?.mismatches) ? raw.mismatches : [];
+  const transfers = Array.isArray(raw?.reasons) ? raw.reasons : [];
 
   return {
     verdict: raw?.verdict || 'Result',

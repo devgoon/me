@@ -101,29 +101,7 @@ describe('FitPage', () => {
     });
   });
 
-  it('normalizes gaps/transfers from legacy mismatches/reasons fields', async () => {
-    const user = userEvent.setup();
-    apiRequest.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        verdict: 'FIT',
-        score: 90,
-        suggestedMessage: 'Great fit',
-        mismatches: ['Legacy gap field'],
-        reasons: ['Legacy transfer field'],
-      }),
-    });
-
-    render(<FitPage />, { wrapper: createQueryWrapper() });
-
-    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
-    await user.click(screen.getByRole('button', { name: "See if We're a match" }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Legacy gap field')).toBeInTheDocument();
-      expect(screen.getByText('Legacy transfer field')).toBeInTheDocument();
-    });
-  });
+  // Legacy normalization removed: UI strictly uses API fields `mismatches`/`reasons`.
 
   it('shows empty state text when gaps and transfers are empty', async () => {
     const user = userEvent.setup();
