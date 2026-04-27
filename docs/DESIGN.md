@@ -363,7 +363,3 @@ Operational links
 
 - Prompt builders apply heuristics to trim `bullet_points`, `equivalents`, and long free-text fields when the composed prompt length exceeds `MAX_PROMPT_CHARS` (see `api/prompts.js` configuration). Trimming favors keeping representative bullets and high-priority instructions.
 
-### Caching Considerations
-
-- Cache keys include the model name and a deterministic compact of the context (profile id, experiences summary, certifications list) so that identical inputs return the cached output.
-- Small/empty LLM responses are not cached; large responses are recorded with the SHA-256 hash used as the cache key.
