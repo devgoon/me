@@ -125,16 +125,16 @@ export function useAdminPage() {
   }
 
   useEffect(() => {
-    let t;
+    const timers = [];
     const schedule = (fn) => {
-      if (t) clearTimeout(t);
-      t = setTimeout(fn, 0);
-      return t;
+      const id = setTimeout(fn, 0);
+      timers.push(id);
+      return id;
     };
 
     if (bootstrapQuery.isPending) {
       schedule(() => setLoading(true));
-      return () => clearTimeout(t);
+      return () => timers.forEach(clearTimeout);
     }
 
     if (bootstrapQuery.isError) {
@@ -142,37 +142,37 @@ export function useAdminPage() {
         setStatus(bootstrapQuery.error?.message || 'Unable to load admin data');
         setLoading(false);
       });
-      return () => clearTimeout(t);
+      return () => timers.forEach(clearTimeout);
     }
 
     if (bootstrapQuery.data?.unauthorized) {
       redirectTo('/auth');
       schedule(() => setLoading(false));
-      return () => clearTimeout(t);
+      return () => timers.forEach(clearTimeout);
     }
 
     if (bootstrapQuery.data?.data) {
       schedule(() => setAdminData(normalizeAdminIncoming(bootstrapQuery.data.data)));
     }
     schedule(() => setLoading(false));
-    return () => clearTimeout(t);
+    return () => timers.forEach(clearTimeout);
   }, [bootstrapQuery.data, bootstrapQuery.error, bootstrapQuery.isError, bootstrapQuery.isPending]);
 
   useEffect(() => {
     if (activeTab !== 'cache') return;
     if (cacheReportQuery.isFetching) return;
-    let t;
+    const timers = [];
     const schedule = (fn) => {
-      if (t) clearTimeout(t);
-      t = setTimeout(fn, 0);
-      return t;
+      const id = setTimeout(fn, 0);
+      timers.push(id);
+      return id;
     };
     if (cacheReportQuery.isError) {
       schedule(() => {
         setStatus(cacheReportQuery.error?.message || 'Failed to load cache report');
         setCacheRows([]);
       });
-      return () => clearTimeout(t);
+      return () => timers.forEach(clearTimeout);
     }
     if (cacheReportQuery.data) {
       schedule(() => {
@@ -180,7 +180,7 @@ export function useAdminPage() {
         setStatus('Cache report loaded');
       });
     }
-    return () => clearTimeout(t);
+    return () => timers.forEach(clearTimeout);
   }, [
     activeTab,
     cacheReportQuery.data,

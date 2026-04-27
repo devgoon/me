@@ -10,8 +10,8 @@ const navItems = [
   { to: '/experience', label: 'Experience' },
   { to: '/certifications', label: 'Certifications' },
   { to: '/education', label: 'Education' },
-  { to: '/fit', label: "See If We're A Match" },
-  { href: '/assets/Lodovico-Resume-04-08-26.pdf', label: 'Download Resume', external: true },
+  { to: '/fit', label: "JD Fit Check" },
+  { href: '/assets/Lodovico-Resume-04-08-26.pdf', label: 'Resume', external: true },
 ];
 
 const socialLinks = [

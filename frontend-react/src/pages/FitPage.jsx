@@ -132,7 +132,7 @@ function FitPage() {
 
   return (
     <Stack spacing={2.5}>
-      <Typography variant="h1">See If We're a Match</Typography>
+      <Typography variant="h1">JD Fit Check</Typography>
       <Card variant="outlined">
         <CardContent>
           <Stack spacing={2}>
@@ -152,7 +152,7 @@ function FitPage() {
               disabled={loading}
               sx={{ alignSelf: 'flex-start' }}
             >
-              {loading ? 'Analyzing...' : "See if We're a match"}
+              {loading ? 'Analyzing...' : "JD Fit Check"}
             </Button>
             {error ? <Alert severity="error">{error}</Alert> : null}
           </Stack>

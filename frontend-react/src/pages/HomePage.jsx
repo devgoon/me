@@ -45,7 +45,7 @@ function HomePage() {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
                 <Button component={RouterLink} to="/fit" variant="contained" size="large">
-                  See If We're a Match
+                  JD Fit Check
                 </Button>
                 <Button variant="outlined" size="large" onClick={() => setChatOpen(true)}>
                   Ask AI about Me
