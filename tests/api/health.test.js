@@ -29,7 +29,7 @@ describe('health endpoint', () => {
       query: vi.fn().mockResolvedValue({}),
       end: vi.fn().mockResolvedValue(undefined),
     };
-    require('../../api/db').Client = vi.fn(() => mockClient);
+    require('../../api/db').__setTestClient(mockClient);
     mockClient.queryWithRetry = mockClient.query;
     const context = { res: null };
     await health(context, {});
@@ -47,9 +47,11 @@ describe('health endpoint', () => {
       query: vi.fn().mockResolvedValue({}),
       end: vi.fn().mockResolvedValue(undefined),
     };
-    require('../../api/db').Client = vi.fn(() => mockClient);
+    require('../../api/db').__setTestClient(mockClient);
     mockClient.queryWithRetry = mockClient.query;
-    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ models: [{ id: 'other' }] }) });
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ models: [{ id: 'other' }] }) });
     const context = { res: null };
     await health(context, {});
     expect(context.res.status).toBe(503);

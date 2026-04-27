@@ -22,7 +22,7 @@ describe('fit-check API', () => {
       query: vi.fn(),
       end: vi.fn().mockResolvedValue(undefined),
     };
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -37,7 +37,7 @@ describe('fit-check API', () => {
       }),
     });
   });
-    fitHandler = require('../../api/fit/index');
+  fitHandler = require('../../api/fit/index');
 
   afterAll(() => {
     if (originalDatabaseUrl === undefined) delete process.env.AZURE_DATABASE_URL;
@@ -162,7 +162,7 @@ describe('fit GET behavior', () => {
       query: vi.fn(),
       end: vi.fn().mockResolvedValue(undefined),
     };
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
   });
 
@@ -210,7 +210,7 @@ describe('fit API additional tests', () => {
       query: vi.fn(),
       end: vi.fn().mockResolvedValue(undefined),
     };
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
   });
 

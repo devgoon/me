@@ -28,8 +28,8 @@ if (process.env.NODE_ENV === 'test') {
           constructor() {
             this._inputs = {};
           }
-          input(name, _val) {
-            this._inputs[name] = true;
+          input(name, value) {
+            this._inputs[name] = value;
           }
           async query() {
             return { recordset: [] };
@@ -56,8 +56,8 @@ if (process.env.NODE_ENV === 'test') {
       constructor() {
         this._inputs = {};
       }
-      input(name, _val) {
-        this._inputs[name] = true;
+      input(name, value) {
+        this._inputs[name] = value;
       }
       async query() {
         return { recordset: [] };

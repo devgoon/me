@@ -7,7 +7,7 @@ describe('cache-report', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     client = { connect: vi.fn(), query: vi.fn(), end: vi.fn() };
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
   });
 

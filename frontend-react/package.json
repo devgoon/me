@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:watch": "vite build --watch",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",

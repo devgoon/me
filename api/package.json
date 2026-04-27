@@ -12,10 +12,13 @@
     "node": "22.x"
   },
   "scripts": {
-    "coverage": "cd .. && npx jest --coverage --testPathPattern=tests/api/ --runInBand",
-    "test:vitest": "vitest run --config=vitest.config.js"
+    "coverage": "vitest run --config=vitest.config.js --coverage",
+    "test:vitest": "vitest run --config=vitest.config.js",
+    "lint": "npx eslint '**/*.js' --ignore-pattern '**/__tests__/**' --ignore-pattern '**/*.test.*'",
+    "lint:fix": "npx eslint '**/*.js' --ignore-pattern '**/__tests__/**' --ignore-pattern '**/*.test.*' --fix"
   },
   "devDependencies": {
+    "@vitest/coverage-istanbul": "^4.1.5",
     "vitest": "^4.1.5"
   }
 }

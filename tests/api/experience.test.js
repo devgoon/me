@@ -20,7 +20,7 @@ describe('experience API', () => {
       query: vi.fn(),
       end: vi.fn().mockResolvedValue(undefined),
     };
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
     experienceHandler = require('../../api/experience/index');
   });
@@ -46,7 +46,7 @@ describe('experience API', () => {
         query: vi.fn(),
         end: vi.fn().mockResolvedValue(undefined),
       };
-      require('../../api/db').Client = vi.fn(function () { return client; });
+      require('../../api/db').__setTestClient(client);
       client.queryWithRetry = client.query;
     });
 
@@ -97,7 +97,7 @@ describe('experience API', () => {
         query: vi.fn(),
         end: vi.fn().mockResolvedValue(undefined),
       };
-      require('../../api/db').Client = vi.fn(function () { return client; });
+      require('../../api/db').__setTestClient(client);
       client.queryWithRetry = client.query;
     });
 
@@ -155,7 +155,7 @@ describe('experience API', () => {
         query: vi.fn(),
         end: vi.fn().mockResolvedValue(undefined),
       };
-      require('../../api/db').Client = vi.fn(function () { return client; });
+      require('../../api/db').__setTestClient(client);
       client.queryWithRetry = client.query;
 
       global.fetch = vi.fn().mockResolvedValue(
@@ -321,9 +321,7 @@ describe('experience callAnthropicForContexts', () => {
 
   test('parses top-level text field', async () => {
     const jsonText = JSON.stringify({ experiences: [{ id: 1, situation: 'S' }] });
-    global.fetch = vi
-      .fn()
-      .mockResolvedValue({ ok: true, json: async () => ({ text: jsonText }) });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ text: jsonText }) });
     const res = await helpers.callAnthropicForContexts({}, [{ id: 1 }], 'key', []);
     expect(res[1]).toBeDefined();
     expect(res[1].situation).toContain('S');

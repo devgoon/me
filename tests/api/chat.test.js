@@ -21,7 +21,8 @@ describe('chat API', () => {
       query: vi.fn(),
       end: vi.fn().mockResolvedValue(undefined),
     };
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    // Inject the test client instance so `new Client()` returns our mock.
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
     chatHandler = require('../../api/chat/index');
   });
@@ -73,12 +74,7 @@ describe('chat API', () => {
       .mockResolvedValueOnce({}); // update cache_hit_count
     const context = { res: null };
     await chatHandler(context, { method: 'POST', body: { message: 'What is AI?' } });
-    if (!context.res || context.res.status !== 200) {
-      // eslint-disable-next-line no-console
-      console.error('DEBUG chat cached response failure:', JSON.stringify(context.res || {}));
-      // eslint-disable-next-line no-console
-      console.error('DEBUG client.query.mock.calls:', JSON.stringify(client.query.mock.calls));
-    }
+
     expect(context.res.status).toBe(200);
     expect(context.res.body.response).toBe('Cached answer');
   });
@@ -117,10 +113,7 @@ describe('chat API', () => {
 
     const context = { res: null };
     await chatHandler(context, { method: 'POST', body: { message: 'Hello' } });
-    if (!context.res || context.res.status !== 200) {
-      // eslint-disable-next-line no-console
-      console.error('DEBUG chat equivalents failure:', JSON.stringify(context.res || {}));
-    }
+
     expect(context.res.status).toBe(200);
     expect(capturedBody).toBeTruthy();
     expect(capturedBody).toMatch(/JavaScript|JS/);
@@ -142,16 +135,15 @@ describe('chat API', () => {
       .mockResolvedValueOnce({}); // setCache insert
 
     // Make the AI return a string with extra whitespace
-    global.fetch = vi.fn().mockImplementation(() =>
-      Promise.resolve({ ok: true, json: async () => ({ text: '   Trim me   ' }) })
-    );
+    global.fetch = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve({ ok: true, json: async () => ({ text: '   Trim me   ' }) })
+      );
 
     const context = { res: null };
     await chatHandler(context, { method: 'POST', body: { message: 'Trim test' } });
-    if (!context.res || context.res.status !== 200) {
-      // eslint-disable-next-line no-console
-      console.error('DEBUG chat trim cache failure:', JSON.stringify(context.res || {}));
-    }
+
     expect(context.res.status).toBe(200);
 
     // Find the MERGE call for ai_response_cache and inspect params
@@ -181,7 +173,8 @@ describe('chat API additional tests', () => {
       query: vi.fn(),
       end: vi.fn().mockResolvedValue(undefined),
     };
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    // Inject the test client instance so `new Client()` returns our mock.
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
 
     chatHandler = require('../../api/chat/index');
@@ -208,9 +201,11 @@ describe('chat API additional tests', () => {
   });
 
   test('stores JSON-stringified object in cache when response is object', async () => {
-    global.fetch = vi.fn().mockResolvedValue(
-      Promise.resolve({ ok: true, json: async () => ({ text: '{"answer":"ok"}' }) })
-    );
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        Promise.resolve({ ok: true, json: async () => ({ text: '{"answer":"ok"}' }) })
+      );
 
     const context = { req: { body: { message: 'hello' } }, res: null, log: { info: vi.fn() } };
     await chatHandler(context, context.req);

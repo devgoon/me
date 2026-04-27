@@ -6,22 +6,17 @@
   "author": "Lodovico Minnocci",
   "license": "MIT",
   "scripts": {
-    "test": "npm run test:unit",
-    "test:unit": "npx jest --runInBand --testPathPattern=tests/",
+    "test": "npm run test:api",
+    "test:api": "npm --prefix api run test:vitest",
     "test:evals": "node scripts/run-evals.js",
-    "test:evals:jest": "npx jest --runInBand --testPathPattern=tests/evals/ --coverage=false",
     "evals:export:chat-cache": "node scripts/export-chat-cache-evals.js",
     "build": "echo 'No UI build required'",
-    "test:e2e": "npx playwright test",
-    "test:e2e:headed": "npx playwright test --headed",
-    "test:e2e:debug": "npx playwright test --debug",
     "format": "prettier --write \"**/*.{js,json,md,css,html}\"",
     "format:check": "prettier --check \"**/*.{js,json,md,css,html}\"",
-    "coverage": "jest --coverage --coverageReporters=text --coverageReporters=text-summary --runInBand",
-    "coverage:api": "cd api && npm run coverage",
+    "coverage:api": "npm --prefix api run test:vitest",
     "update-default-data": "node scripts/update-default-data.js",
-    "lint": "npx eslint@8 \"api/**/*.js\" \"frontend-react/src/**/*.js\" \"frontend-react/src/**/*.jsx\" --ext .js,.jsx --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\"",
-    "lint:fix": "npx eslint@8 \"api/**/*.js\" \"frontend-react/src/**/*.js\" \"frontend-react/src/**/*.jsx\" --ext .js,.jsx --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\" --fix",
+    "lint": "npx eslint \"api/**/*.js\" \"frontend-react/src/**/*.{js,jsx}\" --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\"",
+    "lint:fix": "npx eslint \"api/**/*.js\" \"frontend-react/src/**/*.{js,jsx}\" --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\" --fix",
     "react:dev": "npm --prefix frontend-react run dev",
     "react:build": "npm --prefix frontend-react run build",
     "react:build:watch": "npm --prefix frontend-react run build:watch",
@@ -30,28 +25,7 @@
   "devDependencies": {
     "cspell": "^10.0.0",
     "eslint": "^10.1.0",
-    "prettier": "^2.8.8",
-    "@playwright/test": "^1.40.0",
-    "jest": "^29.6.0",
-    "nyc": "^15.1.0",
-    "jest-environment-jsdom": "^30.3.0",
-    "linkinator": "^7.6.1"
-  },
-  "jest": {
-    "testMatch": [
-      "<rootDir>/tests/**/*.test.js"
-    ],
-    "testPathIgnorePatterns": [
-      "<rootDir>/tests/e2e/"
-    ],
-    "setupFiles": [
-      "<rootDir>/tests/setupTests.js"
-    ],
-    "collectCoverage": true,
-    "collectCoverageFrom": [
-      "api/**/*.js"
-    ],
-    "coverageDirectory": "coverage"
+    "prettier": "^2.8.8"
   },
   "engines": {
     "node": "22.x"

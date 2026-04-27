@@ -8,8 +8,8 @@ module.exports = defineConfig({
     setupFiles: ['../tests/setupTests.js'],
     include: ['../tests/api/**/*.test.js', '../tests/api/**/*.test.ts'],
     coverage: {
-      provider: 'c8',
-      reporter: ['text', 'json-summary', 'lcov'],
+      provider: 'istanbul',
+      reporter: ['json-summary', 'lcov'],
       // write API coverage summary into repo-level coverage folder so merge script can find it
       reportsDirectory: path.resolve(__dirname, '..', 'coverage'),
     },

@@ -14,36 +14,33 @@ spellcheck:
 
 unit-test:
 	@echo "==> Running eval tests (no coverage)"
-	@npm run test:evals:jest || true
+	@npm run test:evals || true
 	@echo "==> Running UI tests (frontend-react) with coverage"
 	@npm --prefix frontend-react run test:coverage || true
 	@echo "==> Running API tests with coverage"
-	@npx jest --coverage --testPathPattern=tests/api/ --runInBand || true
-	@echo "==> Merging coverage summaries"
-	@node scripts/merge-coverage.js || true
-	
-coverage:
-	@npm run coverage
+	@npm --prefix api run coverage || true
+
+coverage: unit-test
+
 
 check:
 	@echo "==> Running spellcheck"
 	@$(MAKE) spellcheck
 	@echo "==> Running frontend-react lint"
-	@npm --prefix frontend-react run lint || true
+	@npm --prefix frontend-react run lint:fix || true
+	@echo "==> Running api lint"
+	@npm --prefix api run lint:fix || true
 	@echo "==> Building frontend-react"
 	@npm --prefix frontend-react run build || true
 	@echo "==> Running evals"
 	@$(MAKE) evals || true
 	@echo "==> Running unit tests + coverage"
 	@$(MAKE) coverage
-	@npm --prefix frontend-react run test:run || true
 	@echo "==> Quality checks complete"
 
 evals:
 	@echo "Running eval runner (fit + chat)"
 	npm run test:evals
-	@echo "Running eval Jest suite"
-	npm run test:evals:jest
 e2e:
 	bash scripts/run-e2e.sh
 	

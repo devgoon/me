@@ -19,7 +19,7 @@ describe('skills API', () => {
       query: vi.fn(),
       end: vi.fn().mockResolvedValue(undefined),
     };
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
     skillsHandler = require('../../api/skills/index');
   });

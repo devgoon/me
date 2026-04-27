@@ -102,7 +102,7 @@ describe('admin API', () => {
     client.beginTransaction = vi.fn().mockResolvedValue(undefined);
     client.commitTransaction = vi.fn().mockResolvedValue(undefined);
     client.rollbackTransaction = vi.fn().mockResolvedValue(undefined);
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
     // Re-require handler after resetting modules so mocks take effect
     adminHandler = require('../../api/admin/index');
@@ -129,7 +129,7 @@ describe('admin API', () => {
 
     expect(context.res.status).toBe(401);
     expect(context.res.body).toEqual({ error: 'Unauthorized' });
-    expect(require('../../api/db').Client).not.toHaveBeenCalled();
+    expect(client.connect).not.toHaveBeenCalled();
   });
 
   test('returns clear validation error when salary min exceeds max', async () => {
@@ -470,7 +470,7 @@ describe('admin cache invalidation error path', () => {
       end: vi.fn().mockResolvedValue(undefined),
     };
     const { Client } = require('../../api/db');
-    require('../../api/db').Client = vi.fn(function () { return client; });
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
     process.env.AZURE_DATABASE_URL = 'Server=.;Database=Test;User Id=u;Password=p;';
   });
