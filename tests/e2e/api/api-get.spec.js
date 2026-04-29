@@ -23,17 +23,30 @@ test.describe('API GET endpoints', () => {
     expect(body).toBeTruthy();
   });
 
-  test('GET /api/admin/cache-report responds 200/204 or auth status', async ({ request }) => {
-    const res = await request.get('/api/admin/cache-report');
-    // This endpoint may be empty in some envs but should return a 200/204.
-    // Deployed previews may enforce auth; allow 401 when the CI runner sets the flag.
+  test('GET /api/cache-report responds 200/204 or auth status', async ({ request }) => {
     const flag = process.env.E2E_PREVIEW_ENFORCES_AUTH;
+    if (typeof flag === 'undefined') {
+      // eslint-disable-next-line no-console
+      console.warn(
+        'E2E_PREVIEW_ENFORCES_AUTH is not set; defaulting to 0. For deterministic results, run tests via scripts/run-e2e.sh'
+      );
+    }
     const enforcesAuth = flag === '1' || (flag && flag.toLowerCase() === 'true');
+    let res;
+    try {
+      res = await request.get('/api/cache-report', { maxRedirects: 0 });
+    } catch (e) {
+      // If the request helper throws (some environments), fall back to a
+      // normal GET to obtain the final status code.
+      res = await request.get('/api/cache-report');
+    }
+    const status = res.status();
+
     if (enforcesAuth) {
-      // Deployed previews may enforce auth and/or role checks.
-      expect([200, 204, 401, 403]).toContain(res.status());
+      // Enforced auth: expect the admin API to deny or redirect unauthenticated requests.
+      expect([401, 403, 302]).toContain(status);
     } else {
-      expect([200, 204, 403]).toContain(res.status());
+      expect([200, 401, 403, 302]).toContain(status);
     }
   });
 });

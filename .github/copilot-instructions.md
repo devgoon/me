@@ -15,9 +15,8 @@ Refer to docs/copilot-api.md for API-specific conventions, testing, and deployme
 
 ## Testing
 - All new or modified code must include tests; PRs should not be merged without appropriate tests.
-- Run frontend tests: `npm run test:ui`
-- Run API tests: `npm run test:api`
-- Run all tests: `npm test`
+- Use the Makefile task for local and CI checks: run `make check` to execute tests, linting, and formatting checks. (Legacy: `npm run test:ui`, `npm run test:api`, `npm test`)
+
 
 ## Linting
 - Run: `npm run lint`

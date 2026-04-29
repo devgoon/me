@@ -24,7 +24,7 @@ export async function fetchPanelData() {
 
 export async function fetchCacheReport() {
   return apiRequest(
-    '/api/admin/cache-report',
+    '/api/cache-report',
     { method: 'GET', credentials: 'include' },
     CACHE_API_OPTIONS
   );
