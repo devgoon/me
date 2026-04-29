@@ -94,7 +94,7 @@ jobs:
           action: upload
           app_location: 'frontend-react'
           api_location: 'api/'
-          app_artifact_location: 'frontend-react/dist'
+          app_artifact_location: 'dist'
           deployment_environment: 'staging'
 
       - name: Deploy (main)
@@ -111,7 +111,7 @@ jobs:
           action: upload
           app_location: 'frontend-react'
           api_location: 'api/'
-          app_artifact_location: 'frontend-react/dist'
+          app_artifact_location: 'dist'
 
       - name: Capture deployed URL
         id: capture-url
