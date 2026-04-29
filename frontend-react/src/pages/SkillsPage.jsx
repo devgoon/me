@@ -102,7 +102,18 @@ function SkillsPage() {
                 </Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }} useFlexGap>
                   {skills.strong.map((skill) => (
-                    <Chip key={skill} label={skill} size="small" />
+                    <Chip
+                      key={skill}
+                      label={skill}
+                      size="small"
+                      sx={{
+                        backgroundColor: '#00E5FF',
+                        color: '#001216',
+                        border: '1px solid #00E5FF',
+                        borderRadius: 12,
+                        fontWeight: 600,
+                      }}
+                    />
                   ))}
                 </Stack>
               </Box>
@@ -113,7 +124,18 @@ function SkillsPage() {
                 </Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }} useFlexGap>
                   {skills.moderate.map((skill) => (
-                    <Chip key={skill} label={skill} size="small" variant="outlined" />
+                    <Chip
+                      key={skill}
+                      label={skill}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        borderColor: '#00E5FF',
+                        color: '#00E5FF',
+                        backgroundColor: 'transparent',
+                        borderWidth: 1,
+                      }}
+                    />
                   ))}
                 </Stack>
               </Box>

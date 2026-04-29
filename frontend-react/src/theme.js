@@ -125,29 +125,84 @@ const theme = createTheme({
         root: {
           borderRadius: 12,
           paddingInline: '1rem',
+          fontWeight: 600,
+          textTransform: 'none',
         },
         outlined: {
-          borderColor: 'rgba(95, 168, 255, 0.28)',
-          backgroundColor: 'rgba(95, 168, 255, 0.04)',
+          borderColor: '#00E5FF',
+          color: '#00E5FF',
+          backgroundColor: 'transparent',
+          '&:hover': {
+            backgroundColor: 'rgba(0,229,255,0.06)',
+            boxShadow: '0 6px 18px rgba(0,229,255,0.08)',
+            transform: 'translateY(-2px)',
+          },
+        },
+        contained: {
+          backgroundColor: '#00E5FF',
+          color: '#001216',
+          border: '1px solid #00E5FF',
+          boxShadow: '0 6px 22px rgba(0,229,255,0.18)',
+          '&:hover': {
+            backgroundColor: '#00D8F0',
+            boxShadow: '0 12px 36px rgba(0,229,255,0.22)',
+            transform: 'translateY(-2px)',
+          },
         },
         containedPrimary: {
-          boxShadow: '0 10px 24px rgba(47, 123, 214, 0.28)',
+          // keep parity with generic contained
+        },
+        containedSecondary: {
+          // make secondary contained buttons match chips as well
+          backgroundColor: '#00E5FF',
+          color: '#001216',
+          border: '1px solid #00E5FF',
+          boxShadow: '0 6px 22px rgba(0,229,255,0.18)',
+          '&:hover': {
+            backgroundColor: '#00D8F0',
+            boxShadow: '0 12px 36px rgba(0,229,255,0.22)',
+            transform: 'translateY(-2px)',
+          },
         },
       },
     },
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: 10,
+          borderRadius: 12,
           fontWeight: 600,
+          padding: '6px 10px',
         },
+        label: {
+          fontSize: '0.85rem',
+        },
+        sizeSmall: {
+          padding: '4px 8px',
+          fontSize: '0.78rem',
+        },
+        // High-contrast accent for dark/black backgrounds
         filled: {
-          backgroundColor: 'rgba(95, 168, 255, 0.16)',
-          color: '#dbeafe',
+          backgroundColor: '#00E5FF',
+          color: '#001216',
+          border: '1px solid #00E5FF',
+          boxShadow: '0 6px 22px rgba(0,229,255,0.18)',
+          transition: 'transform 120ms ease, box-shadow 120ms ease',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 12px 36px rgba(0,229,255,0.22)',
+          },
         },
         outlined: {
-          borderColor: 'rgba(125, 211, 199, 0.22)',
-          backgroundColor: 'rgba(125, 211, 199, 0.05)',
+          borderColor: '#00E5FF',
+          backgroundColor: 'transparent',
+          color: '#00E5FF',
+          borderWidth: 1,
+          transition: 'background-color 120ms ease, transform 120ms ease, box-shadow 120ms ease',
+          '&:hover': {
+            backgroundColor: 'rgba(0,229,255,0.06)',
+            transform: 'translateY(-2px)',
+            boxShadow: '0 6px 18px rgba(0,229,255,0.08)',
+          },
         },
       },
     },

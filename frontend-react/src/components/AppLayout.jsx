@@ -56,24 +56,46 @@ function AppLayout({ children }) {
           <Stack spacing={1.5} aria-label="Main navigation" component="nav">
             {navItems.map((item) =>
               item.external ? (
-                <MuiLink
-                  key={item.label}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{
-                    textDecoration: 'none',
-                    color: 'text.primary',
-                    fontSize: '0.95rem',
-                    fontWeight: 500,
-                    transition: 'color 0.2s',
-                    '&:hover': {
-                      color: 'primary.main',
-                    },
-                  }}
-                >
-                  {item.label}
-                </MuiLink>
+                // If the external link is a PDF resume, use the `download` attribute
+                // so clicking triggers a direct download instead of opening a new tab.
+                item.href && item.href.toLowerCase().endsWith('.pdf') ? (
+                  <MuiLink
+                    key={item.label}
+                    href={item.href}
+                    download="Lodovico-Resume.pdf"
+                    sx={{
+                      textDecoration: 'none',
+                      color: 'text.primary',
+                      fontSize: '0.95rem',
+                      fontWeight: 500,
+                      transition: 'color 0.2s',
+                      '&:hover': {
+                        color: 'primary.main',
+                      },
+                    }}
+                  >
+                    {item.label}
+                  </MuiLink>
+                ) : (
+                  <MuiLink
+                    key={item.label}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      textDecoration: 'none',
+                      color: 'text.primary',
+                      fontSize: '0.95rem',
+                      fontWeight: 500,
+                      transition: 'color 0.2s',
+                      '&:hover': {
+                        color: 'primary.main',
+                      },
+                    }}
+                  >
+                    {item.label}
+                  </MuiLink>
+                )
               ) : (
                 <MuiLink
                   key={item.to}
