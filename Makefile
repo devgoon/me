@@ -7,7 +7,7 @@ install:
 install-ci:
 	npm ci --omit=dev
 	cd api && npm ci --omit=dev
-	cd frontend-react && npm ci --omit=dev
+	cd frontend-react && npm ci
 	
 lint:
 	@# Auto-format with Prettier, then run ESLint autofix
