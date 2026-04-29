@@ -111,16 +111,32 @@ function getBearerToken(req) {
 function getClientPrincipal(req) {
   const headers = req && req.headers ? req.headers : {};
   const encoded = headers['x-ms-client-principal'] || headers['X-MS-CLIENT-PRINCIPAL'];
-  if (!encoded) {
-    return null;
+  let decoded = null;
+
+  if (encoded) {
+    try {
+      decoded = JSON.parse(Buffer.from(String(encoded), 'base64').toString('utf8'));
+    } catch {
+      // fall through to try cookie parsing
+      decoded = null;
+    }
   }
 
-  let decoded;
-  try {
-    decoded = JSON.parse(Buffer.from(String(encoded), 'base64').toString('utf8'));
-  } catch {
-    return null;
+  // If platform header isn't present, try the StaticWebAppsAuthCookie from cookies
+  if (!decoded) {
+    const cookieHeader = headers.cookie || headers.Cookie || '';
+    const match = cookieHeader.match(/(?:^|;\s*)StaticWebAppsAuthCookie=([^;]+)/);
+    if (match && match[1]) {
+      try {
+        const raw = decodeURIComponent(match[1]);
+        decoded = JSON.parse(Buffer.from(String(raw), 'base64').toString('utf8'));
+      } catch {
+        decoded = null;
+      }
+    }
   }
+
+  if (!decoded) return null;
 
   const claims = Array.isArray(decoded.claims) ? decoded.claims : [];
   const findClaim = (type) => {

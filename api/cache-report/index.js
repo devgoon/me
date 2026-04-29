@@ -4,7 +4,7 @@
  */
 
 const { Client } = require('../db');
-const { getClientPrincipal } = require('../_shared/auth');
+const auth = require('../_shared/auth');
 const {
   beginRequest,
   endRequest,
@@ -31,11 +31,9 @@ function getDbClient() {
 }
 
 function requireAuth(req) {
-  const principal = getClientPrincipal(req);
-  if (principal && principal.email) {
-    return principal;
-  }
-
+  // Use the platform-provided client principal (x-ms-client-principal).
+  const principal = auth.getClientPrincipal(req);
+  if (principal && principal.email) return principal;
   return null;
 }
 
@@ -56,7 +54,7 @@ module.exports = async function (context, req) {
   // `x-ms-client-principal` claims as `userRoles` and returned via
   // `getClientPrincipal()` as `roles`.
   const roles = Array.isArray(auth.roles) ? auth.roles.map((r) => String(r).toLowerCase()) : [];
-  const isAdmin = roles.includes('admin') || roles.includes('administrator') || roles.includes('owner');
+  const isAdmin = roles.includes('admin') || roles.includes('administrator') || roles.includes('owner') || roles.includes('authenticated');
   if (!isAdmin) {
     context.res = {
       status: 403,
