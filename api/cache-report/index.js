@@ -52,6 +52,21 @@ module.exports = async function (context, req) {
     return;
   }
 
+  // Require an admin role for this endpoint. Roles are provided by the
+  // `x-ms-client-principal` claims as `userRoles` and returned via
+  // `getClientPrincipal()` as `roles`.
+  const roles = Array.isArray(auth.roles) ? auth.roles.map((r) => String(r).toLowerCase()) : [];
+  const isAdmin = roles.includes('admin') || roles.includes('administrator') || roles.includes('owner');
+  if (!isAdmin) {
+    context.res = {
+      status: 403,
+      headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+      body: { error: 'Forbidden' },
+    };
+    endRequest(context, obs, 403);
+    return;
+  }
+
   const client = getDbClient();
   await client.connect();
   try {

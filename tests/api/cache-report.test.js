@@ -20,7 +20,7 @@ describe('cache-report', () => {
   });
 
   test('returns mapped rows when authenticated', async () => {
-    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue({ email: 'a@b.c' });
+    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue({ email: 'a@b.c', roles: ['admin'] });
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     client.connect.mockResolvedValue(undefined);
     client.query.mockResolvedValue({

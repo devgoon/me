@@ -23,9 +23,17 @@ test.describe('API GET endpoints', () => {
     expect(body).toBeTruthy();
   });
 
-  test('GET /api/cache-report responds 200', async ({ request }) => {
-    const res = await request.get('/api/cache-report');
-    // This endpoint may be empty in some envs but should return a 200/204
-    expect([200, 204]).toContain(res.status());
+  test('GET /api/admin/cache-report responds 200/204 or auth status', async ({ request }) => {
+    const res = await request.get('/api/admin/cache-report');
+    // This endpoint may be empty in some envs but should return a 200/204.
+    // Deployed previews may enforce auth; allow 401 when the CI runner sets the flag.
+    const flag = process.env.E2E_PREVIEW_ENFORCES_AUTH;
+    const enforcesAuth = flag === '1' || (flag && flag.toLowerCase() === 'true');
+    if (enforcesAuth) {
+      // Deployed previews may enforce auth and/or role checks.
+      expect([200, 204, 401, 403]).toContain(res.status());
+    } else {
+      expect([200, 204, 403]).toContain(res.status());
+    }
   });
 });
