@@ -1,4 +1,6 @@
-import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, Stack, Typography, Chip } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { apiRequestJson } from '../lib/tanstackApi.js';
 
 function AboutPage() {
   return (
@@ -38,6 +40,12 @@ function AboutPage() {
                     Contact: vminnocci@gmail.com
                   </Typography>
                 </Box>
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                    Experience
+                  </Typography>
+                  <ExperienceChips />
+                </Box>
               </Stack>
             </Stack>
           </CardContent>
@@ -48,3 +56,69 @@ function AboutPage() {
 }
 
 export default AboutPage;
+
+function ExperienceChips() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    // First try to load local default data so the UI can show immediately.
+    (async () => {
+      try {
+        const defaultsRes = await fetch('/_shared/default-data.json', { cache: 'no-store' });
+        if (defaultsRes.ok) {
+          const defaults = await defaultsRes.json();
+          if (mounted && defaults?.experience?.experiences) {
+            setData({ experiences: defaults.experience.experiences });
+          }
+        }
+      } catch {
+        // ignore defaults failures
+      }
+
+      // Then request the authoritative API and replace defaults when available
+      try {
+        const apiRes = await apiRequestJson('/api/experience', { method: 'GET' }, { timeoutMs: 8000 });
+        if (!mounted) return;
+        setData(apiRes);
+        setError(null);
+      } catch (err) {
+        if (!mounted) return;
+        // if we had defaults, keep them; otherwise surface an error
+        if (!data) setError(err?.message || String(err));
+      } finally {
+        if (!mounted) return;
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (loading && !data) return <Typography color="text.secondary">Loading experience…</Typography>;
+  if (error && !data) return <Typography color="text.secondary">Experience not available.</Typography>;
+
+  const experiences = (data && Array.isArray(data.experiences) ? data.experiences : []);
+
+  return (
+    <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }} component="div" useFlexGap>
+      {experiences.map((exp) => {
+        const label = exp.title ? `${exp.companyName} — ${exp.title}` : exp.companyName;
+        return (
+          <Chip
+            key={exp.id}
+            label={label}
+            size="small"
+            variant="outlined"
+            title={exp.bulletPoints && exp.bulletPoints.length > 0 ? exp.bulletPoints.join('\n') : ''}
+          />
+        );
+      })}
+    </Stack>
+  );
+}

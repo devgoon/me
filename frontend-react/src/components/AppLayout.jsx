@@ -4,8 +4,7 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
 const navItems = [
-  { to: '/', label: 'Home' },
-  { to: '/about', label: 'About' },
+  { to: '/', label: 'About' },
   { to: '/skills', label: 'Skills' },
   { to: '/experience', label: 'Experience' },
   { to: '/certifications', label: 'Certifications' },
