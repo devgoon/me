@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Button, Card, CardContent, Chip, Stack, Typography, Box } from '@mui/material';
+import {
+  Button,
+  Chip,
+  Stack,
+  Typography,
+  Box,
+  Container,
+  Paper,
+  Avatar,
+  Divider,
+} from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequestJson, tanstackRetryOptions } from '../lib/tanstackApi.js';
 import ChatDialog from '../components/ChatDialog.jsx';
@@ -29,21 +39,29 @@ function HomePage() {
   return (
     <Stack spacing={6}>
       {/* Hero Section */}
-      <Box>
-        <Card variant="outlined">
-          <CardContent>
+      <Box component="section" sx={{ py: { xs: 4, md: 8 } }}>
+        <Container maxWidth="md">
+          <Paper elevation={3} sx={{ p: { xs: 3, md: 6 }, borderRadius: 3 }}>
             <Stack spacing={3}>
-              <Stack spacing={2}>
-                <Typography variant="h2" sx={{ fontWeight: 700 }}>
-                  Lodovico (Vico) Minnocci
-                </Typography>
-                <Typography variant="h6" color="text.secondary">
-                  Building cloud-native systems, from startups to Fortune 500s. Now driving
-                  innovation in autonomous vehicles.
-                </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} alignItems="center">
+                <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontWeight: 700 }}>VM</Avatar>
+                <Box>
+                  <Typography variant="h3" sx={{ fontWeight: 800, lineHeight: 1 }}>
+                    Lodovico (Vico) Minnocci
+                  </Typography>
+                  <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 0.5 }}>
+                    I design and deliver reliable, cloud-native distributed systems at
+                    startup speed — now focused on autonomy and vehicle-scale software.
+                  </Typography>
+                </Box>
               </Stack>
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <Typography variant="body1" color="text.secondary">
+                I help teams reduce risk and ship faster by combining pragmatic architecture,
+                observability, and a focus on operational excellence.
+              </Typography>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button component={RouterLink} to="/fit" variant="contained" size="large">
                   JD Fit Check
                 </Button>
@@ -51,41 +69,35 @@ function HomePage() {
                   Ask AI about Me
                 </Button>
               </Stack>
+
               <ChatDialog open={chatOpen} onClose={() => setChatOpen(false)} />
+
+              <Divider />
 
               {/* Company Badges */}
               <Box>
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                  Experience at
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  Selected experience
                 </Typography>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{ flexWrap: 'wrap' }}
-                  component="div"
-                  useFlexGap
-                >
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }} component="div" useFlexGap>
                   {[
                     'Torc Robotics',
                     'Ancera',
-                    'Subway',
                     'Thermo Fisher Scientific',
                     'Fiserv',
                     'The Hartford',
-                    'Neopost',
-                    'Ingenix',
                   ].map((company) => (
                     <Chip key={company} label={company} size="small" variant="outlined" />
                   ))}
                 </Stack>
               </Box>
 
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="caption" color="text.secondary">
                 {health}
               </Typography>
             </Stack>
-          </CardContent>
-        </Card>
+          </Paper>
+        </Container>
       </Box>
     </Stack>
   );

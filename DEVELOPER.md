@@ -89,7 +89,7 @@ Scripts that work with Azure SQL live in the `scripts/` folder and produce artif
 
 ## How the scripts read credentials
 
-- Primary source: the `.env.local` file's `DATABASE_ADO` value (ADO-style: `Data Source=...;Initial Catalog=...;User ID=...;Password=...`).
+- Primary source: the `.env.local` file's `ADMIN_DATABASE_ADO` value (ADO-style: `Data Source=...;Initial Catalog=...;User ID=...;Password=...`).
 - For non-interactive runs you can export `SOURCE_USER` and `SOURCE_PASS` in your shell; the scripts will prefer those if present.
 - The tools prefer SQL authentication (username/password). Integrated/Kerberos authentication can fail on macOS and in CI environments ("Cannot generate SSPI context"). When in doubt, use SQL auth.
 

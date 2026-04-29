@@ -46,14 +46,14 @@ e2e:
 	
 start:
 	@mkdir -p .azurite
-	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
-	AZURITE_PID=$$!; \
-	REACT_WATCH_PID=""; \
-	trap 'kill $$AZURITE_PID $$REACT_WATCH_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
 	# Load .env.local into environment for child processes (single source of truth)
 	if [ -f .env.local ]; then \
 		set -a; . .env.local; set +a; \
 	fi; \
+	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
+	AZURITE_PID=$$!; \
+	REACT_WATCH_PID=""; \
+	trap 'kill $$AZURITE_PID $$REACT_WATCH_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
 	# Ensure DEBUG_DB is enabled for local Functions host unless explicitly disabled
 	if [ -z "$$DEBUG_DB" ]; then \
 		export DEBUG_DB=1; \
