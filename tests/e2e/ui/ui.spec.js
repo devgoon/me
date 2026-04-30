@@ -1,5 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
+// Use BASE_URL in CI or fall back to local emulator
+const base = process.env.BASE_URL ?? 'http://localhost:4280';
+
 // Consolidated UI smoke tests for main flows. Keep tests resilient to optional
 // elements (footers, overlays) and avoid relying on external services.
 
@@ -46,7 +49,7 @@ test('Primary navigation links load pages', async ({ page }) => {
         await page.waitForLoadState('networkidle');
       }
       // Ensure we are not stuck on root by checking main content changed or URL changed
-      if (page.url() === 'http://localhost:4280/') {
+      if (page.url().startsWith(base)) {
         // Try to detect a page-specific heading instead
         const heading = page.locator('h1, h2, h3');
         await expect(heading.first()).toBeVisible({ timeout: 5000 }).catch(() => {});

@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('navigate to fit page via sidebar Assess My Fit (AI) button', async ({ page }) => {
-  await page.goto('http://localhost:4280/');
+  const base = process.env.BASE_URL ?? 'http://localhost:4280';
+  await page.goto(base);
   // Wait for sidebar to load
   await page.waitForSelector('nav');
   // Click the Assess My Fit (AI) button (match by text to handle link/button variations)
