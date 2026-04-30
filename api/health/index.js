@@ -17,6 +17,11 @@ const ANTHROPIC_VERSION = '2023-06-01';
 const ANTHROPIC_CHAT_URL = 'https://api.anthropic.com/v1/messages';
 const { apiFetch } = require('../fetch');
 
+/**
+ * Health check endpoint for service status, DB connectivity and Anthropic availability.
+ * @param {Object} context
+ * @param {Object} req
+ */
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'health.get');
   function normalizeConn(raw) {

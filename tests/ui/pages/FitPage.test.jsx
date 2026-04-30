@@ -181,4 +181,90 @@ describe('FitPage', () => {
       expect(screen.queryByRole('link', { name: 'Schedule a meeting' })).not.toBeInTheDocument();
     });
   });
+
+  it('re-renders schedule meeting link after a subsequent FIT verdict', async () => {
+    import.meta.env.VITE_SCHEDULE_MEETING_URL = 'https://calendar.app.google/test-schedule';
+    const user = userEvent.setup();
+
+    // First response: MARGINAL
+    // Second response: FIT
+    apiRequest.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockFitResponse({ verdict: 'MARGINAL', score: 71 }),
+    });
+    apiRequest.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockFitResponse({ verdict: 'FIT', score: 92 }),
+    });
+
+    render(<FitPage />, { wrapper: createQueryWrapper() });
+
+    // First analysis
+    await user.type(
+      screen.getByPlaceholderText('Paste a job description'),
+      'A role with partial overlap'
+    );
+    await user.click(screen.getByRole('button', { name: "JD Fit Check" }));
+
+    await waitFor(() => {
+      expect(screen.getByText('MARGINAL')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Schedule a meeting' })).not.toBeInTheDocument();
+    });
+
+    // Prepare second input and run again
+    await user.clear(screen.getByPlaceholderText('Paste a job description'));
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A strong role');
+    await user.click(screen.getByRole('button', { name: "JD Fit Check" }));
+
+    await waitFor(() => {
+      const scheduleLink = screen.getByRole('link', { name: 'Schedule a meeting' });
+      expect(scheduleLink).toBeInTheDocument();
+      expect(scheduleLink).toHaveAttribute('href', 'https://calendar.app.google/test-schedule');
+    });
+  });
+
+  it('shows FOLLOW-UP heading when verdict is FIT', async () => {
+    import.meta.env.VITE_SCHEDULE_MEETING_URL = '';
+    const user = userEvent.setup();
+    apiRequest.mockResolvedValue({ ok: true, json: async () => mockFitResponse({ verdict: 'FIT' }) });
+
+    render(<FitPage />, { wrapper: createQueryWrapper() });
+
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
+    await user.click(screen.getByRole('button', { name: "JD Fit Check" }));
+
+    await waitFor(() => {
+      expect(screen.getByText('FOLLOW-UP')).toBeInTheDocument();
+    });
+  });
+
+  it('shows NEXT STEPS heading when verdict is MARGINAL', async () => {
+    import.meta.env.VITE_SCHEDULE_MEETING_URL = '';
+    const user = userEvent.setup();
+    apiRequest.mockResolvedValue({ ok: true, json: async () => mockFitResponse({ verdict: 'MARGINAL' }) });
+
+    render(<FitPage />, { wrapper: createQueryWrapper() });
+
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
+    await user.click(screen.getByRole('button', { name: "JD Fit Check" }));
+
+    await waitFor(() => {
+      expect(screen.getByText('NEXT STEPS')).toBeInTheDocument();
+    });
+  });
+
+  it('shows RECOMMENDATION heading for non-FIT/MARGINAL verdicts', async () => {
+    import.meta.env.VITE_SCHEDULE_MEETING_URL = '';
+    const user = userEvent.setup();
+    apiRequest.mockResolvedValue({ ok: true, json: async () => mockFitResponse({ verdict: 'NO FIT' }) });
+
+    render(<FitPage />, { wrapper: createQueryWrapper() });
+
+    await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
+    await user.click(screen.getByRole('button', { name: "JD Fit Check" }));
+
+    await waitFor(() => {
+      expect(screen.getByText('RECOMMENDATION')).toBeInTheDocument();
+    });
+  });
 });

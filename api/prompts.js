@@ -3,16 +3,34 @@
  * @module api/prompts.js
  */
 
+/**
+ * Normalize a possibly-empty value into a printable string or 'N/A'.
+ * @param {*} value
+ * @returns {string}
+ */
 const textOrNA = (value) => {
   if (value === null || value === undefined || value === '') return 'N/A';
   return String(value);
 };
+/**
+ * Convert a date-ish value to string, using 'Present' for falsy values.
+ * @param {*} value
+ * @returns {string}
+ */
 const dateOrPresent = (value) => {
   if (!value) return 'Present';
   return String(value);
 };
 const { parsePgArray, safeParseJson } = require('./_shared/parse');
 
+/**
+ * Ensure the input is converted into an array of strings. Accepts arrays,
+ * JSON strings, Postgres array literals, newline/comma-separated strings,
+ * or objects whose values will be stringified.
+ *
+ * @param {*} items
+ * @returns {Array<string>}
+ */
 const ensureArray = (items) => {
   if (!items) return [];
   if (Array.isArray(items)) return items;
@@ -51,6 +69,14 @@ const ensureArray = (items) => {
   return [];
 };
 
+/**
+ * Render items as a list of "- item" lines. Returns `emptyLine` when no
+ * meaningful content is present.
+ *
+ * @param {*} items
+ * @param {string} emptyLine
+ * @returns {string}
+ */
 const listLines = (items, emptyLine) => {
   if (!items) return emptyLine;
   if (Array.isArray(items)) {
@@ -88,6 +114,11 @@ const listLines = (items, emptyLine) => {
   return emptyLine;
 };
 
+/**
+ * Produce human-readable lines describing a skills array for the fit prompt.
+ * @param {Array<Object>} skills
+ * @returns {string}
+ */
 function fitSkillLines(skills) {
   if (!skills || skills.length === 0) return '- None listed';
   return skills
@@ -119,6 +150,11 @@ function fitSkillLines(skills) {
     .join('\n');
 }
 
+/**
+ * Produce shorter skill lines used for chat prompts.
+ * @param {Array<Object>} skills
+ * @returns {string}
+ */
 function chatSkillLines(skills) {
   if (!skills || skills.length === 0) return '- None listed';
   return skills
@@ -135,6 +171,14 @@ function chatSkillLines(skills) {
     .join('\n');
 }
 
+/**
+ * Build the long form prompt used for the fit analysis AI call. This
+ * stitches together profile, experience, skills, education, and other
+ * candidate context into a single string.
+ *
+ * @param {Object} payload - Candidate context and records.
+ * @returns {string} Prompt string suitable for sending to the AI model.
+ */
 function buildFitPrompt(payload) {
   const profile = payload.profile;
   const experiences = payload.experiences || [];
@@ -287,6 +331,12 @@ function buildFitPrompt(payload) {
   return promptStr;
 }
 
+/**
+ * Build a chat-oriented prompt variant for conversational AI flows.
+ *
+ * @param {Object} payload - Candidate context and records.
+ * @returns {string} Prompt string.
+ */
 function buildChatPrompt(payload) {
   const profile = payload.profile;
   const experiences = payload.experiences || [];

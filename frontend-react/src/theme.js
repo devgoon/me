@@ -1,3 +1,7 @@
+/**
+ * Application MUI theme configuration. Exports a configured dark theme
+ * with palette, typography and component overrides used across the UI.
+ */
 import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({

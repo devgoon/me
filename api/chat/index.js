@@ -19,6 +19,11 @@ const DB_CONNECT_TIMEOUT_MS = 30000;
 const DB_QUERY_TIMEOUT_MS = 30000;
 const AI_TIMEOUT_MS = 60000;
 
+/**
+ * Create an AbortController with a timeout and a clear function.
+ * @param {number} ms - Milliseconds until abort.
+ * @returns {{signal:AbortSignal, clear:Function}}
+ */
 function timeoutSignal(ms) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), ms);
@@ -38,6 +43,12 @@ const { fetchWithTimeout } = require('../fetch');
 
 const { buildChatPrompt } = require('../prompts');
 
+/**
+ * Load candidate profile, experiences, skills, gaps, values, FAQ and
+ * related context from the database for use in chat prompts.
+ * @param {import('../db').Client} client
+ * @returns {Promise<Object>} Candidate context object.
+ */
 async function loadCandidateContext(client) {
   const profileResult = await client.queryWithRetry(
     `SELECT TOP 1 *
@@ -138,6 +149,13 @@ async function loadCandidateContext(client) {
   };
 }
 
+/**
+ * Call the Anthropic API with retry/backoff and return the assistant text.
+ * @param {string} systemPrompt
+ * @param {string} userMessage
+ * @param {string} apiKey
+ * @returns {Promise<string>} Assistant response text.
+ */
 async function callAnthropic(systemPrompt, userMessage, apiKey) {
   const maxAttempts = 3;
   let attempt = 0;
@@ -233,6 +251,13 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
   throw lastErr || new Error('Anthropic API failure');
 }
 
+/**
+ * Lookup a cached AI response by model+question hash and return stored response.
+ * @param {import('../db').Client} client
+ * @param {string} model
+ * @param {string} question
+ * @returns {Promise<string|null>} Cached response or null.
+ */
 async function getCache(client, model, question) {
   const hash = crypto
     .createHash('sha256')
@@ -261,6 +286,14 @@ async function getCache(client, model, question) {
   return null;
 }
 
+/**
+ * Store or merge a response into the AI response cache by hash key.
+ * @param {import('../db').Client} client
+ * @param {string} model
+ * @param {string} question
+ * @param {string|Object|null} response
+ * @returns {Promise<void>}
+ */
 async function setCache(client, model, question, response) {
   const hash = crypto
     .createHash('sha256')
@@ -287,6 +320,12 @@ async function setCache(client, model, question, response) {
   );
 }
 
+/**
+ * Chat API handler. Accepts a JSON body with `message` and returns an
+ * assistant response. Integrates DB cache + Anthropic calls.
+ * @param {Object} context - Azure Functions context object.
+ * @param {Object} req - Incoming request object.
+ */
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'chat.ask');
   try {

@@ -1,9 +1,13 @@
+/** Default FAQ entries used when no FAQ data is present. */
 export const ADMIN_DEFAULT_FAQ = [
   { question: 'What are your strongest skills?', answer: '', isCommonQuestion: true },
   { question: 'What are your biggest gaps right now?', answer: '', isCommonQuestion: true },
   { question: 'What kind of team are you looking for?', answer: '', isCommonQuestion: true },
 ];
 
+/**
+ * Initial admin UI model used to bootstrap the admin panel state.
+ */
 export const ADMIN_INITIAL_STATE = {
   profile: {
     fullName: '',

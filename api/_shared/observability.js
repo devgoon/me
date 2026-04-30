@@ -5,6 +5,13 @@
 
 const { randomUUID } = require('crypto');
 
+/**
+ * Derive or generate a request id for tracing logs. Prefers existing
+ * `x-request-id` header and falls back to a UUID or timestamp-based id.
+ *
+ * @param {Object} req - Request-like object with `headers`.
+ * @returns {string} Request id string.
+ */
 function getRequestId(req) {
   const headerValue =
     req && req.headers ? req.headers['x-request-id'] || req.headers['X-Request-Id'] : null;
@@ -19,6 +26,14 @@ function getRequestId(req) {
   }
 }
 
+/**
+ * Log the start of a request and return a metadata object used by end/fail.
+ *
+ * @param {Object} context - Executing function context (may include `log`).
+ * @param {Object} req - Request object.
+ * @param {string} operationName - Logical operation name for tracing.
+ * @returns {{requestId:string,startedAt:number,method:string,path:string,operationName:string}}
+ */
 function beginRequest(context, req, operationName) {
   const requestId = getRequestId(req);
   const startedAt = Date.now();
@@ -39,6 +54,14 @@ function beginRequest(context, req, operationName) {
   return { requestId, startedAt, method, path, operationName };
 }
 
+/**
+ * Log request completion with duration and status.
+ *
+ * @param {Object} context - Executing function context.
+ * @param {Object} meta - Metadata returned from `beginRequest`.
+ * @param {number} statusCode - HTTP status code.
+ * @param {Object} [extras] - Additional fields to include in the log.
+ */
 function endRequest(context, meta, statusCode, extras) {
   const durationMs = Date.now() - meta.startedAt;
   writeInfo(
@@ -56,6 +79,14 @@ function endRequest(context, meta, statusCode, extras) {
   );
 }
 
+/**
+ * Log a failed request including error message and duration.
+ *
+ * @param {Object} context - Executing function context.
+ * @param {Object} meta - Metadata returned from `beginRequest`.
+ * @param {Error|string} error - Error object or message.
+ * @param {number} statusCode - HTTP status code to record.
+ */
 function failRequest(context, meta, error, statusCode) {
   const durationMs = Date.now() - meta.startedAt;
   writeError(
@@ -73,6 +104,13 @@ function failRequest(context, meta, error, statusCode) {
   );
 }
 
+/**
+ * Write an informational log line using the provided context's logging
+ * facility (supports `context.log` function or object with `.info`).
+ *
+ * @param {Object} context - Context exposing logging methods.
+ * @param {string} message - Message string to log.
+ */
 function writeInfo(context, message) {
   if (!context || !context.log) {
     return;
@@ -86,6 +124,12 @@ function writeInfo(context, message) {
   }
 }
 
+/**
+ * Write an error log line using the provided context's logging facility.
+ *
+ * @param {Object} context - Context exposing logging methods.
+ * @param {string} message - Message string to log.
+ */
 function writeError(context, message) {
   if (!context || !context.log) {
     return;
@@ -99,6 +143,13 @@ function writeError(context, message) {
   }
 }
 
+/**
+ * Return a headers object augmented with `x-request-id`.
+ *
+ * @param {Object} headers - Existing headers object.
+ * @param {string} requestId - Request id value to set.
+ * @returns {Object} New headers object including `x-request-id`.
+ */
 function withRequestId(headers, requestId) {
   return {
     ...(headers || {}),

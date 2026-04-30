@@ -42,6 +42,11 @@ async function handleMe(req) {
   return { status: 401, body: { error: 'Unauthorized' } };
 }
 
+/**
+ * Auth handler exposing session/user info endpoints (e.g., GET /me).
+ * @param {Object} context
+ * @param {Object} req
+ */
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'auth.me');
   const action = text(req && req.params && req.params.action).toLowerCase() || '';

@@ -30,6 +30,10 @@ function redirectTo(path) {
 }
 
 export function useAdminPage() {
+  /**
+   * Hook providing admin page state and actions.
+   * @returns {Object} API of state and mutators used by Admin UI.
+   */
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
   const [activeTab, setActiveTab] = useState('profile');

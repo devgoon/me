@@ -1,5 +1,12 @@
 import { ADMIN_DEFAULT_FAQ, ADMIN_INITIAL_STATE } from './state.js';
 
+/**
+ * Normalize incoming admin panel payload into the UI model shape.
+ * Ensures default fields are present and maps legacy keys.
+ *
+ * @param {Object} data - Raw payload returned from the API.
+ * @returns {Object} Normalized admin data.
+ */
 export function normalizeAdminIncoming(data) {
   const payload = { ...ADMIN_INITIAL_STATE, ...(data || {}) };
   payload.profile = { ...ADMIN_INITIAL_STATE.profile, ...(data?.profile || {}) };
@@ -31,6 +38,13 @@ export function normalizeAdminIncoming(data) {
   return payload;
 }
 
+/**
+ * Prepare admin payload for saving: strip empty entries and normalize
+ * field names expected by the server.
+ *
+ * @param {Object} payload - Admin UI model.
+ * @returns {Object} Sanitized payload ready for JSON serialization.
+ */
 export function sanitizeForSave(payload) {
   const out = JSON.parse(JSON.stringify(payload));
   out.experiences = (out.experiences || []).filter((item) => String(item.companyName || '').trim());
@@ -55,6 +69,11 @@ export function sanitizeForSave(payload) {
   return out;
 }
 
+/**
+ * Parse an input into a number or return null for empty/unparseable values.
+ * @param {*} value
+ * @returns {number|null}
+ */
 export function parseNullableNumber(value) {
   if (value === null || value === undefined) return null;
   const raw = String(value).trim();
@@ -63,6 +82,10 @@ export function parseNullableNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * Validate salary min/max in the admin payload and throw on invalid range.
+ * @param {Object} payload
+ */
 export function validateSalaryRange(payload) {
   const min = parseNullableNumber(payload?.profile?.salaryMin);
   const max = parseNullableNumber(payload?.profile?.salaryMax);
@@ -71,6 +94,10 @@ export function validateSalaryRange(payload) {
   }
 }
 
+/**
+ * Return a new default experience object for the UI.
+ * @returns {Object}
+ */
 export function defaultExperience() {
   return {
     companyName: '',
@@ -95,6 +122,10 @@ export function defaultExperience() {
   };
 }
 
+/**
+ * Return a new default skill object for the UI.
+ * @returns {Object}
+ */
 export function defaultSkill() {
   return {
     skillName: '',
@@ -107,6 +138,10 @@ export function defaultSkill() {
   };
 }
 
+/**
+ * Return a new default education object for the UI.
+ * @returns {Object}
+ */
 export function defaultEducation() {
   return {
     institution: '',
@@ -121,6 +156,10 @@ export function defaultEducation() {
   };
 }
 
+/**
+ * Return a new default certification object for the UI.
+ * @returns {Object}
+ */
 export function defaultCertification() {
   return {
     name: '',
@@ -134,6 +173,10 @@ export function defaultCertification() {
   };
 }
 
+/**
+ * Return a new default gap object for the UI.
+ * @returns {Object}
+ */
 export function defaultGap() {
   return {
     gapType: 'skill',
@@ -143,10 +186,19 @@ export function defaultGap() {
   };
 }
 
+/**
+ * Return a new default FAQ object for the UI.
+ * @returns {Object}
+ */
 export function defaultFaq() {
   return { question: '', answer: '', isCommonQuestion: false };
 }
 
+/**
+ * Return a new AI instruction rule default, using `existingRules` to set priority.
+ * @param {number} existingRules
+ * @returns {Object}
+ */
 export function defaultRule(existingRules = 0) {
   return { instructionType: 'tone', instruction: '', priority: (existingRules + 1) * 10 };
 }

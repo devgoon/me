@@ -70,13 +70,25 @@ function __getMssql() {
   return require('mssql');
 }
 
+/**
+ * Lightweight SQL client wrapper exposing a consistent `query`/`queryWithRetry`
+ * interface. In tests a fake client may be injected with `__setTestClient`.
+ */
 class Client {
+  /**
+   * @param {{connectionString?: string}} [options]
+   */
   constructor(options) {
     if (__testClient) return __testClient;
     this._connectionString = (options && options.connectionString) || null;
     this._pool = null;
   }
 
+  /**
+   * Establish a connection pool. Reads `AZURE_DATABASE_URL` when no explicit
+   * `connectionString` option is provided.
+   * @returns {Promise<void>}
+   */
   async connect() {
     // Prefer explicit option, then AZURE_DATABASE_URL. Use the string as-is
     // (trim surrounding quotes) — we only support Azure SQL connection strings.
@@ -100,6 +112,10 @@ class Client {
     await this._pool.connect();
   }
 
+  /**
+   * Begin a transaction on the current connection pool.
+   * @returns {Promise<void>}
+   */
   async beginTransaction() {
     if (!this._pool) throw new Error('Client not connected');
     const sql = __getMssql();
@@ -107,12 +123,20 @@ class Client {
     await this._transaction.begin();
   }
 
+  /**
+   * Commit the active transaction.
+   * @returns {Promise<void>}
+   */
   async commitTransaction() {
     if (!this._transaction) throw new Error('No active transaction');
     await this._transaction.commit();
     this._transaction = null;
   }
 
+  /**
+   * Roll back the active transaction if present.
+   * @returns {Promise<void>}
+   */
   async rollbackTransaction() {
     if (!this._transaction) return;
     try {
@@ -122,6 +146,14 @@ class Client {
     }
   }
 
+  /**
+   * Execute a SQL query. Supports Postgres-style $1/$2 parameter placeholders
+   * which are translated to T-SQL @p1/@p2. Returns an object with `rows`.
+   *
+   * @param {string} text - SQL text with $n placeholders.
+   * @param {Array<any>} [params] - Parameter values.
+   * @returns {Promise<{rows: any[]}>}
+   */
   async query(text, params) {
     if (!this._pool) throw new Error('Client not connected');
     // Convert Postgres-style $1/$2 placeholders to T-SQL @p1/@p2 to match
@@ -154,6 +186,14 @@ class Client {
 
   // Helper: query with retry/backoff for transient DB errors.
   // Options: { maxAttempts, baseDelayMs }
+  /**
+   * Execute a query with retry/backoff for common transient errors.
+   *
+   * @param {string} text - SQL text.
+   * @param {Array<any>} [params] - Parameter values.
+   * @param {{maxAttempts?: number, baseDelayMs?: number}} [options]
+   * @returns {Promise<{rows: any[]}>}
+   */
   async queryWithRetry(text, params, options) {
     const maxAttempts = (options && options.maxAttempts) || 3;
     const baseDelay = (options && options.baseDelayMs) || 200;
@@ -179,6 +219,10 @@ class Client {
     }
   }
 
+  /**
+   * Close the connection pool if open.
+   * @returns {Promise<void>}
+   */
   async end() {
     try {
       if (this._pool) {

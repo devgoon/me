@@ -57,6 +57,13 @@ function FitPage() {
     textTransform: 'uppercase',
   };
 
+  function getRecommendationHeading(verdict) {
+    const normalized = String(verdict || '').trim().toUpperCase();
+    if (normalized === 'FIT') return 'Follow-up';
+    if (normalized === 'MARGINAL') return 'Next Steps';
+    return 'Recommendation';
+  }
+
   const fitMutation = useMutation({
     mutationFn: async (description) => {
       return apiRequest(
@@ -84,13 +91,6 @@ function FitPage() {
     lines.push(`Assessment: ${data.verdict}`);
     lines.push(`Score: ${data.score ?? 'N/A'}`);
 
-    lines.push("WHERE I DON'T FIT:");
-    if (data.gaps.length > 0) {
-      data.gaps.forEach((gap) => lines.push(`- ${gap}`));
-    } else {
-      lines.push('- No JD-specific gaps identified.');
-    }
-
     lines.push('WHAT TRANSFERS:');
     if (data.transfers.length > 0) {
       data.transfers.forEach((transfer) => lines.push(`- ${transfer}`));
@@ -98,7 +98,15 @@ function FitPage() {
       lines.push('- No direct transfer highlights found.');
     }
 
-    lines.push('RECOMMENDATION:');
+    lines.push("WHERE I DON'T FIT:");
+    if (data.gaps.length > 0) {
+      data.gaps.forEach((gap) => lines.push(`- ${gap}`));
+    } else {
+      lines.push('- No JD-specific gaps identified.');
+    }
+
+    const recHeading = getRecommendationHeading(data.verdict).toUpperCase();
+    lines.push(`${recHeading}:`);
     lines.push(data.recommendation || 'N/A');
 
     return lines.join('\n');
@@ -200,23 +208,6 @@ function FitPage() {
               ) : null}
 
               <Stack spacing={1}>
-                <Typography sx={sectionHeadingSx}>WHERE I DON'T FIT</Typography>
-                {result.gaps.length > 0 ? (
-                  <Stack component="ul" sx={{ m: 0, pl: 3, gap: 0.75 }}>
-                    {result.gaps.map((gap, index) => (
-                      <Typography component="li" variant="body2" key={`gap-${index}`}>
-                        {gap}
-                      </Typography>
-                    ))}
-                  </Stack>
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    No JD-specific gaps identified.
-                  </Typography>
-                )}
-              </Stack>
-
-              <Stack spacing={1}>
                 <Typography sx={sectionHeadingSx}>WHAT TRANSFERS</Typography>
                 {result.transfers.length > 0 ? (
                   <Stack component="ul" sx={{ m: 0, pl: 3, gap: 0.75 }}>
@@ -234,7 +225,24 @@ function FitPage() {
               </Stack>
 
               <Stack spacing={1}>
-                <Typography sx={sectionHeadingSx}>RECOMMENDATION</Typography>
+                <Typography sx={sectionHeadingSx}>WHERE I DON'T FIT</Typography>
+                {result.gaps.length > 0 ? (
+                  <Stack component="ul" sx={{ m: 0, pl: 3, gap: 0.75 }}>
+                    {result.gaps.map((gap, index) => (
+                      <Typography component="li" variant="body2" key={`gap-${index}`}>
+                        {gap}
+                      </Typography>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No JD-specific gaps identified.
+                  </Typography>
+                )}
+              </Stack>
+
+              <Stack spacing={1}>
+                <Typography sx={sectionHeadingSx}>{getRecommendationHeading(result.verdict).toUpperCase()}</Typography>
                 <Typography variant="body2">{result.recommendation}</Typography>
               </Stack>
             </Stack>

@@ -16,6 +16,11 @@ const {
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 15000;
 
+/**
+ * Normalize a value to trimmed text or null when empty.
+ * @param {*} value
+ * @returns {string|null}
+ */
 function asText(value) {
   if (value === null || value === undefined) {
     return null;
@@ -24,6 +29,11 @@ function asText(value) {
   return t === '' ? null : t;
 }
 
+/**
+ * Ensure value is an array of trimmed strings.
+ * @param {*} value
+ * @returns {Array<string>}
+ */
 function asArray(value) {
   if (!Array.isArray(value)) {
     return [];
@@ -35,6 +45,11 @@ function asArray(value) {
 
 const { parsePgArray, safeParseJson } = require('../_shared/parse');
 
+/**
+ * Coerce various input shapes into a newline-separated string.
+ * @param {*} v
+ * @returns {string}
+ */
 function coerceToNewlineString(v) {
   if (!v) return '';
   if (Array.isArray(v)) return v.join('\n');
@@ -57,6 +72,11 @@ function coerceToNewlineString(v) {
   return String(v);
 }
 
+/**
+ * Convert input into an array of strings, supporting JSON, PG arrays, and CSV/newlines.
+ * @param {*} v
+ * @returns {Array<string>}
+ */
 function coerceToArray(v) {
   if (v === null || v === undefined) return [];
   if (Array.isArray(v)) return v;
@@ -86,6 +106,11 @@ function coerceToArray(v) {
 
 // asDate helper removed (unused)
 
+/**
+ * Format a value into YYYY-MM-DD when possible.
+ * @param {*} value
+ * @returns {string}
+ */
 function formatDateToYMD(value) {
   if (value === null || value === undefined || value === '') return '';
   // If already a YYYY-MM-DD string, return it
@@ -101,6 +126,11 @@ function formatDateToYMD(value) {
   return '';
 }
 
+/**
+ * Format a value into MM/DD/YYYY when possible.
+ * @param {*} value
+ * @returns {string}
+ */
 function formatDateToMDY(value) {
   if (value === null || value === undefined || value === '') return '';
   const ymd = formatDateToYMD(value);
@@ -110,6 +140,11 @@ function formatDateToMDY(value) {
   return parts[1] + '/' + parts[2] + '/' + parts[0];
 }
 
+/**
+ * Convert MM/DD/YYYY string into YYYY-MM-DD.
+ * @param {string} value
+ * @returns {string}
+ */
 function formatMDYToYMD(value) {
   if (!value) return '';
   const s = String(value).trim();
@@ -121,6 +156,11 @@ function formatMDYToYMD(value) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+/**
+ * Parse a value into a finite Number or return null.
+ * @param {*} value
+ * @returns {number|null}
+ */
 function asNumber(value) {
   if (value === null || value === undefined) {
     return null;
@@ -133,6 +173,10 @@ function asNumber(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Create a configured DB client using AZURE_DATABASE_URL.
+ * @returns {import('../db').Client}
+ */
 function getDbClient() {
   const databaseUrl = process.env.AZURE_DATABASE_URL;
   if (!databaseUrl) {
@@ -147,6 +191,11 @@ function getDbClient() {
   });
 }
 
+/**
+ * Require an authenticated client principal from the request.
+ * @param {Object} req
+ * @returns {Object|null}
+ */
 function requireAuth(req) {
   const principal = auth.getClientPrincipal(req);
   if (principal && principal.email) {
@@ -156,6 +205,11 @@ function requireAuth(req) {
   return null;
 }
 
+/**
+ * Map various gap-type inputs into normalized gap type keys.
+ * @param {string} input
+ * @returns {string}
+ */
 function mapGapType(input) {
   const value = String(input || '').toLowerCase();
   if (value === 'skill gap' || value === 'skill') return 'skill';
@@ -165,6 +219,11 @@ function mapGapType(input) {
   return 'skill';
 }
 
+/**
+ * Normalize instruction type values for AI instructions.
+ * @param {string} input
+ * @returns {string}
+ */
 function mapInstructionType(input) {
   const value = String(input || '').toLowerCase();
   if (value === 'tone') return 'tone';
@@ -172,6 +231,11 @@ function mapInstructionType(input) {
   return 'honesty';
 }
 
+/**
+ * Normalize skill category inputs into 'strong'|'moderate'|'gap'.
+ * @param {string} input
+ * @returns {string}
+ */
 function mapSkillCategory(input) {
   const value = String(input || '').toLowerCase();
   if (value === 'strong') return 'strong';
@@ -182,6 +246,13 @@ function mapSkillCategory(input) {
 
 // use centralized `q` from ../db for write retries
 
+/**
+ * Resolve or create a candidate profile row and return the candidate id.
+ * @param {import('../db').Client} client
+ * @param {string} email
+ * @param {Object} profile
+ * @returns {Promise<number>} Candidate id
+ */
 async function resolveCandidate(client, email, profile) {
   const existing = await client.queryWithRetry(
     `SELECT TOP 1 id
@@ -204,6 +275,12 @@ async function resolveCandidate(client, email, profile) {
   return inserted.rows[0].id;
 }
 
+/**
+ * Load all admin data for a candidate (profile, experiences, skills, gaps, education, etc.).
+ * @param {import('../db').Client} client
+ * @param {number} candidateId
+ * @returns {Promise<Object>} Normalized admin payload
+ */
 async function loadAll(client, candidateId) {
   const profileRes = await client.queryWithRetry(
     `SELECT TOP 1 *
@@ -411,6 +488,14 @@ async function loadAll(client, candidateId) {
   };
 }
 
+/**
+ * Persist the provided admin payload for a candidate within a DB transaction.
+ * @param {import('../db').Client} client
+ * @param {number} candidateId
+ * @param {Object} payload
+ * @param {string} authEmail
+ * @returns {Promise<void>}
+ */
 async function saveAll(client, candidateId, payload, authEmail) {
   const profile = payload.profile || {};
   const experiences = Array.isArray(payload.experiences) ? payload.experiences : [];
@@ -729,6 +814,12 @@ async function saveAll(client, candidateId, payload, authEmail) {
   }
 }
 
+/**
+ * Admin API handler for loading and saving full admin panel data.
+ * GET returns the candidate data for the authenticated user; POST saves updates.
+ * @param {Object} context - Azure Functions context
+ * @param {Object} req - Request object
+ */
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'admin.panel');
   const auth = requireAuth(req);

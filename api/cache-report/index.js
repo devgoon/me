@@ -37,6 +37,11 @@ function requireAuth(req) {
   return null;
 }
 
+/**
+ * Cache report endpoint. Requires admin role and returns cached AI responses.
+ * @param {Object} context
+ * @param {Object} req
+ */
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'cacheReport');
   const auth = requireAuth(req);
