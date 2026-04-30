@@ -1,10 +1,7 @@
 .PHONY: e2e install install-ci e2e lint spellcheck unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
 
 install:
-	npm install --workspaces --legacy-peer-deps
-
-install-ci:
-	npm ci --workspaces --legacy-peer-deps
+	npm ci --workspaces --legacy-peer-deps --include=dev
 	
 lint:spellcheck
 	@# Auto-format with Prettier, then run ESLint autofix
