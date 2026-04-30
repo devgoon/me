@@ -9,7 +9,8 @@ test.describe('API GET endpoints', () => {
   });
 
   test('GET /api/experience returns an array or object', async ({ request }) => {
-    const res = await request.get('/api/experience');
+    // Use skipAI to avoid calling external AI APIs during e2e runs
+    const res = await request.get('/api/experience?skipAI=1');
     expect(res.status()).toBe(200);
     const body = await res.json();
     expect(body).toBeTruthy();
