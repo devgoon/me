@@ -1,7 +1,7 @@
 {
   "name": "me-api",
   "version": "1.0.0",
-  "private": true,
+  "private": false,
   "main": "chat/index.js",
   "author": "Lodovico Minnocci",
   "license": "MIT",
@@ -18,5 +18,9 @@
     "lint:fix": "npx eslint '**/*.js' --ignore-pattern '**/__tests__/**' --ignore-pattern '**/*.test.*' --fix"
   },
   "devDependencies": {
+  }
+  ,
+  "publishConfig": {
+    "access": "public"
   }
 }
