@@ -5,6 +5,7 @@
 **Scope:** frontend static site + Azure Functions API (chat/fit/experience), Azure SQL Database (managed), ai_response_cache, prompt builders (`api/prompts.js`), and the Anthropic LLM provider.
 
 **Platform & Stack (concrete)**
+
 - Frontend: React 19, Vite, MUI (@mui/material), `@tanstack/react-query` v5
 - Tests: Vitest, @testing-library/react, @testing-library/user-event, Playwright (E2E)
 - API: Azure Functions (Node.js 22+), centralized prompts in `api/prompts.js`
@@ -32,10 +33,11 @@ flowchart LR
 - DB: Azure SQL Database (managed) holds the following tables: `candidate_profile`, `skills`, `skill_equivalence`, `experiences`, `education`, `certifications`, `faq_responses`, `values_culture`, `gaps_weaknesses`, `ai_instructions`, `ai_response_cache`.
 
 ---
- 
+
 ## Frontend
 
 - **Pages:**
+
   - **Home:** Candidate overview and entry point; shows a short `elevator_pitch`, high-level score cards, and quick actions (Ask AI, Run Fit Check).
   - **Experience & Skills:** Loads a static/compact snapshot first (fast-rendered JSON embedded or fetched as a small payload) so the UI is usable immediately; then the page hydrates and fetches the full, canonical candidate rows (experiences, skills, equivalences, certifications, education) via `@tanstack/react-query` to render expanded details and edit controls. The initial static-data-first approach reduces TTI and improves perceived performance while allowing richer dynamic interactions once the detailed data arrives.
   - **Chat / Ask AI:** Conversational UI that posts to `/api/chat`; uses React state + React Query for history and cached assistant responses. Supports follow-up queries and threaded context.
@@ -45,13 +47,13 @@ flowchart LR
   - **Health / Diagnostics:** Small pages used by monitoring and E2E tests to assert the app and API health endpoints.
 
 - **Rendering model:** The frontend is a client-side single-page application (Vite + React). Routes are client-rendered (React Router style), initial HTML is minimal, and hydration/data fetching is handled on the client. Pages use `@tanstack/react-query` v5 to fetch and cache API data; common patterns include:
+
   - Static-first quick render: small JSON or minimal payload to show the page synchronously, then background React Query fetch to hydrate richer content.
   - Shared QueryClient across the app and in tests to avoid duplicated caches and update coordination.
   - UI components that depend on larger context (Experience, Skills) initially render compact summaries and progressively render full details when the detailed query resolves.
   - Optimistic updates and cache invalidation hooks exist for edits (skills/experiences) to reflect local changes quickly and then reconcile with server responses.
 
 - **Data flow & caching:** The frontend treats the API as the source of truth. Data is requested from `/api/*` endpoints; caching and deduping are handled by React Query on the client and `ai_response_cache` on the server for LLM responses (chat). Tests should use a shared `createQueryClient()` test wrapper so components under test observe the same cache semantics.
-
 
 ## Fit Check
 
@@ -95,11 +97,9 @@ sequenceDiagram
 - Prompt length guard: code trims equivalents or other optional context when prompt size exceeds configured chars (to avoid token limits).
 - Sensitive fields: salary and contact details should NOT be included in prompts. Existing code was audited — `target_titles` is included per request, but `salary_min` / `salary_max` are not included. Redact any sensitive profile fields before logging or caching.
 
-
-
 ## Secrets & Key Management
 
-- Store runtime secrets in CI/repo secret stores.  Do not store secrets in plaintext files in the repository.
+- Store runtime secrets in CI/repo secret stores. Do not store secrets in plaintext files in the repository.
 - Keep local example files for developer setup: `api/local.settings.json.example`, `.env.local.example` and ensure actual local files are listed in `.gitignore`.
 - In CI, inject secrets via environment variables or vault integrations and avoid baking keys into build artifacts.
 - If secrets were ever committed, coordinate an immediate rotation of the exposed keys and, if necessary, perform a history-rewrite.
@@ -109,13 +109,12 @@ sequenceDiagram
 
 This section consolidates caching behavior, keys, invalidation, and operational guidance.
 
-
 ## Database Schema (ER diagram)
-
 
 ## Frontend
 
 - **Pages:**
+
   - **Home:** Candidate overview and entry point; shows a short `elevator_pitch`, high-level score cards, and quick actions (Ask AI, Run Fit Check).
   - **Experience & Skills:** Loads a static/compact snapshot first (fast-rendered JSON embedded or fetched as a small payload) so the UI is usable immediately; then the page hydrates and fetches the full, canonical candidate rows (experiences, skills, equivalences, certifications, education) via `@tanstack/react-query` to render expanded details and edit controls. The initial static-data-first approach reduces TTI and improves perceived performance while allowing richer dynamic interactions once the detailed data arrives.
   - **Chat / Ask AI:** Conversational UI that posts to `/api/chat`; uses React state + React Query for history and cached assistant responses. Supports follow-up queries and threaded context.
@@ -125,13 +124,14 @@ This section consolidates caching behavior, keys, invalidation, and operational 
   - **Health / Diagnostics:** Small pages used by monitoring and E2E tests to assert the app and API health endpoints.
 
 - **Rendering model:** The frontend is a client-side single-page application (Vite + React). Routes are client-rendered (React Router style), initial HTML is minimal, and hydration/data fetching is handled on the client. Pages use `@tanstack/react-query` v5 to fetch and cache API data; common patterns include:
+
   - Static-first quick render: small JSON or minimal payload to show the page synchronously, then background React Query fetch to hydrate richer content.
   - Shared QueryClient across the app and in tests to avoid duplicated caches and update coordination.
   - UI components that depend on larger context (Experience, Skills) initially render compact summaries and progressively render full details when the detailed query resolves.
   - Optimistic updates and cache invalidation hooks exist for edits (skills/experiences) to reflect local changes quickly and then reconcile with server responses.
 
 - **Data flow & caching:** The frontend treats the API as the source of truth. Data is requested from `/api/*` endpoints; caching and deduping are handled by React Query on the client and `ai_response_cache` on the server for LLM responses (chat). Tests should use a shared `createQueryClient()` test wrapper so components under test observe the same cache semantics.
-The following Mermaid ER diagram summarizes the primary tables and relationships used for candidate context, skills/equivalences, and the AI response cache.
+  The following Mermaid ER diagram summarizes the primary tables and relationships used for candidate context, skills/equivalences, and the AI response cache.
 
 ```mermaid
 erDiagram
@@ -258,9 +258,7 @@ erDiagram
 
 ## AI Prompt Contexts
 
-This section documents what contextual data each AI prompt type includes when calling the LLM. All context is assembled server-side in the API layer (api/fit/index.js` and `api/chat/index.js`) and passed into centralized prompt builders in `api/prompts.js`.
-
-
+This section documents what contextual data each AI prompt type includes when calling the LLM. All context is assembled server-side in the API layer (api/fit/index.js`and`api/chat/index.js`) and passed into centralized prompt builders in `api/prompts.js`.
 
 ### Chat (/api/chat)
 
@@ -276,8 +274,6 @@ Context included:
 Usage:
 
 - Used for conversational assistant UI (Ask AI). Prompts favor brevity; include only the most relevant profile snippets and FAQ items. The chat path is tolerant of conversational follow-ups and may pass dialog history plus a compact candidate context to the prompt builder.
-
-
 
 ```mermaid
 sequenceDiagram
@@ -310,8 +306,8 @@ sequenceDiagram
 ```
 
 Cache behavior:
-- The `/api/chat` handler checks `ai_response_cache` first. Cache keys are computed as SHA-256 over `model + '|' + message` (the user message). On a cache miss the service loads the candidate context, builds the prompt with `api/prompts.js`, calls the LLM, and writes the assistant response into `ai_response_cache` keyed by the model+message hash.
 
+- The `/api/chat` handler checks `ai_response_cache` first. Cache keys are computed as SHA-256 over `model + '|' + message` (the user message). On a cache miss the service loads the candidate context, builds the prompt with `api/prompts.js`, calls the LLM, and writes the assistant response into `ai_response_cache` keyed by the model+message hash.
 
 ### Fit Check (/api/fit)
 
@@ -359,6 +355,3 @@ sequenceDiagram
   F-->>B: render assistant response
   B-->>U: UI shows result
 ```
-
-
-

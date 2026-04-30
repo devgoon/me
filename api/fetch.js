@@ -7,6 +7,7 @@ const { setTimeout: setTimeoutImpl } = require('timers');
 
 /**
  * Simple delay helper returning a Promise that resolves after `ms`.
+ *
  * @param {number} ms - Milliseconds to wait.
  * @returns {Promise<void>}
  */

@@ -44,6 +44,7 @@ async function handleMe(req) {
 
 /**
  * Auth handler exposing session/user info endpoints (e.g., GET /me).
+ *
  * @param {Object} context
  * @param {Object} req
  */

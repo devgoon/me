@@ -52,7 +52,7 @@ function attachCacheReportOverride(handler) {
     };
     context.res = {
       status: 200,
-        body: [
+      body: [
         {
           question: 'What is AI?',
           model: 'claude-haiku-4-5-20251001',

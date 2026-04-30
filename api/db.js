@@ -76,7 +76,9 @@ function __getMssql() {
  */
 class Client {
   /**
-   * @param {{connectionString?: string}} [options]
+   * Create a new `Client` instance.
+   *
+   * @param {{connectionString?: string}} [options] Connection string options
    */
   constructor(options) {
     if (__testClient) return __testClient;
@@ -87,6 +89,7 @@ class Client {
   /**
    * Establish a connection pool. Reads `AZURE_DATABASE_URL` when no explicit
    * `connectionString` option is provided.
+   *
    * @returns {Promise<void>}
    */
   async connect() {
@@ -114,6 +117,7 @@ class Client {
 
   /**
    * Begin a transaction on the current connection pool.
+   *
    * @returns {Promise<void>}
    */
   async beginTransaction() {
@@ -125,6 +129,7 @@ class Client {
 
   /**
    * Commit the active transaction.
+   *
    * @returns {Promise<void>}
    */
   async commitTransaction() {
@@ -135,6 +140,7 @@ class Client {
 
   /**
    * Roll back the active transaction if present.
+   *
    * @returns {Promise<void>}
    */
   async rollbackTransaction() {
@@ -221,6 +227,7 @@ class Client {
 
   /**
    * Close the connection pool if open.
+   *
    * @returns {Promise<void>}
    */
   async end() {

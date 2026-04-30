@@ -1,3 +1,5 @@
+const jsdoc = require('eslint-plugin-jsdoc');
+
 module.exports = [
   {
     ignores: [
@@ -16,12 +18,20 @@ module.exports = [
     ],
   },
   {
-    files: ['api/**/*.js', 'assets/js/**/*.js'],
+    files: ['api/**/*.js', 'frontend-react/**/*.jsx'],
+    plugins: { jsdoc },
+    settings: { jsdoc: { mode: 'jsdoc', tagNamePreference: { fileoverview: false } } },
     languageOptions: {
       ecmaVersion: 2021,
       sourceType: 'module',
     },
     rules: {
+      /* JSDoc rules: enforce basic presence and correctness of JSDoc on api code */
+      'jsdoc/check-param-names': 'error',
+      'jsdoc/newline-after-description': 'warn',
+      'jsdoc/require-description': 'warn',
+      'jsdoc/require-param': 'warn',
+      'jsdoc/require-returns': 'warn',
       'no-unused-vars': 'warn',
       'no-empty': 'warn',
       'id-match': [

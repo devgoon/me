@@ -5,6 +5,7 @@
 
 /**
  * Normalize a possibly-empty value into a printable string or 'N/A'.
+ *
  * @param {*} value
  * @returns {string}
  */
@@ -14,6 +15,7 @@ const textOrNA = (value) => {
 };
 /**
  * Convert a date-ish value to string, using 'Present' for falsy values.
+ *
  * @param {*} value
  * @returns {string}
  */
@@ -116,6 +118,7 @@ const listLines = (items, emptyLine) => {
 
 /**
  * Produce human-readable lines describing a skills array for the fit prompt.
+ *
  * @param {Array<Object>} skills
  * @returns {string}
  */
@@ -152,6 +155,7 @@ function fitSkillLines(skills) {
 
 /**
  * Produce shorter skill lines used for chat prompts.
+ *
  * @param {Array<Object>} skills
  * @returns {string}
  */

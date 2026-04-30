@@ -47,6 +47,7 @@ function toCamel(obj) {
 
 /**
  * Convert object keys from snake_case to camelCase shallowly.
+ *
  * @param {Object} obj
  * @returns {Object}
  */
@@ -56,6 +57,7 @@ function toCamel(obj) {
  * Public fit endpoint. GET returns public candidate summary; POST performs
  * a job-description fit analysis using the AI model configured via
  * `ANTHROPIC_API_KEY`.
+ *
  * @param {Object} context - Azure Functions context
  * @param {Object} req - Incoming request
  */
@@ -73,6 +75,7 @@ module.exports = async function (context, req) {
 
       /**
        * Create an abort signal with a clear helper for AI calls.
+       *
        * @param {number} ms
        * @returns {{signal:AbortSignal, clear:Function}}
        */
@@ -89,6 +92,7 @@ module.exports = async function (context, req) {
       /**
        * Load candidate context (profile, experiences, skills, gaps, etc.)
        * for use in the fit prompt.
+       *
        * @param {import('../db').Client} client
        * @returns {Promise<Object>}
        */
@@ -166,6 +170,7 @@ module.exports = async function (context, req) {
 
       /**
        * Call Anthropic with retry/backoff and return assistant text.
+       *
        * @param {string} systemPrompt
        * @param {string} userMessage
        * @param {string} apiKey

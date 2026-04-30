@@ -21,19 +21,18 @@ function AboutPage() {
               />
               <Stack spacing={2}>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                 Lodovico (Vico) Minnocci
+                  Lodovico (Vico) Minnocci
                 </Typography>
                 <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
                   Cloud Architect & Developer
                 </Typography>
                 <Typography>
-                  Software Engineer specializing in large-scale, highly available
-                  platform systems supporting latency-sensitive workloads in production. Proven
-                  experience designing and operating distributed services, managing high-throughput
-                  traffic, and owning reliability, performance, and operational health at scale.
-                  Experienced in applying GitHub Copilot as a productivity multiplier in large
-                  production codebases, balancing acceleration with correctness, security, and long-
-                  term maintainability.
+                  Software Engineer specializing in large-scale, highly available platform systems
+                  supporting latency-sensitive workloads in production. Proven experience designing
+                  and operating distributed services, managing high-throughput traffic, and owning
+                  reliability, performance, and operational health at scale. Experienced in applying
+                  GitHub Copilot as a productivity multiplier in large production codebases,
+                  balancing acceleration with correctness, security, and long- term maintainability.
                 </Typography>
                 <Box>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -83,7 +82,11 @@ function ExperienceChips() {
 
       // Then request the authoritative API and replace defaults when available
       try {
-        const apiRes = await apiRequestJson('/api/experience', { method: 'GET' }, { timeoutMs: 8000 });
+        const apiRes = await apiRequestJson(
+          '/api/experience',
+          { method: 'GET' },
+          { timeoutMs: 8000 }
+        );
         if (mounted) {
           setData(apiRes);
           setError(null);
@@ -102,9 +105,10 @@ function ExperienceChips() {
   }, []);
 
   if (loading && !data) return <Typography color="text.secondary">Loading experience…</Typography>;
-  if (error && !data) return <Typography color="text.secondary">Experience not available.</Typography>;
+  if (error && !data)
+    return <Typography color="text.secondary">Experience not available.</Typography>;
 
-  const experiences = (data && Array.isArray(data.experiences) ? data.experiences : []);
+  const experiences = data && Array.isArray(data.experiences) ? data.experiences : [];
 
   return (
     <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }} component="div" useFlexGap>
@@ -116,7 +120,9 @@ function ExperienceChips() {
             label={label}
             size="small"
             variant="outlined"
-            title={exp.bulletPoints && exp.bulletPoints.length > 0 ? exp.bulletPoints.join('\n') : ''}
+            title={
+              exp.bulletPoints && exp.bulletPoints.length > 0 ? exp.bulletPoints.join('\n') : ''
+            }
           />
         );
       })}

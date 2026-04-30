@@ -17,9 +17,7 @@
     "lint": "npx eslint '**/*.js' --ignore-pattern '**/__tests__/**' --ignore-pattern '**/*.test.*'",
     "lint:fix": "npx eslint '**/*.js' --ignore-pattern '**/__tests__/**' --ignore-pattern '**/*.test.*' --fix"
   },
-  "devDependencies": {
-  }
-  ,
+  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   }

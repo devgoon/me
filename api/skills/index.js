@@ -24,6 +24,7 @@ function normalizeSkillRow(row) {
 
 /**
  * Skills list endpoint. Returns categorized skill names for the latest candidate.
+ *
  * @param {Object} context
  * @param {Object} req
  */

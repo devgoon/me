@@ -21,6 +21,7 @@ const AI_TIMEOUT_MS = 60000;
 
 /**
  * Create an AbortController with a timeout and a clear function.
+ *
  * @param {number} ms - Milliseconds until abort.
  * @returns {{signal:AbortSignal, clear:Function}}
  */
@@ -46,6 +47,7 @@ const { buildChatPrompt } = require('../prompts');
 /**
  * Load candidate profile, experiences, skills, gaps, values, FAQ and
  * related context from the database for use in chat prompts.
+ *
  * @param {import('../db').Client} client
  * @returns {Promise<Object>} Candidate context object.
  */
@@ -151,6 +153,7 @@ async function loadCandidateContext(client) {
 
 /**
  * Call the Anthropic API with retry/backoff and return the assistant text.
+ *
  * @param {string} systemPrompt
  * @param {string} userMessage
  * @param {string} apiKey
@@ -253,6 +256,7 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
 
 /**
  * Lookup a cached AI response by model+question hash and return stored response.
+ *
  * @param {import('../db').Client} client
  * @param {string} model
  * @param {string} question
@@ -288,6 +292,7 @@ async function getCache(client, model, question) {
 
 /**
  * Store or merge a response into the AI response cache by hash key.
+ *
  * @param {import('../db').Client} client
  * @param {string} model
  * @param {string} question
@@ -323,6 +328,7 @@ async function setCache(client, model, question, response) {
 /**
  * Chat API handler. Accepts a JSON body with `message` and returns an
  * assistant response. Integrates DB cache + Anthropic calls.
+ *
  * @param {Object} context - Azure Functions context object.
  * @param {Object} req - Incoming request object.
  */

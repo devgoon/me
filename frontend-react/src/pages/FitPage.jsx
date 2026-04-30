@@ -58,7 +58,9 @@ function FitPage() {
   };
 
   function getRecommendationHeading(verdict) {
-    const normalized = String(verdict || '').trim().toUpperCase();
+    const normalized = String(verdict || '')
+      .trim()
+      .toUpperCase();
     if (normalized === 'FIT') return 'Follow-up';
     if (normalized === 'MARGINAL') return 'Next Steps';
     return 'Recommendation';
@@ -160,7 +162,7 @@ function FitPage() {
               disabled={loading}
               sx={{ alignSelf: 'flex-start' }}
             >
-              {loading ? 'Analyzing...' : "JD Fit Check"}
+              {loading ? 'Analyzing...' : 'JD Fit Check'}
             </Button>
             {/* Ask AI moved back to sidebar; keep Fit page focused */}
             {error ? <Alert severity="error">{error}</Alert> : null}
@@ -242,7 +244,9 @@ function FitPage() {
               </Stack>
 
               <Stack spacing={1}>
-                <Typography sx={sectionHeadingSx}>{getRecommendationHeading(result.verdict).toUpperCase()}</Typography>
+                <Typography sx={sectionHeadingSx}>
+                  {getRecommendationHeading(result.verdict).toUpperCase()}
+                </Typography>
                 <Typography variant="body2">{result.recommendation}</Typography>
               </Stack>
             </Stack>

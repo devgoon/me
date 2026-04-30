@@ -5,7 +5,6 @@ import { createQueryWrapper, createQueryClient } from '../../queryTestUtils.jsx'
 import { renderHook } from '@testing-library/react';
 import { useAdminPage } from '/frontend-react/src/pages/admin/useAdminPage.js';
 
-
 // Mock the hook itself to assert AdminPage presentation independently
 vi.mock('/frontend-react/src/pages/admin/useAdminPage.js', () => ({
   useAdminPage: () => ({
@@ -13,7 +12,12 @@ vi.mock('/frontend-react/src/pages/admin/useAdminPage.js', () => ({
     status: '',
     activeTab: 'profile',
     adminData: {
-      profile: { fullName: 'Test User', email: 'test@example.com', currentTitle: 'Engineer', targetTitles: [] },
+      profile: {
+        fullName: 'Test User',
+        email: 'test@example.com',
+        currentTitle: 'Engineer',
+        targetTitles: [],
+      },
     },
     targetTitleInput: '',
     cacheSearch: '',

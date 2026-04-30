@@ -18,6 +18,7 @@ const DB_QUERY_TIMEOUT_MS = 15000;
 
 /**
  * Normalize a value to trimmed text or null when empty.
+ *
  * @param {*} value
  * @returns {string|null}
  */
@@ -31,6 +32,7 @@ function asText(value) {
 
 /**
  * Ensure value is an array of trimmed strings.
+ *
  * @param {*} value
  * @returns {Array<string>}
  */
@@ -47,6 +49,7 @@ const { parsePgArray, safeParseJson } = require('../_shared/parse');
 
 /**
  * Coerce various input shapes into a newline-separated string.
+ *
  * @param {*} v
  * @returns {string}
  */
@@ -74,6 +77,7 @@ function coerceToNewlineString(v) {
 
 /**
  * Convert input into an array of strings, supporting JSON, PG arrays, and CSV/newlines.
+ *
  * @param {*} v
  * @returns {Array<string>}
  */
@@ -108,6 +112,7 @@ function coerceToArray(v) {
 
 /**
  * Format a value into YYYY-MM-DD when possible.
+ *
  * @param {*} value
  * @returns {string}
  */
@@ -128,6 +133,7 @@ function formatDateToYMD(value) {
 
 /**
  * Format a value into MM/DD/YYYY when possible.
+ *
  * @param {*} value
  * @returns {string}
  */
@@ -142,6 +148,7 @@ function formatDateToMDY(value) {
 
 /**
  * Convert MM/DD/YYYY string into YYYY-MM-DD.
+ *
  * @param {string} value
  * @returns {string}
  */
@@ -158,6 +165,7 @@ function formatMDYToYMD(value) {
 
 /**
  * Parse a value into a finite Number or return null.
+ *
  * @param {*} value
  * @returns {number|null}
  */
@@ -175,6 +183,7 @@ function asNumber(value) {
 
 /**
  * Create a configured DB client using AZURE_DATABASE_URL.
+ *
  * @returns {import('../db').Client}
  */
 function getDbClient() {
@@ -193,6 +202,7 @@ function getDbClient() {
 
 /**
  * Require an authenticated client principal from the request.
+ *
  * @param {Object} req
  * @returns {Object|null}
  */
@@ -207,6 +217,7 @@ function requireAuth(req) {
 
 /**
  * Map various gap-type inputs into normalized gap type keys.
+ *
  * @param {string} input
  * @returns {string}
  */
@@ -221,6 +232,7 @@ function mapGapType(input) {
 
 /**
  * Normalize instruction type values for AI instructions.
+ *
  * @param {string} input
  * @returns {string}
  */
@@ -233,6 +245,7 @@ function mapInstructionType(input) {
 
 /**
  * Normalize skill category inputs into 'strong'|'moderate'|'gap'.
+ *
  * @param {string} input
  * @returns {string}
  */
@@ -248,6 +261,7 @@ function mapSkillCategory(input) {
 
 /**
  * Resolve or create a candidate profile row and return the candidate id.
+ *
  * @param {import('../db').Client} client
  * @param {string} email
  * @param {Object} profile
@@ -277,6 +291,7 @@ async function resolveCandidate(client, email, profile) {
 
 /**
  * Load all admin data for a candidate (profile, experiences, skills, gaps, education, etc.).
+ *
  * @param {import('../db').Client} client
  * @param {number} candidateId
  * @returns {Promise<Object>} Normalized admin payload
@@ -490,6 +505,7 @@ async function loadAll(client, candidateId) {
 
 /**
  * Persist the provided admin payload for a candidate within a DB transaction.
+ *
  * @param {import('../db').Client} client
  * @param {number} candidateId
  * @param {Object} payload
@@ -817,6 +833,7 @@ async function saveAll(client, candidateId, payload, authEmail) {
 /**
  * Admin API handler for loading and saving full admin panel data.
  * GET returns the candidate data for the authenticated user; POST saves updates.
+ *
  * @param {Object} context - Azure Functions context
  * @param {Object} req - Request object
  */

@@ -19,6 +19,7 @@ const { apiFetch } = require('../fetch');
 
 /**
  * Health check endpoint for service status, DB connectivity and Anthropic availability.
+ *
  * @param {Object} context
  * @param {Object} req
  */

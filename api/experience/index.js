@@ -22,6 +22,7 @@ const EXPERIENCE_QUESTION_KEY = 'experience_ai_contexts_v1';
 
 /**
  * Create an AbortController that aborts after `ms` milliseconds.
+ *
  * @param {number} ms - Timeout in milliseconds.
  * @returns {{signal:AbortSignal, clear:Function}}
  */
@@ -41,6 +42,7 @@ const { fetchWithTimeout } = require('../fetch');
 
 /**
  * Convert a value to an ISO YYYY-MM-DD date string or null.
+ *
  * @param {*} value
  * @returns {string|null}
  */
@@ -56,6 +58,7 @@ function toIsoDate(value) {
 
 /**
  * Return string value or a provided fallback when value is empty.
+ *
  * @param {*} value
  * @param {string} fallback
  * @returns {string}
@@ -70,6 +73,7 @@ function textOrFallback(value, fallback) {
 /**
  * Build a minimal AI context object from an experience row when no explicit
  * AI context is available.
+ *
  * @param {Object} exp
  * @returns {Object}
  */
@@ -96,6 +100,7 @@ function buildFallbackContext(exp) {
 
 /**
  * Sanitize and map AI-generated context entries by experience id.
+ *
  * @param {*} raw - Parsed AI response object.
  * @param {Array<Object>} experiences
  * @returns {Object} Map of experienceId -> context
@@ -129,10 +134,11 @@ function sanitizeAiContexts(raw, experiences) {
 }
 
 /**
- * Extract the first JSON object found in `text` (supports fenced ````json`` blocks).
+ * Extract the first JSON object found in text (supports fenced JSON blocks).
  * Returns parsed object or null on failure.
- * @param {string} text
- * @returns {Object|null}
+ *
+ * @param {string} text - Input string potentially containing JSON.
+ * @returns {Object|null} Parsed object or null on failure.
  */
 function extractJsonObject(text) {
   if (!text) {
@@ -158,6 +164,7 @@ function extractJsonObject(text) {
 
 /**
  * Coerce various input shapes into an array of strings.
+ *
  * @param {*} val
  * @returns {Array<string>}
  */
@@ -199,6 +206,7 @@ function coerceToArray(val) {
 /**
  * Call Anthropic API to generate compact AI contexts for experiences.
  * Returns a mapping of experienceId -> context object.
+ *
  * @param {Object} profile
  * @param {Array<Object>} experiences
  * @param {string} apiKey
@@ -290,6 +298,7 @@ async function callAnthropicForContexts(profile, experiences, apiKey, certificat
 
 /**
  * Load candidate profile, experiences, skills and gaps from the database.
+ *
  * @param {import('../db').Client} client
  * @returns {Promise<Object>} Normalized payload used by experience handlers.
  */
@@ -356,6 +365,7 @@ async function loadCandidateData(client) {
 /**
  * Experience API handler. Optionally enriches experiences with AI contexts
  * when an Anthropic API key is configured and the caller has not opted out.
+ *
  * @param {Object} context - Azure Functions context
  */
 module.exports = async function (context) {

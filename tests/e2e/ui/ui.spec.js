@@ -44,7 +44,9 @@ test('Primary navigation links load pages', async ({ page }) => {
       await el.first().click();
       if (href) {
         // Wait for client-side navigation to update the URL
-        await page.waitForURL(new RegExp(href.replace(/\?/g, '\\?')),{ timeout: 10000 }).catch(() => {});
+        await page
+          .waitForURL(new RegExp(href.replace(/\?/g, '\\?')), { timeout: 10000 })
+          .catch(() => {});
       } else {
         await page.waitForLoadState('networkidle');
       }
@@ -52,7 +54,9 @@ test('Primary navigation links load pages', async ({ page }) => {
       if (page.url().startsWith(base)) {
         // Try to detect a page-specific heading instead
         const heading = page.locator('h1, h2, h3');
-        await expect(heading.first()).toBeVisible({ timeout: 5000 }).catch(() => {});
+        await expect(heading.first())
+          .toBeVisible({ timeout: 5000 })
+          .catch(() => {});
       }
       await page.goBack();
     }

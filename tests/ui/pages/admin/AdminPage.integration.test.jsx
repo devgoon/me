@@ -10,7 +10,11 @@ vi.mock('/frontend-react/src/pages/admin/adminService.js', async (importOriginal
     fetchPanelData: vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        profile: { fullName: 'Integration User', email: 'int@example.com', currentTitle: 'Int Engineer' },
+        profile: {
+          fullName: 'Integration User',
+          email: 'int@example.com',
+          currentTitle: 'Int Engineer',
+        },
         experiences: [],
         skills: [],
         gaps: [],

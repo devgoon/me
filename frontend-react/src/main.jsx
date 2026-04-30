@@ -18,10 +18,8 @@ const queryClient = new QueryClient({
 
 // Debug: verify queryClient shape at runtime
 try {
-   
   console.log('QueryClient debug', typeof queryClient, typeof queryClient.defaultQueryOptions);
 } catch (err) {
-   
   console.error('QueryClient debug error', err);
 }
 

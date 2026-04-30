@@ -39,6 +39,7 @@ function requireAuth(req) {
 
 /**
  * Cache report endpoint. Requires admin role and returns cached AI responses.
+ *
  * @param {Object} context
  * @param {Object} req
  */
@@ -59,7 +60,11 @@ module.exports = async function (context, req) {
   // `x-ms-client-principal` claims as `userRoles` and returned via
   // `getClientPrincipal()` as `roles`.
   const roles = Array.isArray(auth.roles) ? auth.roles.map((r) => String(r).toLowerCase()) : [];
-  const isAdmin = roles.includes('admin') || roles.includes('administrator') || roles.includes('owner') || roles.includes('authenticated');
+  const isAdmin =
+    roles.includes('admin') ||
+    roles.includes('administrator') ||
+    roles.includes('owner') ||
+    roles.includes('authenticated');
   if (!isAdmin) {
     context.res = {
       status: 403,

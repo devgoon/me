@@ -14,8 +14,8 @@
     "format": "prettier --write \"**/*.{js,json,md,css,html}\"",
     "format:check": "prettier --check \"**/*.{js,json,md,css,html}\"",
     "update-default-data": "node scripts/update-default-data.js",
-    "lint": "npx eslint \"api/**/*.js\" \"frontend-react/src/**/*.{js,jsx}\" --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\"",
-    "lint:fix": "npx eslint \"api/**/*.js\" \"frontend-react/src/**/*.{js,jsx}\" --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.*\" --fix",
+    "lint": "npx eslint \"api/**/*.js\" \"frontend-react/src/**/*.{js,jsx}\" \"tests/**/*.{js,jsx}\"",
+    "lint:fix": "npx eslint \"api/**/*.js\" \"frontend-react/src/**/*.{js,jsx}\" \"tests/**/*.{js,jsx}\" --fix",
     "react:dev": "npm --prefix frontend-react run dev",
     "react:build": "npm --prefix frontend-react run build",
     "react:build:watch": "npm --prefix frontend-react run build:watch",
@@ -27,10 +27,11 @@
     "@playwright/test": "^1.45.0",
     "@vitest/coverage-istanbul": "^4.1.5",
     "@vitest/coverage-v8": "^4.1.5",
-    "eslint": "^10.2.1",
+    "eslint": "^8.0.0",
     "jsdom": "^29.1.0",
     "prettier": "^2.8.8",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.5",
+    "eslint-plugin-jsdoc": "^39.0.0"
   },
   "engines": {
     "node": "22.x"
