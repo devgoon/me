@@ -91,3 +91,6 @@ lcov-report/
 
 # Archive folder for exported artifacts (kept out of git)
 archives/
+ 
+# pnpm lockfile (local-only)
+pnpm-lock.yaml
