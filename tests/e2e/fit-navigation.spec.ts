@@ -12,7 +12,7 @@ test('navigate to fit page via sidebar Assess My Fit (AI) button', async ({ page
   await page.waitForURL('**/fit');
   await expect(page).toHaveURL(/.*\/fit$/);
   // Ensure heading present
-  await expect(page.locator('h1')).toHaveText(/JD Fit Check/);
+  await expect(page.locator('h1')).toHaveText(/Asses Fit/);
 
   // Verify the chat button opens the drawer with updated label
   const chatButton = page.locator('button', { hasText: 'Ask about Me (AI)' });

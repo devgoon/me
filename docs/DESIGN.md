@@ -37,7 +37,6 @@ flowchart LR
 ## Frontend
 
 - **Pages:**
-
   - **Home:** Candidate overview and entry point; shows a short `elevator_pitch`, high-level score cards, and quick actions (Ask AI, Run Fit Check).
   - **Experience & Skills:** Loads a static/compact snapshot first (fast-rendered JSON embedded or fetched as a small payload) so the UI is usable immediately; then the page hydrates and fetches the full, canonical candidate rows (experiences, skills, equivalences, certifications, education) via `@tanstack/react-query` to render expanded details and edit controls. The initial static-data-first approach reduces TTI and improves perceived performance while allowing richer dynamic interactions once the detailed data arrives.
   - **Chat / Ask AI:** Conversational UI that posts to `/api/chat`; uses React state + React Query for history and cached assistant responses. Supports follow-up queries and threaded context.
@@ -47,7 +46,6 @@ flowchart LR
   - **Health / Diagnostics:** Small pages used by monitoring and E2E tests to assert the app and API health endpoints.
 
 - **Rendering model:** The frontend is a client-side single-page application (Vite + React). Routes are client-rendered (React Router style), initial HTML is minimal, and hydration/data fetching is handled on the client. Pages use `@tanstack/react-query` v5 to fetch and cache API data; common patterns include:
-
   - Static-first quick render: small JSON or minimal payload to show the page synchronously, then background React Query fetch to hydrate richer content.
   - Shared QueryClient across the app and in tests to avoid duplicated caches and update coordination.
   - UI components that depend on larger context (Experience, Skills) initially render compact summaries and progressively render full details when the detailed query resolves.
@@ -114,7 +112,6 @@ This section consolidates caching behavior, keys, invalidation, and operational 
 ## Frontend
 
 - **Pages:**
-
   - **Home:** Candidate overview and entry point; shows a short `elevator_pitch`, high-level score cards, and quick actions (Ask AI, Run Fit Check).
   - **Experience & Skills:** Loads a static/compact snapshot first (fast-rendered JSON embedded or fetched as a small payload) so the UI is usable immediately; then the page hydrates and fetches the full, canonical candidate rows (experiences, skills, equivalences, certifications, education) via `@tanstack/react-query` to render expanded details and edit controls. The initial static-data-first approach reduces TTI and improves perceived performance while allowing richer dynamic interactions once the detailed data arrives.
   - **Chat / Ask AI:** Conversational UI that posts to `/api/chat`; uses React state + React Query for history and cached assistant responses. Supports follow-up queries and threaded context.
@@ -124,7 +121,6 @@ This section consolidates caching behavior, keys, invalidation, and operational 
   - **Health / Diagnostics:** Small pages used by monitoring and E2E tests to assert the app and API health endpoints.
 
 - **Rendering model:** The frontend is a client-side single-page application (Vite + React). Routes are client-rendered (React Router style), initial HTML is minimal, and hydration/data fetching is handled on the client. Pages use `@tanstack/react-query` v5 to fetch and cache API data; common patterns include:
-
   - Static-first quick render: small JSON or minimal payload to show the page synchronously, then background React Query fetch to hydrate richer content.
   - Shared QueryClient across the app and in tests to avoid duplicated caches and update coordination.
   - UI components that depend on larger context (Experience, Skills) initially render compact summaries and progressively render full details when the detailed query resolves.

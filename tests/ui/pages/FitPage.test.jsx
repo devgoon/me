@@ -37,7 +37,7 @@ describe('FitPage', () => {
 
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     expect(apiRequest).not.toHaveBeenCalled();
   });
@@ -54,7 +54,7 @@ describe('FitPage', () => {
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     expect(screen.getByRole('button', { name: 'Analyzing...' })).toBeDisabled();
 
@@ -68,7 +68,7 @@ describe('FitPage', () => {
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('FitPage', () => {
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A strong React role');
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       expect(screen.getByText('Good Match')).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('FitPage', () => {
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       expect(screen.getByText('No JD-specific gaps identified.')).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe('FitPage', () => {
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A strong role');
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       const scheduleLink = screen.getByRole('link', { name: 'Schedule a meeting' });
@@ -155,7 +155,7 @@ describe('FitPage', () => {
       screen.getByPlaceholderText('Paste a job description'),
       'A role with partial overlap'
     );
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       expect(screen.getByText('MARGINAL')).toBeInTheDocument();
@@ -174,7 +174,7 @@ describe('FitPage', () => {
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       expect(screen.getByText('FIT')).toBeInTheDocument();
@@ -204,7 +204,7 @@ describe('FitPage', () => {
       screen.getByPlaceholderText('Paste a job description'),
       'A role with partial overlap'
     );
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       expect(screen.getByText('MARGINAL')).toBeInTheDocument();
@@ -214,7 +214,7 @@ describe('FitPage', () => {
     // Prepare second input and run again
     await user.clear(screen.getByPlaceholderText('Paste a job description'));
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A strong role');
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       const scheduleLink = screen.getByRole('link', { name: 'Schedule a meeting' });
@@ -234,7 +234,7 @@ describe('FitPage', () => {
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       expect(screen.getByText('FOLLOW-UP')).toBeInTheDocument();
@@ -252,7 +252,7 @@ describe('FitPage', () => {
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       expect(screen.getByText('NEXT STEPS')).toBeInTheDocument();
@@ -270,7 +270,7 @@ describe('FitPage', () => {
     render(<FitPage />, { wrapper: createQueryWrapper() });
 
     await user.type(screen.getByPlaceholderText('Paste a job description'), 'A role');
-    await user.click(screen.getByRole('button', { name: 'JD Fit Check' }));
+    await user.click(screen.getByRole('button', { name: 'Asses Fit' }));
 
     await waitFor(() => {
       expect(screen.getByText('RECOMMENDATION')).toBeInTheDocument();

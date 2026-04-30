@@ -309,8 +309,8 @@ async function setCache(client, model, question, response) {
     response === null || response === undefined
       ? ''
       : typeof response === 'string'
-      ? response.trim()
-      : JSON.stringify(response);
+        ? response.trim()
+        : JSON.stringify(response);
 
   await client.queryWithRetry(
     `MERGE ai_response_cache AS target

@@ -31,10 +31,10 @@ function HomePage() {
   const health = healthQuery.isPending
     ? 'Checking API...'
     : healthQuery.isError
-    ? 'API unavailable from this host'
-    : healthQuery.data?.status
-    ? `API: ${healthQuery.data.status}`
-    : 'API is reachable';
+      ? 'API unavailable from this host'
+      : healthQuery.data?.status
+        ? `API: ${healthQuery.data.status}`
+        : 'API is reachable';
 
   return (
     <Stack spacing={6}>
@@ -65,7 +65,7 @@ function HomePage() {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button component={RouterLink} to="/fit" variant="contained" size="large">
-                  JD Fit Check
+                  Asses Fit
                 </Button>
                 <Button variant="outlined" size="large" onClick={() => openChat(null)}>
                   Ask about Me (AI)

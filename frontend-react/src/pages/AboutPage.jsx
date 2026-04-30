@@ -27,12 +27,18 @@ function AboutPage() {
                   Cloud Architect & Developer
                 </Typography>
                 <Typography>
-                  Software Engineer specializing in large-scale, highly available platform systems
-                  supporting latency-sensitive workloads in production. Proven experience designing
-                  and operating distributed services, managing high-throughput traffic, and owning
-                  reliability, performance, and operational health at scale. Experienced in applying
-                  GitHub Copilot as a productivity multiplier in large production codebases,
-                  balancing acceleration with correctness, security, and long- term maintainability.
+                  Software Engineer specializing in large‑scale, highly available platform systems
+                  supporting latency‑sensitive workloads in production. Proven experience designing,
+                  evolving, and operating distributed services that handle high‑throughput traffic
+                  while meeting strict reliability, performance, and operational SLOs. Demonstrated
+                  technical leadership in setting architectural direction, driving cross‑team
+                  initiatives, and resolving complex, multi‑system production issues. Trusted owner
+                  of reliability, performance tuning, and operational health at scale, with a track
+                  record of identifying systemic risks early and delivering durable solutions.
+                  Experienced in applying GitHub Copilot as a productivity multiplier in large
+                  production codebases, establishing best practices that balance acceleration with
+                  correctness, security, and long‑term maintainability, while mentoring other
+                  engineers on effective and responsible usage.
                 </Typography>
                 <Box>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
