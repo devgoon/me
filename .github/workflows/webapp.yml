@@ -34,6 +34,17 @@ jobs:
       - name: Install dependencies
         run: make install-ci
 
+      - name: Ensure eslint-plugin-jsdoc
+        run: |
+          # CI sometimes falls back to npx-installed eslint which lacks project devDeps.
+          # Install the jsdoc plugin into node_modules as a fallback (no-lockfile change).
+          if [ ! -d node_modules/eslint-plugin-jsdoc ]; then
+            echo "eslint-plugin-jsdoc not found — installing fallback package"
+            npm install eslint-plugin-jsdoc@^62.9.0 --no-save --no-audit --no-fund
+          else
+            echo "eslint-plugin-jsdoc already present"
+          fi
+
       - name: Checks
         run: make check
 
