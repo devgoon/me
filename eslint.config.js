@@ -15,10 +15,11 @@ module.exports = [
       'api/package-lock.json',
       'package-lock.json',
       'dist/',
+      'frontend-react/dist/',
     ],
   },
   {
-    files: ['api/**/*.js', 'frontend-react/**/*.jsx'],
+    files: ['api/**/*.js'],
     plugins: { jsdoc },
     settings: { jsdoc: { mode: 'jsdoc', tagNamePreference: { fileoverview: false } } },
     languageOptions: {
@@ -43,6 +44,20 @@ module.exports = [
           ignoreDestructuring: false,
         },
       ],
+    },
+  },
+  {
+    files: ['frontend-react/**/*.{js,jsx}', 'tests/**/*.{js,jsx}'],
+    languageOptions: {
+      parserOptions: {
+        ecmaVersion: 2021,
+        sourceType: 'module',
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    rules: {
+      'no-unused-vars': 'warn',
+      'no-empty': 'warn',
     },
   },
 ];

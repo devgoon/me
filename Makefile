@@ -6,15 +6,15 @@ install:
 install-ci:
 	npm ci --workspaces --omit=dev
 	
-lint:
+lint:spellcheck
 	@# Auto-format with Prettier, then run ESLint autofix
 	@npx prettier --write "**/*.{jsx,js,json,md,css,html}"
-	@npx eslint "api/**/*.js" "frontend-react/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
+	@npx eslint "api/**/*.js" "frontend-react/**/*.{js,jsx}" "tests/**/*.{js,jsx}" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
 
 spellcheck:
 	npx cspell "frontend-react/*.{html,css,jsx,js,tsx, ts}" "api/**/*.js" --verbose
 
-unit-test:
+unit-test: evals
 	@echo "==> Running eval tests (no coverage)"
 	@npm run test:evals || true
 	@echo "==> Running UI tests (frontend-react) with coverage"
@@ -26,23 +26,22 @@ coverage: unit-test
 
 
 check:
-	@echo "==> Running spellcheck"
-	@$(MAKE) spellcheck
-	@echo "==> Running frontend-react lint"
-	@npm --prefix frontend-react run lint:fix || true
-	@echo "==> Running api lint"
-	@npm --prefix api run lint:fix || true
-	@echo "==> Building frontend-react"
-	@npm --prefix frontend-react run build || true
-	@echo "==> Running evals"
-	@$(MAKE) evals || true
-	@echo "==> Running unit tests + coverage"
+
+	@echo "==> Running lint/spellcheck"
+	make lint
+	@echo "==> Building frontend"
+	@$(MAKE) build-frontend
+	@echo "==> Running evals, unit tests and coverage"
 	@$(MAKE) coverage
 	@echo "==> Quality checks complete"
 
 evals:
 	@echo "Running eval runner (fit + chat)"
 	npm run test:evals
+
+build-frontend:
+	@echo "Building frontend (frontend-react)"
+	@npm --prefix frontend-react run build || { echo "Frontend build failed (frontend-react)."; exit 1; }
 e2e:
 	bash scripts/run-e2e.sh
 	
@@ -62,8 +61,11 @@ start:
 	fi; \
 	# Build and serve React frontend by default.
 	echo "Building React frontend (frontend-react/dist)..."; \
-	npm --prefix frontend-react run build; \
+	# Run the frontend build and fail loudly with a helpful message if it errors
+	# (avoids masking failures with `|| true`).
+	npm --prefix frontend-react run build || { echo "Frontend build failed — see frontend-react build output"; exit 1; }; \
 	echo "Watching React frontend for changes (frontend-react/dist)..."; \
+	# Start watch in background; swallow non-zero from the backgrounded watcher only
 	npm --prefix frontend-react run build:watch >/dev/null 2>&1 & \
 	REACT_WATCH_PID=$$!; \
 	echo "Starting local SWA emulator from frontend-react/dist with api/"; \

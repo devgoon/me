@@ -11,6 +11,8 @@
  * A case passes only when:
  * - score >= expected.minScore (default 70)
  * - and there are no failures recorded.
+ *
+ * @param value
  */
 function normalizeText(value) {
   return String(value || '').toLowerCase();

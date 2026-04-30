@@ -71,6 +71,7 @@ export function sanitizeForSave(payload) {
 
 /**
  * Parse an input into a number or return null for empty/unparseable values.
+ *
  * @param {*} value
  * @returns {number|null}
  */
@@ -84,6 +85,7 @@ export function parseNullableNumber(value) {
 
 /**
  * Validate salary min/max in the admin payload and throw on invalid range.
+ *
  * @param {Object} payload
  */
 export function validateSalaryRange(payload) {
@@ -96,6 +98,7 @@ export function validateSalaryRange(payload) {
 
 /**
  * Return a new default experience object for the UI.
+ *
  * @returns {Object}
  */
 export function defaultExperience() {
@@ -124,6 +127,7 @@ export function defaultExperience() {
 
 /**
  * Return a new default skill object for the UI.
+ *
  * @returns {Object}
  */
 export function defaultSkill() {
@@ -140,6 +144,7 @@ export function defaultSkill() {
 
 /**
  * Return a new default education object for the UI.
+ *
  * @returns {Object}
  */
 export function defaultEducation() {
@@ -158,6 +163,7 @@ export function defaultEducation() {
 
 /**
  * Return a new default certification object for the UI.
+ *
  * @returns {Object}
  */
 export function defaultCertification() {
@@ -175,6 +181,7 @@ export function defaultCertification() {
 
 /**
  * Return a new default gap object for the UI.
+ *
  * @returns {Object}
  */
 export function defaultGap() {
@@ -188,6 +195,7 @@ export function defaultGap() {
 
 /**
  * Return a new default FAQ object for the UI.
+ *
  * @returns {Object}
  */
 export function defaultFaq() {
@@ -196,6 +204,7 @@ export function defaultFaq() {
 
 /**
  * Return a new AI instruction rule default, using `existingRules` to set priority.
+ *
  * @param {number} existingRules
  * @returns {Object}
  */

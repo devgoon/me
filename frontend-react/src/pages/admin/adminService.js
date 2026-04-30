@@ -12,6 +12,7 @@ export const SAVE_API_OPTIONS = { timeoutMs: SAVE_TIMEOUT_MS, maxAttempts: 5, ba
 
 /**
  * Fetch currently authenticated user session information.
+ *
  * @returns {Promise<Response>} Fetch Response for `/api/auth/me`.
  */
 export async function fetchAuthMe() {
@@ -20,6 +21,7 @@ export async function fetchAuthMe() {
 
 /**
  * Fetch admin panel configuration and candidate data used to populate the UI.
+ *
  * @returns {Promise<Response>} Fetch Response for panel data.
  */
 export async function fetchPanelData() {
@@ -32,6 +34,7 @@ export async function fetchPanelData() {
 
 /**
  * Fetch cache/report diagnostics for admin UI cache tab.
+ *
  * @returns {Promise<Response>} Fetch Response for cache report.
  */
 export async function fetchCacheReport() {
@@ -44,6 +47,7 @@ export async function fetchCacheReport() {
 
 /**
  * Persist admin panel data to the server.
+ *
  * @param {Object} payload - Data to save.
  * @returns {Promise<Response>} Fetch Response for save operation.
  */
