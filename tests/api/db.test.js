@@ -26,6 +26,8 @@ describe('Client.queryWithRetry', () => {
   });
 });
 const path = require('path');
+// Sentinel connection string used by virtual mssql mock implementations
+const conn = 'conn';
 
 // Provide a stable top-level virtual mock for 'mssql'. Individual tests
 // can override the mocks by calling `vi.resetModules()` and replacing
@@ -33,7 +35,7 @@ const path = require('path');
 vi.mock(
   'mssql',
   () => ({
-    ConnectionPool: vi.fn().mockImplementation(function (conn) {
+    ConnectionPool: vi.fn().mockImplementation(function () {
       this._conn = conn;
       this.connect = vi.fn().mockResolvedValue(undefined);
       this.request = vi.fn().mockReturnValue({
@@ -80,7 +82,7 @@ describe('api/db.js Client', () => {
       request: vi.fn(),
       close: vi.fn(() => Promise.resolve()),
     };
-    const mockPoolConstructor = vi.fn(function (conn) {
+    const mockPoolConstructor = vi.fn(function () {
       this._conn = conn;
       return mockPoolInstance;
     });
@@ -118,7 +120,7 @@ describe('api/db.js Client', () => {
       request: vi.fn(),
       close: vi.fn(() => Promise.resolve()),
     };
-    const mockPoolConstructor = vi.fn(function (conn) {
+    const mockPoolConstructor = vi.fn(function () {
       return mockPoolInstance;
     });
 
@@ -179,7 +181,7 @@ describe('api/db.js Client', () => {
       request: vi.fn(() => mockRequestInstance),
       close: vi.fn(() => Promise.resolve()),
     };
-    const mockPoolConstructor = vi.fn(function (conn) {
+    const mockPoolConstructor = vi.fn(function () {
       return mockPoolInstance;
     });
 
@@ -221,7 +223,7 @@ describe('api/db.js Client', () => {
       request: vi.fn(),
       close: mockClose,
     };
-    const mockPoolConstructor = vi.fn(function (conn) {
+    const mockPoolConstructor = vi.fn(function () {
       return mockPoolInstance;
     });
 
@@ -241,7 +243,7 @@ describe('api/db.js Client', () => {
       request: vi.fn(),
       close: mockCloseFail,
     };
-    const mockPoolConstructor2 = vi.fn(function (conn) {
+    const mockPoolConstructor2 = vi.fn(function () {
       return mockPoolInstance2;
     });
     const db2 = require(path.join(__dirname, '../../api/db.js'));

@@ -1,3 +1,11 @@
+/* eslint-disable jsdoc/require-description */
+/**
+ * TanStack (React Query) helpers for API requests.
+ * Provides error wrapper and retry option builders used by hooks.
+ * @module tanstackApi
+ * @returns {void}
+ */
+
 /**
  * Error wrapper for non-OK HTTP responses returned by `apiRequestJson`.
  *

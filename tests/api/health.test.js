@@ -1,6 +1,5 @@
 vi.mock('../../api/db', () => ({ Client: vi.fn() }));
 const health = require('../../api/health/index');
-const { Client } = require('../../api/db');
 
 describe('health endpoint', () => {
   let origDb;

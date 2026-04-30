@@ -13,19 +13,8 @@ install-ci:
 	@npm ci --workspaces --legacy-peer-deps --include=dev
 	
 lint:spellcheck
-	@# If running in CI, require eslint to be present (fail fast).
-	@if [ -n "$$CI" ]; then \
-		if [ ! -x ./node_modules/.bin/eslint ]; then \
-			echo "eslint not found in ./node_modules/.bin — CI must install devDependencies (run 'make install-ci')"; exit 1; \
-		fi; \
-	else \
-		if [ ! -x ./node_modules/.bin/eslint ]; then \
-			echo "eslint missing locally; running 'make install' to restore devDependencies"; \
-			$(MAKE) install; \
-		fi; \
-	fi
 	@npx prettier --write "**/*.{jsx,js,json,md,css,html}"
-	@npm run lint --silent --
+	@npx eslint "api/**/*.js" "frontend-react/src/**/*.{js,jsx}" "tests/**/*.{js,jsx}" --fix
 
 spellcheck:
 	npx cspell "frontend-react/*.{html,css,jsx,js,tsx, ts}" "api/**/*.js" --verbose

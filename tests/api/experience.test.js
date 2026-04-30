@@ -1,5 +1,4 @@
 vi.mock('../../api/db', () => ({ Client: vi.fn() }));
-const { Client } = require('../../api/db');
 /**
  * @fileoverview Tests for experience API endpoints.
  * @module tests/api/experience.test.js

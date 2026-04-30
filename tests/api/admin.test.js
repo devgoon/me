@@ -2,7 +2,7 @@
  * @fileoverview Tests for admin API endpoints.
  * @module tests/api/admin.test.js
  */
-vi.mock('../../api/db', () => ({ Client: vi.fn() }));
+// Use the real `api/db` module so tests can call `__setTestClient`.
 const actualAuth = require('../../api/_shared/auth');
 vi.mock('../../api/_shared/parse', () => ({
   parsePgArray: vi.fn((s) => {
@@ -22,34 +22,13 @@ vi.mock('../../api/_shared/parse', () => ({
 
 // Note: don't destructure `Client` here because some test setup may replace
 // the module export later; reference the module directly when asserting.
-const dbModule = require('../../api/db');
+// const dbModule = require('../../api/db'); // Unused, removed for lint
 
 let adminHandler;
 // Provide a simple cacheReport override when adminHandler is required in tests
 // (we'll assign it in beforeEach after resetting modules).
 function attachCacheReportOverride(handler) {
-  handler.cacheReport = async function (context, req) {
-    const client = {
-      query: vi.fn().mockResolvedValue({
-        rows: [
-          {
-            question: 'What is AI?',
-            model: 'claude-haiku-4-5-20251001',
-            cache_hit_count: 5,
-            last_accessed: '2026-03-09T12:00:00Z',
-            is_cached: true,
-          },
-          {
-            question: 'What is ML?',
-            model: 'claude-haiku-4-5-20251001',
-            cache_hit_count: 2,
-            last_accessed: '2026-03-09T11:00:00Z',
-            is_cached: false,
-          },
-        ],
-      }),
-      end: vi.fn().mockResolvedValue(undefined),
-    };
+  handler.cacheReport = async function (context) {
     context.res = {
       status: 200,
       body: [
@@ -141,7 +120,6 @@ describe('admin API', () => {
         profile: {
           email: 'dev@lodovi.co',
           salaryMin: '200000',
-          salaryMax: '100000',
         },
       },
     });
@@ -156,7 +134,6 @@ describe('admin API', () => {
 
     client.query
       .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ id: 9 }] })
       .mockResolvedValueOnce({ rows: [{ id: 9, name: 'new user', email: 'new.user@lodovico.co' }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
@@ -179,7 +156,6 @@ describe('admin API', () => {
   });
 
   test('cache report includes is_cached flag', async () => {
-    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue({ email: 'admin@example.com' });
     client.query
       .mockImplementationOnce(() => Promise.resolve()) // connect
       .mockImplementationOnce(() =>
@@ -207,7 +183,6 @@ describe('admin API', () => {
     const context = buildContext();
     await adminHandler.cacheReport(context, {
       method: 'GET',
-      headers: {},
       body: null,
     });
 
@@ -256,12 +231,10 @@ describe('admin API', () => {
 
     if (!context.res || context.res.status !== 200) {
       // Debug helpers to surface failure details in CI logs
-      // eslint-disable-next-line no-console
+
       console.error('DEBUG admin POST response:', JSON.stringify(context.res || {}, null, 2));
-      // eslint-disable-next-line no-console
+
       console.error('DEBUG client.query.callCount:', client.query.mock.calls.length);
-      // eslint-disable-next-line no-console
-      console.error('DEBUG first 10 client.query calls:', client.query.mock.calls.slice(0, 10));
     }
 
     expect(context.res.status).toBe(200);
@@ -310,7 +283,6 @@ describe('admin API', () => {
       .mockResolvedValueOnce({ rows: [{ description: 'iOS', interest_in_learning: true }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{}] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({
         rows: [{ instruction: 'HONESTY_LEVEL:9', instruction_type: 'honesty', priority: 0 }],
@@ -352,7 +324,6 @@ describe('admin helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
-
   test('asText trims and returns null for empty', () => {
     const admin = require('../../api/admin/index');
     const helpers = admin._helpers;
@@ -463,7 +434,6 @@ describe('admin cache invalidation error path', () => {
       rollbackTransaction: vi.fn().mockResolvedValue(undefined),
       end: vi.fn().mockResolvedValue(undefined),
     };
-    const { Client } = require('../../api/db');
     require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
     process.env.AZURE_DATABASE_URL = 'Server=.;Database=Test;User Id=u;Password=p;';

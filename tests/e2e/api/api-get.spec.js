@@ -27,7 +27,6 @@ test.describe('API GET endpoints', () => {
   test('GET /api/cache-report responds 200/204 or auth status', async ({ request }) => {
     const flag = process.env.E2E_PREVIEW_ENFORCES_AUTH;
     if (typeof flag === 'undefined') {
-      // eslint-disable-next-line no-console
       console.warn(
         'E2E_PREVIEW_ENFORCES_AUTH is not set; defaulting to 0. For deterministic results, run tests via scripts/run-e2e.sh'
       );
@@ -36,7 +35,8 @@ test.describe('API GET endpoints', () => {
     let res;
     try {
       res = await request.get('/api/cache-report', { maxRedirects: 0 });
-    } catch (e) {
+    } catch (err) {
+      void err;
       // If the request helper throws (some environments), fall back to a
       // normal GET to obtain the final status code.
       res = await request.get('/api/cache-report');

@@ -1,5 +1,4 @@
 vi.mock('../../api/db', () => ({ Client: vi.fn() }));
-const { Client } = require('../../api/db');
 /**
  * @fileoverview Tests for skills API.
  * @module tests/api/skills.test.js

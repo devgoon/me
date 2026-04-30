@@ -16,7 +16,10 @@ function sanitizePage(page) {
     if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
     try {
       document.body.classList.remove('modal-open');
-    } catch (e) {}
+    } catch (err) {
+      void err;
+      // ignore
+    }
   });
 }
 

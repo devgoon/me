@@ -1,5 +1,4 @@
 vi.mock('../../api/db', () => ({ Client: vi.fn() }));
-const { Client } = require('../../api/db');
 /**
  * @fileoverview Tests for fit-related API behavior.
  * @module tests/api/fit-check.test.js

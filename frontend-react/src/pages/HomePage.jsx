@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequestJson, tanstackRetryOptions } from '../lib/tanstackApi.js';
-import { useChat } from '../contexts/ChatContext.jsx';
+import { useChat } from '../contexts/ChatContextContext.js';
 
 function HomePage() {
   const { openChat } = useChat();
@@ -31,10 +31,10 @@ function HomePage() {
   const health = healthQuery.isPending
     ? 'Checking API...'
     : healthQuery.isError
-      ? 'API unavailable from this host'
-      : healthQuery.data?.status
-        ? `API: ${healthQuery.data.status}`
-        : 'API is reachable';
+    ? 'API unavailable from this host'
+    : healthQuery.data?.status
+    ? `API: ${healthQuery.data.status}`
+    : 'API is reachable';
 
   return (
     <Stack spacing={6}>

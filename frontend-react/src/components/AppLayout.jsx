@@ -3,7 +3,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import ChatIcon from '@mui/icons-material/Chat';
-import { useChat } from '../contexts/ChatContext.jsx';
+import { useChat } from '../contexts/ChatContextContext.js';
 
 const navItems = [
   { to: '/', label: 'About' },

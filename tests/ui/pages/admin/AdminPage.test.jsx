@@ -1,9 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, vi, expect } from 'vitest';
 import AdminPage from '../../../../frontend-react/src/pages/AdminPage.jsx';
-import { createQueryWrapper, createQueryClient } from '../../queryTestUtils.jsx';
-import { renderHook } from '@testing-library/react';
-import { useAdminPage } from '/frontend-react/src/pages/admin/useAdminPage.js';
 
 // Mock the hook itself to assert AdminPage presentation independently
 vi.mock('/frontend-react/src/pages/admin/useAdminPage.js', () => ({

@@ -1,6 +1,5 @@
 vi.mock('../../api/db', () => ({ Client: vi.fn() }));
 const actualAuth = require('../../api/_shared/auth');
-const { Client } = require('../../api/db');
 
 describe('cache-report', () => {
   let client;

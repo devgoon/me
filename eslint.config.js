@@ -29,7 +29,6 @@ module.exports = [
     rules: {
       /* JSDoc rules: enforce basic presence and correctness of JSDoc on api code */
       'jsdoc/check-param-names': 'error',
-      'jsdoc/newline-after-description': 'warn',
       'jsdoc/require-description': 'warn',
       'jsdoc/require-param': 'warn',
       'jsdoc/require-returns': 'warn',

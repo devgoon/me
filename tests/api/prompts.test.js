@@ -1,5 +1,3 @@
-const path = require('path');
-
 // Mock the parse helpers used by prompts.js so tests are deterministic
 vi.mock('../../api/_shared/parse', () => ({
   parsePgArray: (s) => {

@@ -22,7 +22,6 @@ export default defineConfig([
     settings: { jsdoc: { mode: 'jsdoc', tagNamePreference: { fileoverview: false } } },
     rules: {
       'jsdoc/check-param-names': 'error',
-      'jsdoc/newline-after-description': 'warn',
       'jsdoc/require-description': 'warn',
       'jsdoc/require-param': 'warn',
       'jsdoc/require-returns': 'warn',
