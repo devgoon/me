@@ -51,12 +51,6 @@ jobs:
       - name: Prompt and response evals
         run: make evals
 
-      - name: Ensure frontend assets present
-        run: |
-          echo "Building React frontend under frontend-react/dist..."
-          npm ci --prefix frontend-react
-          npm --prefix frontend-react run build
-
       - name: Run npm audit
         run: npm audit --json > audit.json || true
 
