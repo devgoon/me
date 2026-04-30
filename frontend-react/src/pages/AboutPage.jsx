@@ -26,29 +26,38 @@ function AboutPage() {
                 <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
                   Cloud Architect & Developer
                 </Typography>
-                <Typography>
-                  Software Engineer specializing in large‑scale, highly available platform systems
-                  supporting latency‑sensitive workloads in production. Proven experience designing,
-                  evolving, and operating distributed services that handle high‑throughput traffic
-                  while meeting strict reliability, performance, and operational SLOs. Demonstrated
-                  technical leadership in setting architectural direction, driving cross‑team
-                  initiatives, and resolving complex, multi‑system production issues. Trusted owner
-                  of reliability, performance tuning, and operational health at scale, with a track
-                  record of identifying systemic risks early and delivering durable solutions.
-                  Experienced in applying GitHub Copilot as a productivity multiplier in large
-                  production codebases, establishing best practices that balance acceleration with
-                  correctness, security, and long‑term maintainability, while mentoring other
-                  engineers on effective and responsible usage.
-                </Typography>
+                <Box sx={{ maxWidth: { xs: '100%', md: 800 } }}>
+                  <Stack spacing={2}>
+                    <Typography>
+                      Software Engineer specializing in large‑scale, highly available platform
+                      systems supporting latency‑sensitive workloads in production. Proven
+                      experience designing, evolving, and operating distributed services that handle
+                      high‑throughput traffic while meeting strict reliability, performance, and
+                      operational SLOs.
+                    </Typography>
+
+                    <Typography>
+                      Demonstrated technical leadership in setting architectural direction, driving
+                      cross‑team initiatives, and resolving complex, multi‑system production issues.
+                      Trusted owner of reliability, performance tuning, and operational health at
+                      scale, with a track record of identifying systemic risks early and delivering
+                      durable solutions.
+                    </Typography>
+
+                    <Typography>
+                      Experienced in applying GitHub Copilot as a productivity multiplier in large
+                      production codebases, establishing best practices that balance acceleration
+                      with correctness, security, and long‑term maintainability, while mentoring
+                      other engineers on effective and responsible usage.
+                    </Typography>
+                  </Stack>
+                </Box>
                 <Box>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     Contact: vminnocci@gmail.com
                   </Typography>
                 </Box>
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    Experience
-                  </Typography>
                   <ExperienceChips />
                 </Box>
               </Stack>
