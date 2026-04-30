@@ -401,9 +401,8 @@ module.exports = async function (context) {
     // Also skip AI enrichment entirely when no Anthropic API key is configured
     const skipAi = Boolean(
       req &&
-        ((req.query && (req.query.skipAI === '1' || req.query.skipAI === 'true')) ||
-          (req.headers &&
-            (req.headers['x-skip-ai'] === '1' || req.headers['x-skip-ai'] === 'true')))
+      ((req.query && (req.query.skipAI === '1' || req.query.skipAI === 'true')) ||
+        (req.headers && (req.headers['x-skip-ai'] === '1' || req.headers['x-skip-ai'] === 'true')))
     );
 
     // If caller hasn't explicitly opted out, attempt cache lookup first.

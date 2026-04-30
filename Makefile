@@ -1,25 +1,27 @@
 .PHONY: e2e install install-ci e2e lint spellcheck unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env clean
 
+
 install:
-	@# Use `npm ci` when a lockfile exists (clean, reproducible installs).
-	@# Fall back to `npm install` to create a lockfile when none is present.
-	@if [ -f package-lock.json ]; then \
-		npm ci --workspaces --legacy-peer-deps --include=dev; \
-	else \
-		echo "package-lock.json not found — running 'npm install' to generate lockfile"; \
-		npm install --workspaces --legacy-peer-deps --include=dev; \
+	@# Local developer install: allow generating/updating the lockfile.
+	@npm install --workspaces --legacy-peer-deps --include=dev
+
+install-ci:
+	@# CI install: require root package-lock.json and perform reproducible install
+	@if [ ! -f package-lock.json ]; then \
+		echo "package-lock.json missing; aborting CI install"; exit 1; \
 	fi
+	@npm ci --workspaces --legacy-peer-deps --include=dev
 	
 lint:spellcheck
-	@# Auto-format with Prettier, then run ESLint autofix
-	@# Use repo-local binaries to avoid npx auto-installing a different ESLint
-	@# Ensure ESLint binary exists; on CI fail fast, locally attempt to install dev deps
-	@if [ ! -x ./node_modules/.bin/eslint ]; then \
-		if [ -z "$$CI" ]; then \
-			echo "eslint not found — installing devDependencies (this may update package-lock.json)"; \
+	@# If running in CI, require eslint to be present (fail fast).
+	@if [ -n "$$CI" ]; then \
+		if [ ! -x ./node_modules/.bin/eslint ]; then \
+			echo "eslint not found in ./node_modules/.bin — CI must install devDependencies (run 'make install-ci')"; exit 1; \
+		fi; \
+	else \
+		if [ ! -x ./node_modules/.bin/eslint ]; then \
+			echo "eslint missing locally; running 'make install' to restore devDependencies"; \
 			$(MAKE) install; \
-		else \
-			echo "ERROR: eslint not found. CI requires devDependencies to be installed before linting."; exit 1; \
 		fi; \
 	fi
 	@npx prettier --write "**/*.{jsx,js,json,md,css,html}"
@@ -218,10 +220,11 @@ gh-sync-env:
 	./scripts/gh-sync-env-to-gh.sh --env-file "$$ENV_FILE" --repo "$$REPO"
 
 
+
 clean:
-	@echo "Cleaning node_modules, lockfiles, build artifacts and caches..."
+	@echo "Cleaning node_modules, build artifacts and caches..."
 	@rm -rf node_modules frontend-react/node_modules
-	@rm -f package-lock.json frontend-react/package-lock.json
+	@rm -f frontend-react/package-lock.json
 	@rm -rf frontend-react/dist coverage .azurite .vite .cache
 	@echo "Running 'npm cache verify' (use --force to aggressively clean)"
 	@npm cache verify || true

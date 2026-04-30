@@ -32,7 +32,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: make install
+        run: make install-ci
 
       - name: Checks
         run: make check
