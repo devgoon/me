@@ -8,8 +8,9 @@ install-ci:
 	
 lint:spellcheck
 	@# Auto-format with Prettier, then run ESLint autofix
+	@# Use repo-local binaries to avoid npx auto-installing a different ESLint
 	@npx prettier --write "**/*.{jsx,js,json,md,css,html}"
-	@npx eslint "api/**/*.js" "frontend-react/**/*.{js,jsx}" "tests/**/*.{js,jsx}" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
+	@npm run lint --silent --
 
 spellcheck:
 	npx cspell "frontend-react/*.{html,css,jsx,js,tsx, ts}" "api/**/*.js" --verbose
