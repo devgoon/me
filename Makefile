@@ -1,13 +1,10 @@
 .PHONY: e2e install install-ci e2e lint spellcheck unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
 
 install:
-	npm install
-	cd api && npm install
+	npm install --workspaces
 
 install-ci:
-	npm ci --omit=dev
-	cd api && npm ci --omit=dev
-	cd frontend-react && npm ci
+	npm ci --workspaces --omit=dev
 	
 lint:
 	@# Auto-format with Prettier, then run ESLint autofix
