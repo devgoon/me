@@ -65,7 +65,7 @@ function HomePage() {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button component={RouterLink} to="/fit" variant="contained" size="large">
-                  Asses Fit
+                  Assess Fit
                 </Button>
                 <Button variant="outlined" size="large" onClick={() => openChat(null)}>
                   Ask about Me (AI)
