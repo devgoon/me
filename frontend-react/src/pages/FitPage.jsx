@@ -142,7 +142,14 @@ function FitPage() {
 
   return (
     <Stack spacing={2.5}>
-      <Typography variant="h1">JD Fit Check</Typography>
+      <Card variant="outlined">
+        <CardContent>
+          <Typography variant="h1">Assess Fit</Typography>
+          <Typography color="text.secondary">Paste a job description to assess fit.</Typography>
+          {error ? <Alert severity="error">{error}</Alert> : null}
+        </CardContent>
+      </Card>
+
       <Card variant="outlined">
         <CardContent>
           <Stack spacing={2}>
@@ -162,10 +169,9 @@ function FitPage() {
               disabled={loading}
               sx={{ alignSelf: 'flex-start' }}
             >
-              {loading ? 'Analyzing...' : 'JD Fit Check'}
+              {loading ? 'Analyzing...' : 'Assess Fit'}
             </Button>
             {/* Ask AI moved back to sidebar; keep Fit page focused */}
-            {error ? <Alert severity="error">{error}</Alert> : null}
           </Stack>
         </CardContent>
       </Card>

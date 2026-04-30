@@ -85,17 +85,23 @@ function SkillsPage() {
 
   return (
     <Stack spacing={4}>
+      <Card variant="outlined">
+        <CardContent>
+          <Stack spacing={1}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              Skills
+            </Typography>
+            <Typography color="text.secondary">
+              I've acquired many skills over the years...
+            </Typography>
+          </Stack>
+        </CardContent>
+      </Card>
+
       <Box>
         <Card variant="outlined">
           <CardContent>
             <Stack spacing={3}>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                Skills
-              </Typography>
-              <Typography color="text.secondary">
-                I've acquired many skills over the years...
-              </Typography>
-
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
                   Strong

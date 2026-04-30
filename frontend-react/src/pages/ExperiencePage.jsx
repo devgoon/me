@@ -65,8 +65,12 @@ function ExperiencePage() {
 
   return (
     <Stack spacing={2.5}>
-      <Typography variant="h1">Experience</Typography>
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      <Card variant="outlined">
+        <CardContent>
+          <Typography variant="h1">Experience</Typography>
+          {error ? <Alert severity="error">{error}</Alert> : null}
+        </CardContent>
+      </Card>
 
       <Stack spacing={1.5}>
         {orderedExperiences.map((exp) => (
