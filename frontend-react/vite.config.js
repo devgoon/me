@@ -21,8 +21,14 @@ export default defineConfig({
       { find: 'react-router-dom', replacement: resolveModule('react-router-dom') },
       { find: '@tanstack/react-query', replacement: resolveModule('@tanstack', 'react-query') },
       { find: '@testing-library/react', replacement: resolveModule('@testing-library', 'react') },
-      { find: '@testing-library/user-event', replacement: resolveModule('@testing-library', 'user-event') },
-      { find: '@testing-library/jest-dom', replacement: resolveModule('@testing-library', 'jest-dom') },
+      {
+        find: '@testing-library/user-event',
+        replacement: resolveModule('@testing-library', 'user-event'),
+      },
+      {
+        find: '@testing-library/jest-dom',
+        replacement: resolveModule('@testing-library', 'jest-dom'),
+      },
     ],
   },
   test: {
