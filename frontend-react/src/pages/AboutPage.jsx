@@ -21,13 +21,13 @@ function AboutPage() {
               />
               <Stack spacing={2}>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                  About Me
+                 Lodovico (Vico) Minnocci
                 </Typography>
                 <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
                   Cloud Architect & Developer
                 </Typography>
                 <Typography>
-                  Staff-level Software Engineer specializing in large-scale, highly available
+                  Software Engineer specializing in large-scale, highly available
                   platform systems supporting latency-sensitive workloads in production. Proven
                   experience designing and operating distributed services, managing high-throughput
                   traffic, and owning reliability, performance, and operational health at scale.
@@ -64,6 +64,7 @@ function ExperienceChips() {
 
   useEffect(() => {
     let mounted = true;
+    let hadDefaults = false;
 
     // First try to load local default data so the UI can show immediately.
     (async () => {
@@ -73,6 +74,7 @@ function ExperienceChips() {
           const defaults = await defaultsRes.json();
           if (mounted && defaults?.experience?.experiences) {
             setData({ experiences: defaults.experience.experiences });
+            hadDefaults = true;
           }
         }
       } catch {
@@ -82,16 +84,15 @@ function ExperienceChips() {
       // Then request the authoritative API and replace defaults when available
       try {
         const apiRes = await apiRequestJson('/api/experience', { method: 'GET' }, { timeoutMs: 8000 });
-        if (!mounted) return;
-        setData(apiRes);
-        setError(null);
-      } catch (err) {
-        if (!mounted) return;
+        if (mounted) {
+          setData(apiRes);
+          setError(null);
+        }
+      } catch {
         // if we had defaults, keep them; otherwise surface an error
-        if (!data) setError(err?.message || String(err));
+        if (mounted && !hadDefaults) setError('Unable to load experience');
       } finally {
-        if (!mounted) return;
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     })();
 
@@ -122,3 +123,5 @@ function ExperienceChips() {
     </Stack>
   );
 }
+
+// AskAiButton intentionally removed from this file; sidebar provides access.

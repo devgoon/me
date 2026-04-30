@@ -64,9 +64,6 @@ function EducationPage() {
                 <TableCell>
                   <strong>Field of Study</strong>
                 </TableCell>
-                <TableCell>
-                  <strong>Period</strong>
-                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -75,11 +72,6 @@ function EducationPage() {
                   <TableCell>{edu.institution}</TableCell>
                   <TableCell>{edu.degree}</TableCell>
                   <TableCell>{edu.field_of_study}</TableCell>
-                  <TableCell>
-                    {edu.start_date && new Date(edu.start_date).getFullYear()}
-                    {edu.end_date && ` - ${new Date(edu.end_date).getFullYear()}`}
-                    {edu.is_current && ' (Current)'}
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

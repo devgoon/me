@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from './components/AppLayout.jsx';
-import HomePage from './pages/HomePage.jsx';
 import AboutPage from './pages/AboutPage.jsx';
 import SkillsPage from './pages/SkillsPage.jsx';
 import ExperiencePage from './pages/ExperiencePage.jsx';

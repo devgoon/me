@@ -1,7 +1,9 @@
-import { Box, Link as MuiLink, Stack, Typography } from '@mui/material';
+import { Box, Link as MuiLink, Stack, Typography, Button } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import ChatIcon from '@mui/icons-material/Chat';
+import { useChat } from '../contexts/ChatContext.jsx';
 
 const navItems = [
   { to: '/', label: 'About' },
@@ -9,7 +11,6 @@ const navItems = [
   { to: '/experience', label: 'Experience' },
   { to: '/certifications', label: 'Certifications' },
   { to: '/education', label: 'Education' },
-  { to: '/fit', label: "JD Fit Check" },
   { href: '/assets/Lodovico-Resume-04-08-26.pdf', label: 'Resume', external: true },
 ];
 
@@ -19,6 +20,7 @@ const socialLinks = [
 ];
 
 function AppLayout({ children }) {
+  const { openChat } = useChat();
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Left Sidebar Navigation */}
@@ -117,6 +119,25 @@ function AppLayout({ children }) {
             )}
           </Stack>
 
+          <Button
+            startIcon={<ChatIcon />}
+            variant="outlined"
+            onClick={() => openChat(null)}
+            sx={{ mt: 2, textTransform: 'none' }}
+          >
+            Ask about Me (AI)
+          </Button>
+
+          <Button
+            component={RouterLink}
+            to="/fit"
+            startIcon={<ChatIcon />}
+            variant="outlined"
+            sx={{ mt: 1, textTransform: 'none' }}
+          >
+            Assess My Fit (AI)
+          </Button>
+
           {/* Social Links */}
           <Stack
             direction="row"
@@ -135,6 +156,8 @@ function AppLayout({ children }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    width: '2.5rem',
+                    height: '2.5rem',
                     color: 'text.secondary',
                     transition: 'color 0.2s',
                     '&:hover': {
@@ -143,7 +166,7 @@ function AppLayout({ children }) {
                   }}
                   aria-label={link.label}
                 >
-                  <Icon sx={{ fontSize: '1.25rem' }} />
+                  <Icon sx={{ fontSize: '1.875rem', lineHeight: 1 }} />
                 </MuiLink>
               );
             })}

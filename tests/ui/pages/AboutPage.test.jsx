@@ -5,7 +5,7 @@ import AboutPage from '../../../frontend-react/src/pages/AboutPage.jsx';
 describe('AboutPage', () => {
   it('renders the About page with correct heading', () => {
     render(<AboutPage />);
-    expect(screen.getByText('About Me')).toBeInTheDocument();
+    expect(screen.getByText('Lodovico (Vico) Minnocci')).toBeInTheDocument();
   });
 
   it('displays about content and contact info', () => {

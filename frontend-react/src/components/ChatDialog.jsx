@@ -116,7 +116,7 @@ function ChatBubble({ message }) {
   );
 }
 
-function ChatDialog({ open, onClose }) {
+function ChatDialog({ open, onClose, initialContext = null }) {
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -141,6 +141,34 @@ function ChatDialog({ open, onClose }) {
       historyRef.current.scrollTop = historyRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Initialize messages when dialog opens with optional initial context
+  useEffect(() => {
+    if (!open) return;
+    if (!initialContext) {
+      // Avoid synchronous setState inside effect to satisfy lint rules
+      setTimeout(() => setMessages([WELCOME_MESSAGE]), 0);
+      return;
+    }
+
+    const { profile, experiences } = initialContext || {};
+    const parts = [];
+    if (profile) {
+      parts.push(`Profile: ${profile.name || ''}${profile.title ? ' — ' + profile.title : ''}`);
+    }
+    if (Array.isArray(experiences) && experiences.length > 0) {
+      const list = experiences
+        .slice(0, 8)
+        .map((e) => `${e.companyName}${e.title ? ' — ' + e.title : ''}`)
+        .join('; ');
+      parts.push(`Experiences: ${list}`);
+    }
+
+    const systemText = parts.join('\n');
+    const systemMsg = systemText ? { role: 'system', text: systemText } : null;
+    // Avoid calling setState synchronously inside effect
+    setTimeout(() => setMessages([...(systemMsg ? [systemMsg] : []), WELCOME_MESSAGE]), 0);
+  }, [open, initialContext]);
 
   const sendPrompt = async (prompt) => {
     const text = (prompt || input).trim();
@@ -217,7 +245,7 @@ function ChatDialog({ open, onClose }) {
         }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          Ask AI About Me
+          Ask about Me (AI)
         </Typography>
         <IconButton onClick={onClose} size="small" aria-label="Close chat">
           <CloseIcon fontSize="small" />

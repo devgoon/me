@@ -154,6 +154,7 @@ function FitPage() {
             >
               {loading ? 'Analyzing...' : "JD Fit Check"}
             </Button>
+            {/* Ask AI moved back to sidebar; keep Fit page focused */}
             {error ? <Alert severity="error">{error}</Alert> : null}
           </Stack>
         </CardContent>

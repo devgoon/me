@@ -6,6 +6,8 @@ import { CssBaseline, ThemeProvider } from '@mui/material';
 import './index.css';
 import App from './App.jsx';
 import theme from './theme.js';
+import { ChatProvider } from './contexts/ChatContext.jsx';
+
 // Create a local QueryClient to ensure the provider receives a proper instance.
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,10 +18,10 @@ const queryClient = new QueryClient({
 
 // Debug: verify queryClient shape at runtime
 try {
-  // eslint-disable-next-line no-console
+   
   console.log('QueryClient debug', typeof queryClient, typeof queryClient.defaultQueryOptions);
 } catch (err) {
-  // eslint-disable-next-line no-console
+   
   console.error('QueryClient debug error', err);
 }
 
@@ -29,7 +31,9 @@ createRoot(document.getElementById('root')).render(
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <App />
+          <ChatProvider>
+            <App />
+          </ChatProvider>
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>

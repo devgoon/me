@@ -1,4 +1,4 @@
-import { useState } from 'react';
+// no top-level React import required; keep file minimal
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Button,
@@ -13,10 +13,10 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequestJson, tanstackRetryOptions } from '../lib/tanstackApi.js';
-import ChatDialog from '../components/ChatDialog.jsx';
+import { useChat } from '../contexts/ChatContext.jsx';
 
 function HomePage() {
-  const [chatOpen, setChatOpen] = useState(false);
+  const { openChat } = useChat();
   const healthQuery = useQuery({
     queryKey: ['health'],
     queryFn: () =>
@@ -65,12 +65,12 @@ function HomePage() {
                 <Button component={RouterLink} to="/fit" variant="contained" size="large">
                   JD Fit Check
                 </Button>
-                <Button variant="outlined" size="large" onClick={() => setChatOpen(true)}>
-                  Ask AI about Me
+                <Button variant="outlined" size="large" onClick={() => openChat(null)}>
+                  Ask about Me (AI)
                 </Button>
               </Stack>
 
-              <ChatDialog open={chatOpen} onClose={() => setChatOpen(false)} />
+              {/* Chat dialog is provided globally via ChatProvider */}
 
               <Divider />
 
