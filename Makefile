@@ -1,11 +1,27 @@
-.PHONY: e2e install install-ci e2e lint spellcheck unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
+.PHONY: e2e install install-ci e2e lint spellcheck unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env clean
 
 install:
-	npm ci --workspaces --legacy-peer-deps --include=dev
+	@# Use `npm ci` when a lockfile exists (clean, reproducible installs).
+	@# Fall back to `npm install` to create a lockfile when none is present.
+	@if [ -f package-lock.json ]; then \
+		npm ci --workspaces --legacy-peer-deps --include=dev; \
+	else \
+		echo "package-lock.json not found — running 'npm install' to generate lockfile"; \
+		npm install --workspaces --legacy-peer-deps --include=dev; \
+	fi
 	
 lint:spellcheck
 	@# Auto-format with Prettier, then run ESLint autofix
 	@# Use repo-local binaries to avoid npx auto-installing a different ESLint
+	@# Ensure ESLint binary exists; on CI fail fast, locally attempt to install dev deps
+	@if [ ! -x ./node_modules/.bin/eslint ]; then \
+		if [ -z "$$CI" ]; then \
+			echo "eslint not found — installing devDependencies (this may update package-lock.json)"; \
+			$(MAKE) install; \
+		else \
+			echo "ERROR: eslint not found. CI requires devDependencies to be installed before linting."; exit 1; \
+		fi; \
+	fi
 	@npx prettier --write "**/*.{jsx,js,json,md,css,html}"
 	@npm run lint --silent --
 
@@ -200,3 +216,13 @@ gh-sync-env:
 	printf "Proceed? Type 'yes' to continue: "; read ans; \
 	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
 	./scripts/gh-sync-env-to-gh.sh --env-file "$$ENV_FILE" --repo "$$REPO"
+
+
+clean:
+	@echo "Cleaning node_modules, lockfiles, build artifacts and caches..."
+	@rm -rf node_modules frontend-react/node_modules
+	@rm -f package-lock.json frontend-react/package-lock.json
+	@rm -rf frontend-react/dist coverage .azurite .vite .cache
+	@echo "Running 'npm cache verify' (use --force to aggressively clean)"
+	@npm cache verify || true
+	@echo "Clean complete. To reinstall, run: 'make install' or 'make install-ci'"
