@@ -4,7 +4,7 @@ List of environment variables tests expect and how to provide them in CI/local d
 
 Required for API tests (set in CI as secrets):
 
-- `AZURE_DATABASE_URL` — connection string used by API/db helpers (example format in `.env.local.example`). Tests often set this to a local Postgres URL when mocking DB behavior.
+- `AZURE_DATABASE_URL` — connection string used by API/db helpers (example format in `.env.local.example`).
 - `ANTHROPIC_API_KEY` — required by AI-calling endpoints; set to a test value for unit tests or add as a CI secret and mock network calls during integration tests.
 
 Optional / runtime:

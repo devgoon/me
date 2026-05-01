@@ -46,7 +46,6 @@ const ensureArray = (items) => {
       if (typeof parsedJson === 'object' && parsedJson !== null)
         return Object.values(parsedJson).map(String).filter(Boolean);
     }
-    // Try Postgres array literal: {"a","b"}
     const pg = parsePgArray(t);
     if (pg !== null) return pg;
     // comma or newline separated

@@ -25,7 +25,7 @@ flowchart LR
   Browser(Browser)
   SWA(Static Web Apps)
   Functions(Functions - api)
-  DB[(Postgres)]
+  DB[(Azure DB)]
   AI(Anthropic)
   CDN(CDN)
 

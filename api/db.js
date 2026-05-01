@@ -153,7 +153,6 @@ class Client {
   }
 
   /**
-   * Execute a SQL query. Supports Postgres-style $1/$2 parameter placeholders
    * which are translated to T-SQL @p1/@p2. Returns an object with `rows`.
    *
    * @param {string} text - SQL text with $n placeholders.
@@ -162,7 +161,6 @@ class Client {
    */
   async query(text, params) {
     if (!this._pool) throw new Error('Client not connected');
-    // Convert Postgres-style $1/$2 placeholders to T-SQL @p1/@p2 to match
     // how we bind parameters below (we call `req.input('p1', value)`).
     const transformedText = String(text).replace(/\$(\d+)/g, '@p$1');
     const sql = __getMssql();
