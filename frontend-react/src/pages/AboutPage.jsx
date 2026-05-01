@@ -80,7 +80,6 @@ function ExperienceChips() {
     let mounted = true;
     let hadDefaults = false;
 
-    // First try to load local default data so the UI can show immediately.
     (async () => {
       try {
         const defaultsRes = await fetch('/_shared/default-data.json', { cache: 'no-store' });
@@ -92,10 +91,9 @@ function ExperienceChips() {
           }
         }
       } catch {
-        // ignore defaults failures
+        //Defaults are optional, ignore errors
       }
 
-      // Then request the authoritative API and replace defaults when available
       try {
         const apiRes = await apiRequestJson(
           '/api/experience',
@@ -107,7 +105,6 @@ function ExperienceChips() {
           setError(null);
         }
       } catch {
-        // if we had defaults, keep them; otherwise surface an error
         if (mounted && !hadDefaults) setError('Unable to load experience');
       } finally {
         if (mounted) setLoading(false);

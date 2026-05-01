@@ -24,8 +24,6 @@ export function ChatProvider({ children }) {
    */
   const closeChat = () => {
     setOpen(false);
-    // keep prefill in case user re-opens from navbar; clear if needed
-    // setPrefill(null);
   };
 
   return (
@@ -40,5 +38,3 @@ export function ChatProvider({ children }) {
  * Custom hook to access chat dialog context.
  * @returns {JSX.Element}
  */
-
-// Intentionally export only the provider from this file to keep fast-refresh happy.

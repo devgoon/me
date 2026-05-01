@@ -29,7 +29,6 @@ const WELCOME_MESSAGE = {
 };
 
 function renderMarkdown(text) {
-  // Minimal markdown: bold and bullet lists
   const lines = text.split(/\r?\n/);
   const elements = [];
   let listItems = [];
@@ -135,18 +134,15 @@ function ChatDialog({ open, onClose, initialContext = null }) {
     ...tanstackRetryOptions({ maxAttempts: 1, baseDelay: 0 }),
   });
 
-  // Scroll to bottom whenever messages change
   useEffect(() => {
     if (historyRef.current) {
       historyRef.current.scrollTop = historyRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // Initialize messages when dialog opens with optional initial context
   useEffect(() => {
     if (!open) return;
     if (!initialContext) {
-      // Avoid synchronous setState inside effect to satisfy lint rules
       setTimeout(() => setMessages([WELCOME_MESSAGE]), 0);
       return;
     }
@@ -166,7 +162,7 @@ function ChatDialog({ open, onClose, initialContext = null }) {
 
     const systemText = parts.join('\n');
     const systemMsg = systemText ? { role: 'system', text: systemText } : null;
-    // Avoid calling setState synchronously inside effect
+
     setTimeout(() => setMessages([...(systemMsg ? [systemMsg] : []), WELCOME_MESSAGE]), 0);
   }, [open, initialContext]);
 
@@ -231,7 +227,6 @@ function ChatDialog({ open, onClose, initialContext = null }) {
         },
       }}
     >
-      {/* Header */}
       <Stack
         direction="row"
         sx={{
@@ -264,7 +259,6 @@ function ChatDialog({ open, onClose, initialContext = null }) {
         ))}
       </Stack>
 
-      {/* Suggestions */}
       {messages.length <= 1 && (
         <Stack
           direction="row"
@@ -287,7 +281,6 @@ function ChatDialog({ open, onClose, initialContext = null }) {
         </Stack>
       )}
 
-      {/* Input Row */}
       <Box sx={{ px: 2, py: 1.5, borderTop: '1px solid', borderColor: 'divider', flexShrink: 0 }}>
         <TextField
           fullWidth

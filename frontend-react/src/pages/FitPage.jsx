@@ -5,7 +5,6 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { apiRequest, tanstackRetryOptions } from '../lib/tanstackApi.js';
 
 function normalizeFitResult(raw) {
-  // The API is the source-of-truth: use `mismatches` and `reasons` only.
   const gaps = Array.isArray(raw?.mismatches) ? raw.mismatches : [];
   const transfers = Array.isArray(raw?.reasons) ? raw.reasons : [];
 
@@ -171,7 +170,6 @@ function FitPage() {
             >
               {loading ? 'Analyzing...' : 'Assess Fit'}
             </Button>
-            {/* Ask AI moved back to sidebar; keep Fit page focused */}
           </Stack>
         </CardContent>
       </Card>

@@ -8,7 +8,6 @@ import App from './App.jsx';
 import theme from './theme.js';
 import { ChatProvider } from './contexts/ChatContext.jsx';
 
-// Create a local QueryClient to ensure the provider receives a proper instance.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { refetchOnWindowFocus: false, retry: false },
@@ -16,7 +15,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Debug: verify queryClient shape at runtime
 try {
   console.log('QueryClient debug', typeof queryClient, typeof queryClient.defaultQueryOptions);
 } catch (err) {

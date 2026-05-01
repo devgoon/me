@@ -13,7 +13,6 @@ export default ChatContext;
 export function useChat() {
   const ctx = useContext(ChatContext);
   if (!ctx) {
-    // Provide a safe fallback for tests and non-provider usage.
     return {
       open: false,
       openChat: () => {},

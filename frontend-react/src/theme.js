@@ -153,11 +153,8 @@ const theme = createTheme({
             transform: 'translateY(-2px)',
           },
         },
-        containedPrimary: {
-          // keep parity with generic contained
-        },
+        containedPrimary: {},
         containedSecondary: {
-          // make secondary contained buttons match chips as well
           backgroundColor: '#00E5FF',
           color: '#001216',
           border: '1px solid #00E5FF',

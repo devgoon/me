@@ -57,8 +57,6 @@ function AppLayout({ children }) {
           <Stack spacing={1.5} aria-label="Main navigation" component="nav">
             {navItems.map((item) =>
               item.external ? (
-                // If the external link is a PDF resume, use the `download` attribute
-                // so clicking triggers a direct download instead of opening a new tab.
                 item.href && item.href.toLowerCase().endsWith('.pdf') ? (
                   <MuiLink
                     key={item.label}

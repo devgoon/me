@@ -1,4 +1,3 @@
-// no top-level React import required; keep file minimal
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Button,
