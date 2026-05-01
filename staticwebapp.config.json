@@ -5,8 +5,8 @@
   "routes": [
     { "route": "/auth", "rewrite": "/auth.html" },
     { "route": "/auth/*", "rewrite": "/auth.html" },
-    { "route": "/admin", "allowedRoles": ["authenticated"], "rewrite": "/admin.html" },
-    { "route": "/admin/*", "allowedRoles": ["authenticated"], "rewrite": "/admin.html" },
+    { "route": "/admin", "allowedRoles": ["authenticated"], "rewrite": "/index.html" },
+    { "route": "/admin/*", "allowedRoles": ["authenticated"], "rewrite": "/index.html" },
     { "route": "/api/panel-data", "allowedRoles": ["authenticated"] },
     { "route": "/api/cache-report", "allowedRoles": ["authenticated"] },
     {
@@ -34,14 +34,12 @@
   },
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": [
+      "exclude": [
       "/frontend/assets/*",
       "/images/*",
       "/favicon.ico",
       "/auth",
-      "/auth/*",
-      "/admin",
-      "/admin/*"
+      "/auth/*"
     ]
   },
   "mimeTypes": {
