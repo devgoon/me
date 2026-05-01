@@ -80,3 +80,17 @@ swa-dist/
 # Playwright HTML report
 playwright-report/
 test-results/
+
+# Coverage artifacts (ignore all coverage outputs generated during CI/local runs)
+coverage/
+**/coverage/
+lcov.info
+coverage-final.json
+coverage-summary.json
+lcov-report/
+
+# Archive folder for exported artifacts (kept out of git)
+archives/
+ 
+# pnpm lockfile (local-only)
+pnpm-lock.yaml

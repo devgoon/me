@@ -1,27 +1,26 @@
-const { Client } = require('../../api/db');
+vi.mock('../../api/db', () => ({ Client: vi.fn() }));
 /**
  * @fileoverview Tests for skills API.
  * @module tests/api/skills.test.js
  */
+let skillsHandler;
 
-const skillsHandler = require('../../api/skills/index');
-
-jest.mock('../../api/db', () => ({ Client: jest.fn() }));
-
+vi.mock('../../api/db', () => ({ Client: vi.fn() }));
 describe('skills API', () => {
   let client;
   const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     client = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn(),
-      end: jest.fn().mockResolvedValue(undefined),
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn(),
+      end: vi.fn().mockResolvedValue(undefined),
     };
-    Client.mockImplementation(() => client);
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
+    skillsHandler = require('../../api/skills/index');
   });
 
   afterAll(() => {
@@ -39,7 +38,7 @@ describe('skills API', () => {
         ],
       }); // skills
 
-    const context = { req: {}, res: null, log: { warn: jest.fn() } };
+    const context = { req: {}, res: null, log: { warn: vi.fn() } };
     await skillsHandler(context);
 
     expect(context.res.status).toBe(200);

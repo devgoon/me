@@ -22,6 +22,12 @@ function normalizeSkillRow(row) {
   };
 }
 
+/**
+ * Skills list endpoint. Returns categorized skill names for the latest candidate.
+ *
+ * @param {Object} context
+ * @param {Object} req
+ */
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'skills.list');
   const databaseUrl = process.env.AZURE_DATABASE_URL;

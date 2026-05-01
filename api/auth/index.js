@@ -3,7 +3,7 @@
  * @module api/auth/index.js
  */
 
-const { getClientPrincipal } = require('../_shared/auth');
+const auth = require('../_shared/auth');
 const {
   beginRequest,
   endRequest,
@@ -16,7 +16,7 @@ function text(value) {
 }
 
 async function handleMe(req) {
-  const principal = getClientPrincipal(req);
+  const principal = auth.getClientPrincipal(req);
   if (principal && principal.email) {
     return {
       status: 200,
@@ -42,6 +42,12 @@ async function handleMe(req) {
   return { status: 401, body: { error: 'Unauthorized' } };
 }
 
+/**
+ * Auth handler exposing session/user info endpoints (e.g., GET /me).
+ *
+ * @param {Object} context
+ * @param {Object} req
+ */
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'auth.me');
   const action = text(req && req.params && req.params.action).toLowerCase() || '';

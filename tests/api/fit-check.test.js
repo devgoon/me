@@ -1,30 +1,29 @@
-const { Client } = require('../../api/db');
+vi.mock('../../api/db', () => ({ Client: vi.fn() }));
 /**
  * @fileoverview Tests for fit-related API behavior.
  * @module tests/api/fit-check.test.js
  */
 
-const fitHandler = require('../../api/fit/index');
+let fitHandler;
 
-jest.mock('../../api/db', () => ({ Client: jest.fn() }));
-
+vi.mock('../../api/db', () => ({ Client: vi.fn() }));
 describe('fit-check API', () => {
   let client;
   const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
   const originalApiKey = process.env.ANTHROPIC_API_KEY;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     process.env.ANTHROPIC_API_KEY = 'test-key';
     client = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn(),
-      end: jest.fn().mockResolvedValue(undefined),
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn(),
+      end: vi.fn().mockResolvedValue(undefined),
     };
-    Client.mockImplementation(() => client);
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
-    global.fetch = jest.fn().mockResolvedValue({
+    global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
         text: JSON.stringify({
@@ -37,6 +36,7 @@ describe('fit-check API', () => {
       }),
     });
   });
+  fitHandler = require('../../api/fit/index');
 
   afterAll(() => {
     if (originalDatabaseUrl === undefined) delete process.env.AZURE_DATABASE_URL;
@@ -121,7 +121,7 @@ describe('fit-check API', () => {
       }); // education
 
     let capturedBody = null;
-    global.fetch = jest.fn().mockImplementation((url, opts) => {
+    global.fetch = vi.fn().mockImplementation((url, opts) => {
       capturedBody = opts && opts.body ? opts.body : null;
       return Promise.resolve({
         ok: true,
@@ -154,14 +154,14 @@ describe('fit-check API', () => {
 describe('fit GET behavior', () => {
   let client;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     client = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn(),
-      end: jest.fn().mockResolvedValue(undefined),
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn(),
+      end: vi.fn().mockResolvedValue(undefined),
     };
-    Client.mockImplementation(() => client);
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
   });
 
@@ -186,7 +186,7 @@ describe('fit GET behavior', () => {
         ],
       });
 
-    const context = { req: {}, res: null, log: { warn: jest.fn() } };
+    const context = { req: {}, res: null, log: { warn: vi.fn() } };
     await fitHandler(context, { method: 'GET', headers: {} });
 
     expect(context.res.status).toBe(200);
@@ -201,15 +201,15 @@ describe('fit API additional tests', () => {
   const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 
     client = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn(),
-      end: jest.fn().mockResolvedValue(undefined),
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn(),
+      end: vi.fn().mockResolvedValue(undefined),
     };
-    Client.mockImplementation(() => client);
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
   });
 
@@ -220,7 +220,7 @@ describe('fit API additional tests', () => {
 
   test('returns 400 if jobDescription missing', async () => {
     process.env.ANTHROPIC_API_KEY = 'test-key';
-    const context = { req: { method: 'POST', body: {} }, res: null, log: { warn: jest.fn() } };
+    const context = { req: { method: 'POST', body: {} }, res: null, log: { warn: vi.fn() } };
     await fitHandler(context, context.req);
     expect(context.res.status).toBe(400);
     delete process.env.ANTHROPIC_API_KEY;

@@ -8,10 +8,10 @@
     { "route": "/admin", "allowedRoles": ["authenticated"], "rewrite": "/admin.html" },
     { "route": "/admin/*", "allowedRoles": ["authenticated"], "rewrite": "/admin.html" },
     { "route": "/api/panel-data", "allowedRoles": ["authenticated"] },
-    { "route": "/api/admin/cache-report", "allowedRoles": ["authenticated"] },
     { "route": "/api/cache-report", "allowedRoles": ["authenticated"] },
     {
       "route": "/favicon.ico",
+      "rewrite": "/favicon.svg",
       "headers": { "Cache-Control": "public, max-age=604800, immutable" }
     },
     {

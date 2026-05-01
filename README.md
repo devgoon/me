@@ -25,7 +25,7 @@ flowchart LR
   Browser(Browser)
   SWA(Static Web Apps)
   Functions(Functions - api)
-  DB[(Postgres)]
+  DB[(Azure DB)]
   AI(Anthropic)
   CDN(CDN)
 
@@ -51,8 +51,10 @@ Environment (local)
   - `AZURE_DATABASE_URL` — Database connection string used by local tooling. Provide either an ADO-style connection string (suitable for `sqlpackage`/`sqlcmd`), for example:
     `Server=tcp:myhost.database.windows.net,1433;Initial Catalog=mydb;User ID=myuser;Password=secret;Encrypt=true;TrustServerCertificate=false;`
     or a `sqlserver://...;key=val;...` form.
+  - `ADMIN_DATABASE_ADO` — Admin-only ADO-style connection string used by Makefile DB admin tasks (`backup-db`, `dump-schema`, `restore-db`, `run-sql-file`).
   - `ANTHROPIC_API_KEY` — AI provider key (required for AI-backed endpoints; missing this will cause AI endpoints to return 500 errors)
   - `AI_MODEL` — model id (optional override)
+  - `VITE_SCHEDULE_MEETING_URL` — optional frontend booking URL shown when fit verdict is `FIT` (for example a Google Calendar appointment schedule URL). Must start with `VITE_`.
   - `FUNCTIONS_WORKER_RUNTIME=node`
 
 Start local dev stack
@@ -65,7 +67,7 @@ make start
 
 Database management
 
-- `make backup-db` — export the current database. For Azure SQL this will export a `.bacpac` using `sqlpackage`. `make backup-db` prefers an ADO-style connection string from `DATABASE_ADO` in `.env.local` (recommended for `sqlpackage`); if `DATABASE_ADO` is not present it falls back to `AZURE_DATABASE_URL`. For other workflows, use a Node-based export script or the Azure portal. Ensure one of these is set in `.env.local`.
+- `make backup-db` — export the current database. For Azure SQL this will export a `.bacpac` using `sqlpackage`. Requires `ADMIN_DATABASE_ADO` in `.env.local`.
 - `make deploy-db` — runs the full deployment workflow (pre/post schema dumps, migrations, verification). Review `Makefile` and ensure `.env.local` is configured before running.
 
 Quick commands:
@@ -86,15 +88,24 @@ make stop
 
 Open these pages in your browser once the emulator is running:
 
-- Admin UI: http://127.0.0.1:4280/admin.html (source: frontend/admin.html)
-- Experience UI: http://127.0.0.1:4280/experience.html (source: frontend/experience.html)
-- Fit / Analyzer: http://127.0.0.1:4280/fit.html (source: frontend/fit.html)
+- Admin UI: http://127.0.0.1:4280/admin.html (source: frontend-react)
+- Experience UI: http://127.0.0.1:4280/experience.html (source: frontend-react)
+- Fit / Analyzer: http://127.0.0.1:4280/fit.html (source: frontend-react)
 
 Development notes
 
 - Frontend is served as static files; `assets/js` contains the client code (no frontend build step required).
 - The `dist/` directory contains bundled/minified artifacts used on some static pages; `assets/js` is the authoritative source during development.
 - The admin UI performs draft autosaves to `localStorage`; use the Admin page to persist changes to the DB.
+
+React frontend (migration work)
+
+- A React version of the UI is available in `frontend-react/`.
+- Start React dev server: `npm run react:dev`
+- Build React app: `npm run react:build`
+- `make start` now includes React build watch mode and rebuilds `frontend-react/dist` on file changes.
+- Build React app on file changes only: `npm run react:build:watch`
+- Preview React build: `npm run react:preview`
 
 Testing & quality checks
 

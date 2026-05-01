@@ -1,56 +1,45 @@
 {
   "name": "me",
   "version": "1.0.0",
+  "private": true,
   "description": "Personal website for Lodovico Minnocci",
-  "main": "frontend/index.html",
+  "main": "frontend-react/index.html",
   "author": "Lodovico Minnocci",
   "license": "MIT",
   "scripts": {
-    "test": "npm run test:unit",
-    "test:unit": "npx jest --runInBand --testPathPattern=tests/",
+    "test": "npm run test:api",
+    "test:api": "npm --prefix api run test:vitest",
     "test:evals": "node scripts/run-evals.js",
-    "test:evals:jest": "npx jest --runInBand --testPathPattern=tests/evals/ --coverage=false",
     "evals:export:chat-cache": "node scripts/export-chat-cache-evals.js",
     "build": "echo 'No UI build required'",
-    "test:e2e": "npx playwright test",
-    "test:e2e:headed": "npx playwright test --headed",
-    "test:e2e:debug": "npx playwright test --debug",
     "format": "prettier --write \"**/*.{js,json,md,css,html}\"",
     "format:check": "prettier --check \"**/*.{js,json,md,css,html}\"",
-    "coverage": "jest --coverage --coverageReporters=text --coverageReporters=text-summary --runInBand",
-    "coverage:api": "cd api && npm run coverage",
-    "coverage:assets": "cd frontend/assets && npm run coverage || true",
     "update-default-data": "node scripts/update-default-data.js",
-    "lint": "npx eslint@8 \"api/**/*.js\" \"frontend/assets/js/**/*.js\" --ext .js --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.js\"",
-    "lint:fix": "npx eslint@8 \"api/**/*.js\" \"frontend/assets/js/**/*.js\" --ext .js --ignore-pattern \"**/__tests__/**\" --ignore-pattern \"**/*.test.js\" --fix"
+    "lint": "eslint \"api/**/*.js\" \"frontend-react/src/**/*.{js,jsx}\" \"tests/**/*.{js,jsx}\" --fix",
+    "lint:fix": "eslint \"api/**/*.js\" \"frontend-react/src/**/*.{js,jsx}\" \"tests/**/*.{js,jsx}\" --fix",
+    "react:dev": "npm --prefix frontend-react run dev",
+    "react:build": "npm --prefix frontend-react run build",
+    "react:build:watch": "npm --prefix frontend-react run build:watch",
+    "react:preview": "npm --prefix frontend-react run preview",
+    "test:ui": "./frontend-react/node_modules/.bin/vitest run --config ./vite.config.ui.js --root . --coverage",
+    "test:e2e": "npx playwright test --config=playwright.config.js --project=chromium --reporter=list"
   },
   "devDependencies": {
-    "cspell": "^10.0.0",
-    "eslint": "^10.1.0",
+    "@eslint/js": "^8.0.0",
+    "@playwright/test": "^1.45.0",
+    "@vitest/coverage-istanbul": "^4.1.5",
+    "@vitest/coverage-v8": "^4.1.5",
+    "eslint": "^10.2.1",
+    "eslint-plugin-jsdoc": "^62.9.0",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "jsdom": "^29.1.0",
     "prettier": "^2.8.8",
-    "@playwright/test": "^1.40.0",
-    "jest": "^29.6.0",
-    "nyc": "^15.1.0",
-    "jest-environment-jsdom": "^30.3.0",
-    "linkinator": "^7.6.1"
+    "vitest": "^4.1.5"
   },
-  "jest": {
-    "testMatch": [
-      "<rootDir>/tests/**/*.test.js"
-    ],
-    "testPathIgnorePatterns": [
-      "<rootDir>/tests/e2e/"
-    ],
-    "setupFiles": [
-      "<rootDir>/tests/setupTests.js"
-    ],
-    "collectCoverage": true,
-    "collectCoverageFrom": [
-      "api/**/*.js",
-      "frontend/assets/js/**/*.js"
-    ],
-    "coverageDirectory": "coverage"
-  },
+  "workspaces": [
+    "api",
+    "frontend-react"
+  ],
   "engines": {
     "node": "22.x"
   }

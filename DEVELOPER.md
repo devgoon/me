@@ -27,7 +27,10 @@ nvm use 22
 1. Install Node dependencies:
 
 ```bash
-make install
+make install        # developer install (updates lockfile if needed)
+
+# Reproducible CI-style install (uses package-lock.json):
+make install-ci     # CI-safe: fails if package-lock.json is missing
 ```
 
 2. Create your local environment file from the example and update connection details:
@@ -40,7 +43,7 @@ cp .env.local.example .env.local
 3. Run the standard checks and tests:
 
 ```bash
-make check     # spellcheck, lint, unit tests, link check, coverage
+make check     # runs spellcheck, lint, build, unit tests and coverage
 ```
 
 4. Run the local frontend/static site during development:
@@ -63,7 +66,6 @@ make evals
 
 ```bash
 npm run test:evals
-npm run test:evals:jest
 ```
 
 - Export draft chat eval cases from historical cache rows in `ai_response_cache`:
@@ -90,11 +92,21 @@ Scripts that work with Azure SQL live in the `scripts/` folder and produce artif
 
 ## How the scripts read credentials
 
-- Primary source: the `.env.local` file's `DATABASE_ADO` value (ADO-style: `Data Source=...;Initial Catalog=...;User ID=...;Password=...`).
+- Primary source: the `.env.local` file's `ADMIN_DATABASE_ADO` value (ADO-style: `Data Source=...;Initial Catalog=...;User ID=...;Password=...`).
 - For non-interactive runs you can export `SOURCE_USER` and `SOURCE_PASS` in your shell; the scripts will prefer those if present.
 - The tools prefer SQL authentication (username/password). Integrated/Kerberos authentication can fail on macOS and in CI environments ("Cannot generate SSPI context"). When in doubt, use SQL auth.
 
 ## Common commands
+
+Common Make targets you'll use frequently:
+
+- `make install` — local developer install (may update lockfile)
+- `make install-ci` — CI-style install (requires committed `package-lock.json`)
+- `make lint` — run `prettier` and `eslint --fix` across the repo
+- `make spellcheck` — run `cspell` against frontend and api sources
+- `make check` — run lint, build-frontend, and unit tests with coverage
+- `make start` — start local stack (Azurite, Functions host and SWA emulator)
+- `make e2e` — run Playwright end-to-end tests (starts local stack when no BASE_URL)
 
 Dump current schema to `db/schema.sql`:
 
@@ -175,6 +187,18 @@ make gh-sync-env REPO=devgoon/me ENV_FILE=.env.local
 ```bash
 make e2e
 ```
+
+## UI tests (Vitest)
+
+- Run the repository-level UI tests (uses `vite.config.ui.js` and the frontend's devDependencies):
+
+```bash
+npm run test:ui
+```
+
+- The `Makefile` `unit-test` target now calls the repo `test:ui` script; running `make unit-test` will run evals, UI tests (with coverage) and API tests.
+
+- Note: the old `frontend-react/tests-react` bridge approach has been removed — if you need to run frontend tests from the `frontend-react` package directly, use the package's local scripts or re-create a bridge as needed.
 
 - Run tests against a deployed preview (do NOT start the local stack):
 

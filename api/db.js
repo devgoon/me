@@ -7,17 +7,91 @@
 // Testing hook: tests may inject a fake mssql implementation via
 // `require('./db').__setMssqlMock(mock)`. This avoids brittle jest mocking.
 let __mssqlMock = undefined;
+// Testing hook: tests may inject a constructed client instance directly
+// via `require('./db').__setTestClient(client)` so that `new Client()`
+// returns the provided test client. This is useful for unit tests that
+// need to assert on query calls.
+let __testClient = null;
+// During test runs, provide a default no-op fake mssql implementation so
+// tests that don't explicitly mock the DB client won't attempt real
+// network connections. Individual tests may still override this with
+// `__setMssqlMock` if they need custom behavior.
+if (process.env.NODE_ENV === 'test') {
+  __mssqlMock = {
+    ConnectionPool: class {
+      constructor() {}
+      async connect() {
+        return undefined;
+      }
+      request() {
+        return new (class {
+          constructor() {
+            this._inputs = {};
+          }
+          input(name, value) {
+            this._inputs[name] = value;
+          }
+          async query() {
+            return { recordset: [] };
+          }
+        })();
+      }
+      async close() {
+        return undefined;
+      }
+    },
+    Transaction: class {
+      constructor() {}
+      async begin() {
+        return undefined;
+      }
+      async commit() {
+        return undefined;
+      }
+      async rollback() {
+        return undefined;
+      }
+    },
+    Request: class {
+      constructor() {
+        this._inputs = {};
+      }
+      input(name, value) {
+        this._inputs[name] = value;
+      }
+      async query() {
+        return { recordset: [] };
+      }
+    },
+  };
+}
 function __getMssql() {
   if (__mssqlMock) return __mssqlMock;
   return require('mssql');
 }
 
+/**
+ * Lightweight SQL client wrapper exposing a consistent `query`/`queryWithRetry`
+ * interface. In tests a fake client may be injected with `__setTestClient`.
+ */
 class Client {
+  /**
+   * Create a new `Client` instance.
+   *
+   * @param {{connectionString?: string}} [options] Connection string options
+   */
   constructor(options) {
+    if (__testClient) return __testClient;
     this._connectionString = (options && options.connectionString) || null;
     this._pool = null;
   }
 
+  /**
+   * Establish a connection pool. Reads `AZURE_DATABASE_URL` when no explicit
+   * `connectionString` option is provided.
+   *
+   * @returns {Promise<void>}
+   */
   async connect() {
     // Prefer explicit option, then AZURE_DATABASE_URL. Use the string as-is
     // (trim surrounding quotes) — we only support Azure SQL connection strings.
@@ -41,6 +115,11 @@ class Client {
     await this._pool.connect();
   }
 
+  /**
+   * Begin a transaction on the current connection pool.
+   *
+   * @returns {Promise<void>}
+   */
   async beginTransaction() {
     if (!this._pool) throw new Error('Client not connected');
     const sql = __getMssql();
@@ -48,12 +127,22 @@ class Client {
     await this._transaction.begin();
   }
 
+  /**
+   * Commit the active transaction.
+   *
+   * @returns {Promise<void>}
+   */
   async commitTransaction() {
     if (!this._transaction) throw new Error('No active transaction');
     await this._transaction.commit();
     this._transaction = null;
   }
 
+  /**
+   * Roll back the active transaction if present.
+   *
+   * @returns {Promise<void>}
+   */
   async rollbackTransaction() {
     if (!this._transaction) return;
     try {
@@ -63,9 +152,15 @@ class Client {
     }
   }
 
+  /**
+   * which are translated to T-SQL @p1/@p2. Returns an object with `rows`.
+   *
+   * @param {string} text - SQL text with $n placeholders.
+   * @param {Array<any>} [params] - Parameter values.
+   * @returns {Promise<{rows: any[]}>}
+   */
   async query(text, params) {
     if (!this._pool) throw new Error('Client not connected');
-    // Convert Postgres-style $1/$2 placeholders to T-SQL @p1/@p2 to match
     // how we bind parameters below (we call `req.input('p1', value)`).
     const transformedText = String(text).replace(/\$(\d+)/g, '@p$1');
     const sql = __getMssql();
@@ -95,6 +190,14 @@ class Client {
 
   // Helper: query with retry/backoff for transient DB errors.
   // Options: { maxAttempts, baseDelayMs }
+  /**
+   * Execute a query with retry/backoff for common transient errors.
+   *
+   * @param {string} text - SQL text.
+   * @param {Array<any>} [params] - Parameter values.
+   * @param {{maxAttempts?: number, baseDelayMs?: number}} [options]
+   * @returns {Promise<{rows: any[]}>}
+   */
   async queryWithRetry(text, params, options) {
     const maxAttempts = (options && options.maxAttempts) || 3;
     const baseDelay = (options && options.baseDelayMs) || 200;
@@ -120,6 +223,11 @@ class Client {
     }
   }
 
+  /**
+   * Close the connection pool if open.
+   *
+   * @returns {Promise<void>}
+   */
   async end() {
     try {
       if (this._pool) {
@@ -136,6 +244,9 @@ module.exports = {
   Client,
   __setMssqlMock(m) {
     __mssqlMock = m;
+  },
+  __setTestClient(c) {
+    __testClient = c;
   },
   get sql() {
     try {

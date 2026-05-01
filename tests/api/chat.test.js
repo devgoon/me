@@ -1,13 +1,11 @@
-const { Client } = require('../../api/db');
+// Note: do not hoist a module mock for '../../api/db'. Tests will replace
+// `require('../../api/db').Client` at runtime in `beforeEach` so that the
+// actual module code is used but the constructed client can be swapped.
 /**
  * @fileoverview Tests for chat API endpoints.
  * @module tests/api/chat.test.js
  */
-const chatHandler = require('../../api/chat/index');
-
-jest.mock('../../api/db', () => ({
-  Client: jest.fn(),
-}));
+let chatHandler;
 
 describe('chat API', () => {
   let client;
@@ -15,16 +13,18 @@ describe('chat API', () => {
   const originalApiKey = process.env.ANTHROPIC_API_KEY;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     process.env.ANTHROPIC_API_KEY = 'test-key';
     client = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn(),
-      end: jest.fn().mockResolvedValue(undefined),
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn(),
+      end: vi.fn().mockResolvedValue(undefined),
     };
-    Client.mockImplementation(() => client);
+    // Inject the test client instance so `new Client()` returns our mock.
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
+    chatHandler = require('../../api/chat/index');
   });
 
   afterAll(() => {
@@ -74,6 +74,7 @@ describe('chat API', () => {
       .mockResolvedValueOnce({}); // update cache_hit_count
     const context = { res: null };
     await chatHandler(context, { method: 'POST', body: { message: 'What is AI?' } });
+
     expect(context.res.status).toBe(200);
     expect(context.res.body.response).toBe('Cached answer');
   });
@@ -105,13 +106,14 @@ describe('chat API', () => {
       .mockResolvedValueOnce({}); // insert cache (setCache)
 
     let capturedBody = null;
-    global.fetch = jest.fn().mockImplementation((url, opts) => {
+    global.fetch = vi.fn().mockImplementation((url, opts) => {
       capturedBody = opts && opts.body ? opts.body : null;
       return Promise.resolve({ ok: true, json: async () => ({ text: 'OK' }) });
     });
 
     const context = { res: null };
     await chatHandler(context, { method: 'POST', body: { message: 'Hello' } });
+
     expect(context.res.status).toBe(200);
     expect(capturedBody).toBeTruthy();
     expect(capturedBody).toMatch(/JavaScript|JS/);
@@ -133,7 +135,7 @@ describe('chat API', () => {
       .mockResolvedValueOnce({}); // setCache insert
 
     // Make the AI return a string with extra whitespace
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockImplementation(() =>
         Promise.resolve({ ok: true, json: async () => ({ text: '   Trim me   ' }) })
@@ -141,6 +143,7 @@ describe('chat API', () => {
 
     const context = { res: null };
     await chatHandler(context, { method: 'POST', body: { message: 'Trim test' } });
+
     expect(context.res.status).toBe(200);
 
     // Find the MERGE call for ai_response_cache and inspect params
@@ -161,17 +164,20 @@ describe('chat API additional tests', () => {
   const originalAnthropicKey = process.env.ANTHROPIC_API_KEY;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     process.env.ANTHROPIC_API_KEY = 'test-key';
 
     client = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn(),
-      end: jest.fn().mockResolvedValue(undefined),
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn(),
+      end: vi.fn().mockResolvedValue(undefined),
     };
-    Client.mockImplementation(() => client);
+    // Inject the test client instance so `new Client()` returns our mock.
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
+
+    chatHandler = require('../../api/chat/index');
 
     // Order of queries: cache select, then loadCandidateContext sequence
     client.query
@@ -195,13 +201,13 @@ describe('chat API additional tests', () => {
   });
 
   test('stores JSON-stringified object in cache when response is object', async () => {
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValue(
         Promise.resolve({ ok: true, json: async () => ({ text: '{"answer":"ok"}' }) })
       );
 
-    const context = { req: { body: { message: 'hello' } }, res: null, log: { info: jest.fn() } };
+    const context = { req: { body: { message: 'hello' } }, res: null, log: { info: vi.fn() } };
     await chatHandler(context, context.req);
 
     expect(context.res.status).toBe(200);
@@ -214,7 +220,7 @@ describe('chat API additional tests', () => {
   });
 
   test('returns 400 when message missing', async () => {
-    const context = { req: { body: {} }, res: null, log: { info: jest.fn() } };
+    const context = { req: { body: {} }, res: null, log: { info: vi.fn() } };
     await chatHandler(context, context.req);
     expect(context.res.status).toBe(400);
   });
@@ -233,7 +239,7 @@ describe('chat helpers additional', () => {
   });
 
   test('getCache returns response and updates hit count', async () => {
-    const client = { query: jest.fn() };
+    const client = { query: vi.fn() };
     client.queryWithRetry = client.query;
     client.query
       .mockResolvedValueOnce({ rows: [{ response: '  answer  ', cache_hit_count: 1 }] })
@@ -246,7 +252,7 @@ describe('chat helpers additional', () => {
   });
 
   test('setCache stores trimmed string and JSON for object', async () => {
-    const client = { query: jest.fn() };
+    const client = { query: vi.fn() };
     client.queryWithRetry = client.query;
     await helpers.setCache(client, 'm', 'q', '  hello  ');
     expect(client.query).toHaveBeenCalled();
@@ -261,7 +267,7 @@ describe('chat helpers additional', () => {
   });
 
   test('callAnthropic returns text from various response shapes', async () => {
-    global.fetch = jest.fn().mockResolvedValueOnce({
+    global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({ text: 'hello' }),
     });
@@ -271,7 +277,7 @@ describe('chat helpers additional', () => {
   });
 
   test('getCache returns null when no rows', async () => {
-    const client = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+    const client = { query: vi.fn().mockResolvedValue({ rows: [] }) };
     client.queryWithRetry = client.query;
     const res = await helpers.getCache(client, 'm', 'q');
     expect(res).toBeNull();

@@ -1,6 +1,6 @@
 // Target long-prompt branches and edge cases in api/prompts.js
 // Reuse mocked parse helpers for deterministic behavior
-jest.mock('../../api/_shared/parse', () => ({
+vi.mock('../../api/_shared/parse', () => ({
   parsePgArray: (s) => {
     if (!s || typeof s !== 'string') return null;
     const t = s.trim();

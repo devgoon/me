@@ -1,12 +1,10 @@
+vi.mock('../../api/db', () => ({ Client: vi.fn() }));
 const health = require('../../api/health/index');
-const { Client } = require('../../api/db');
-
-jest.mock('../../api/db', () => ({ Client: jest.fn() }));
 
 describe('health endpoint', () => {
   let origDb;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     origDb = process.env.AZURE_DATABASE_URL;
   });
   afterEach(() => {
@@ -17,7 +15,7 @@ describe('health endpoint', () => {
   });
 
   test('returns not_configured when env missing', async () => {
-    const context = { res: null, log: { error: jest.fn() } };
+    const context = { res: null, log: { error: vi.fn() } };
     await health(context, {});
     expect(context.res.status).toBe(200);
     expect(context.res.body.checks.env.databaseUrl).toBe('not_configured');
@@ -26,11 +24,11 @@ describe('health endpoint', () => {
   test('db ok and anthropic not configured', async () => {
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     const mockClient = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn().mockResolvedValue({}),
-      end: jest.fn().mockResolvedValue(undefined),
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn().mockResolvedValue({}),
+      end: vi.fn().mockResolvedValue(undefined),
     };
-    Client.mockImplementation(() => mockClient);
+    require('../../api/db').__setTestClient(mockClient);
     mockClient.queryWithRetry = mockClient.query;
     const context = { res: null };
     await health(context, {});
@@ -44,13 +42,13 @@ describe('health endpoint', () => {
     process.env.ANTHROPIC_API_KEY = 'k';
     process.env.AI_MODEL = 'not-exist';
     const mockClient = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn().mockResolvedValue({}),
-      end: jest.fn().mockResolvedValue(undefined),
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn().mockResolvedValue({}),
+      end: vi.fn().mockResolvedValue(undefined),
     };
-    Client.mockImplementation(() => mockClient);
+    require('../../api/db').__setTestClient(mockClient);
     mockClient.queryWithRetry = mockClient.query;
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValue({ ok: true, json: async () => ({ models: [{ id: 'other' }] }) });
     const context = { res: null };

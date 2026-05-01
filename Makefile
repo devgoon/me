@@ -1,74 +1,85 @@
-.PHONY: e2e install lint spellcheck link-check unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env
+.PHONY: e2e install install-ci e2e lint spellcheck unit-test coverage check evals start stop backup-db deploy-db run-sql-file install-sqlcmd dump-schema restore-db gh-sync-env clean
+
 
 install:
-	npm install
-	cd api && npm install
+	@# Local developer install: allow generating/updating the lockfile.
+	@npm install --workspaces --legacy-peer-deps --include=dev
 
-# CI-friendly install: install only runtime (non-dev) dependencies
-# Use `make install-ci` in CI to avoid devDependencies being installed.
 install-ci:
-	npm ci --omit=dev
-	cd api && npm ci --omit=dev
-
-lint:
-	@# Auto-format with Prettier, then run ESLint autofix
-	@npx prettier --write "**/*.{js,json,md,css,html}"
-	@npx eslint "api/**/*.js" "frontend/assets/js/**/*.js" --ignore-pattern "**/__tests__/**" --ignore-pattern "**/*.test.js" --fix
+	@# CI install: require root package-lock.json and perform reproducible install
+	@if [ ! -f package-lock.json ]; then \
+		echo "package-lock.json missing; aborting CI install"; exit 1; \
+	fi
+	@npm ci --workspaces --legacy-peer-deps --include=dev
+	
+lint:spellcheck
+	@npx prettier --write "**/*.{jsx,js,json,md,css,html}"
+	@npx eslint "api/**/*.js" "frontend-react/src/**/*.{js,jsx}" "tests/**/*.{js,jsx}" --fix
 
 spellcheck:
-	npx cspell "**/*.{html,css,js,ts}" "frontend/assets/*.txt" "api/**/*.js" --verbose
+	npx cspell "frontend-react/*.{html,css,jsx,js,tsx, ts}" "api/**/*.js" --verbose
 
-link-check:
-	npx linkinator ./frontend/index.html ./frontend/admin.html ./frontend/auth.html ./frontend/experience.html ./frontend/fit.html
+unit-test: evals
+	@echo "==> Running eval tests (no coverage)"
+	@npm run test:evals || true
+	@echo "==> Running UI tests (frontend-react) with coverage"
+	@npm run test:ui || true
+	@echo "==> Running API tests with coverage"
+	@npm --prefix api run coverage || true
 
-unit-test:
-	@echo "Running top-level tests"
-	npm test
+coverage: unit-test
 
-coverage:
-	@echo "Running repository tests with coverage (console summary)"
-	@npm run coverage
 
 check:
-	@echo "==> [1/5] Running spellcheck"
-	@$(MAKE) spellcheck
-	@echo "==> [2/5] Running lint"
-	@$(MAKE) lint
-	@echo "==> [3/5] Running link check"
-	@$(MAKE) link-check
-	@echo "==> [4/5] Running unit tests + coverage"
+
+	@echo "==> Running lint/spellcheck"
+	make lint
+	@echo "==> Building frontend"
+	@$(MAKE) build-frontend
+	@echo "==> Running evals, unit tests and coverage"
 	@$(MAKE) coverage
-	@echo "==> [5/5] Code coverage complete"
 	@echo "==> Quality checks complete"
 
 evals:
 	@echo "Running eval runner (fit + chat)"
 	npm run test:evals
-	@echo "Running eval Jest suite"
-	npm run test:evals:jest
 
+build-frontend:
+	@echo "Building frontend (frontend-react)"
+	@npm --prefix frontend-react run build || { echo "Frontend build failed (frontend-react)."; exit 1; }
+e2e:
+	bash scripts/run-e2e.sh
+	
 start:
 	@mkdir -p .azurite
-	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
-	AZURITE_PID=$$!; \
-	trap 'kill $$AZURITE_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
 	# Load .env.local into environment for child processes (single source of truth)
 	if [ -f .env.local ]; then \
 		set -a; . .env.local; set +a; \
 	fi; \
+	@npx -y azurite --silent --location .azurite --debug .azurite/debug.log >/dev/null 2>&1 & \
+	AZURITE_PID=$$!; \
+	REACT_WATCH_PID=""; \
+	trap 'kill $$AZURITE_PID $$REACT_WATCH_PID >/dev/null 2>&1 || true' EXIT INT TERM; \
 	# Ensure DEBUG_DB is enabled for local Functions host unless explicitly disabled
 	if [ -z "$$DEBUG_DB" ]; then \
 		export DEBUG_DB=1; \
 	fi; \
-	# Prepare swa-dist locally (like CI) and start the emulator from swa-dist
-	# Start the SWA emulator directly from the frontend directory (no swa-dist copy)
-	echo "Starting local SWA emulator from frontend/ with api/"; \
-	npx @azure/static-web-apps-cli@latest start frontend --api-location api --port 4280
+	# Build and serve React frontend by default.
+	echo "Building React frontend (frontend-react/dist)..."; \
+	# Run the frontend build and fail loudly with a helpful message if it errors
+	# (avoids masking failures with `|| true`).
+	npm --prefix frontend-react run build || { echo "Frontend build failed — see frontend-react build output"; exit 1; }; \
+	echo "Watching React frontend for changes (frontend-react/dist)..."; \
+	# Start watch in background; swallow non-zero from the backgrounded watcher only
+	npm --prefix frontend-react run build:watch >/dev/null 2>&1 & \
+	REACT_WATCH_PID=$$!; \
+	echo "Starting local SWA emulator from frontend-react/dist with api/"; \
+	npx @azure/static-web-apps-cli@latest start frontend-react/dist --api-location api --port 4280
 
 stop:
 	@set -e; \
 	PIDS=""; \
-	for PORT in 4280 7071 10000 10001 10002; do \
+	for PORT in 4280 7071 10000 10001 10002 5173 4173; do \
 		FOUND=$$(lsof -tiTCP:$$PORT -sTCP:LISTEN || true); \
 		if [ -n "$$FOUND" ]; then \
 			PIDS="$$PIDS $$FOUND"; \
@@ -76,7 +87,7 @@ stop:
 	done; \
 	PIDS=$$(printf "%s\n" $$PIDS | tr ' ' '\n' | sed '/^$$/d' | sort -u | tr '\n' ' '); \
 	if [ -z "$$PIDS" ]; then \
-		echo "No local SWA/Functions/Azurite processes are listening on app ports."; \
+		echo "No local SWA/Functions/Azurite/Vite processes are listening on app ports."; \
 		exit 0; \
 	fi; \
 	echo "Stopping local app processes: $$PIDS"; \
@@ -120,7 +131,7 @@ stop:
 	done; \
 	if [ -n "$$STILL_RUNNING" ]; then \
 		LISTENERS=""; \
-		for PORT in 4280 7071 10000 10001 10002; do \
+		for PORT in 4280 7071 10000 10001 10002 5173 4173; do \
 			FOUND=$$(lsof -tiTCP:$$PORT -sTCP:LISTEN || true); \
 			if [ -n "$$FOUND" ]; then \
 				LISTENERS="$$LISTENERS $$FOUND"; \
@@ -141,8 +152,8 @@ backup-db: install-sqlcmd
 	@if [ -z "$(TARGET_DB)" ]; then \
 		echo "Usage: make backup-db TARGET_DB=database_name"; exit 1; \
 	fi
-	@echo "Backing up database '$(TARGET_DB)' to db/*.bacpac (requires DATABASE_ADO in .env.local)"
-	@if [ ! -f .env.local ]; then echo ".env.local not found; create .env.local with DATABASE_ADO set"; exit 1; fi; \
+	@echo "Backing up database '$(TARGET_DB)' to db/*.bacpac (requires ADMIN_DATABASE_ADO in .env.local)"
+	@if [ ! -f .env.local ]; then echo ".env.local not found; create .env.local with ADMIN_DATABASE_ADO set"; exit 1; fi; \
 	./scripts/backup-db.sh "$(TARGET_DB)" || (echo "backup script failed"; exit 1)
 
 run-sql-file:
@@ -162,7 +173,7 @@ install-sqlcmd:
 
 
 dump-schema: install-sqlcmd
-	@echo "Exporting database schema to db/schema.sql (requires DATABASE_ADO in .env.local)"
+	@echo "Exporting database schema to db/schema.sql (requires ADMIN_DATABASE_ADO in .env.local)"
 	@bash scripts/dump-schema.sh db/schema.sql
 
 restore-db: install-sqlcmd
@@ -173,7 +184,7 @@ restore-db: install-sqlcmd
 	printf "About to restore BACPAC '%s' into database '%s'\n" "$(BACPAC)" "$(TARGET_DB)"; \
 	printf "This is destructive. Proceed? Type 'yes' to continue: "; read ans; \
 	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
-	@echo "Restoring BACPAC '$(BACPAC)' into database '$(TARGET_DB)' (server from .env.local DATABASE_ADO)"; \
+	@echo "Restoring BACPAC '$(BACPAC)' into database '$(TARGET_DB)' (server from .env.local ADMIN_DATABASE_ADO)"; \
 	./scripts/restore-db.sh "$(BACPAC)" "$(TARGET_DB)"
 
 gh-sync-env:
@@ -196,5 +207,14 @@ gh-sync-env:
 	printf "Proceed? Type 'yes' to continue: "; read ans; \
 	if [ "$$ans" != "yes" ]; then echo "Aborted."; exit 1; fi; \
 	./scripts/gh-sync-env-to-gh.sh --env-file "$$ENV_FILE" --repo "$$REPO"
-e2e:
-	bash scripts/run-e2e.sh
+
+
+
+clean:
+	@echo "Cleaning node_modules, build artifacts and caches..."
+	@rm -rf node_modules frontend-react/node_modules
+	@rm -f frontend-react/package-lock.json
+	@rm -rf frontend-react/dist coverage .azurite .vite .cache
+	@echo "Running 'npm cache verify' (use --force to aggressively clean)"
+	@npm cache verify || true
+	@echo "Clean complete. To reinstall, run: 'make install' or 'make install-ci'"

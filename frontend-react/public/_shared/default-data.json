@@ -1,0 +1,361 @@
+{
+  "skills": {
+    "strong": [
+      "Agile-Scrum",
+      "API Design and Development",
+      "Application Security",
+      "Artifactory",
+      "AWS API Gateway",
+      "AWS DynamoDB",
+      "AWS IOT",
+      "AWS Lambda",
+      "AWS S3",
+      "Azure Administration",
+      "Azure Cloud",
+      "Azure DevOps",
+      "Code Design",
+      "Communication",
+      "Continuous Delivery (CI/CD)",
+      "Cryptography and Security Concepts",
+      "Datadog",
+      "DevSecOps",
+      "Digital Authentication",
+      "Enterprise Architecture",
+      "Event Driven Architecture",
+      "GitHub Copilot",
+      "Interpersonal Skills",
+      "Observability",
+      "Problem Solving",
+      "Python",
+      "React",
+      "Software Architecture",
+      "Terraform",
+      "Troubleshooting",
+      "TypeScript",
+      "Written Communication"
+    ],
+    "moderate": [
+      "Amazon CloudWatch",
+      "C#",
+      "Context Engineering",
+      "Conversational AI",
+      "Docker / Containerization",
+      "Java",
+      "Jenkins",
+      "JSON",
+      "Knowledge Sharing",
+      "LLM Integration",
+      "Load Balancing",
+      "Node.js",
+      "Object-Oriented Design",
+      "Pen Testing Tools",
+      "Prompt Engineering",
+      "Relational Databases",
+      "Shell-Scripting",
+      "SNYK",
+      "YAML"
+    ]
+  },
+  "experience": {
+    "profile": {
+      "name": "Lodovico Minnocci",
+      "title": "Senior Software Engineer"
+    },
+    "experiences": [
+      {
+        "id": "540",
+        "companyName": "Torc Robotics",
+        "title": "Senior Software Engineer",
+        "startDate": "2024-09-01",
+        "endDate": null,
+        "isCurrent": true,
+        "bulletPoints": [
+          "Design and operate a high-availability, event-driven telemetry platform using AWS IoT, Kinesis, Lambda, and DynamoDB with strict latency and reliability requirements.",
+          "Own platform APIs documented via OpenAPI and consumed by multiple downstream engineering teams.",
+          "Define and monitor SLOs; build Datadog dashboards and synthetic tests to manage system health and operational risk.",
+          "Serve as on-call first responder for production incidents, leading triage, mitigation, and postmortems to improve system resilience.",
+          "Automate infrastructure and deployment workflows using Terraform and custom GitHub Actions, enabling reliable and repeatable releases.",
+          "Act as technical lead within Agile teams, influencing architectural direction, prioritization, and release readiness.",
+          "Apply AI-assisted development tools (GitHub Copilot) to accelerate delivery while maintaining correctness through testing, peer review, and architectural validation.",
+          "Mentor engineers and promoted best practices in system design and reliability."
+        ],
+        "aiContext": {
+          "situation": "Wanted to work on high-impact autonomous systems and modern cloud-native architecture.",
+          "approach": "Designed and operated a high-availability, event-driven telemetry platform using AWS IoT, Kinesis, Lambda, and DynamoDB with strict latency and reliability requirements.",
+          "technicalWork": "Delivered a reliable fleet observability workflow that shortened incident triage cycles.",
+          "lessonsLearned": "Clear contracts and observability-first architecture reduce long-term operational risk."
+        }
+      },
+      {
+        "id": "541",
+        "companyName": "Ancera",
+        "title": "Systems Architect",
+        "startDate": "2020-12-01",
+        "endDate": "2024-09-01",
+        "isCurrent": false,
+        "bulletPoints": [
+          "Owned Azure infrastructure strategy, balancing performance, reliability, cost, and security across production systems.",
+          "Designed and deployed edge AI solutions using Docker and Nvidia GPUs, improving image-recognition performance by 700%.",
+          "Engaged with vendors to create and implement security‑focused data and network strategies for our LAN environment.",
+          "Established DevSecOps practices and secure CI/CD pipelines, achieving SOC 2 compliance.",
+          "Built MLOps workflows for TensorFlow in Docker and managed private container and artifact registries."
+        ],
+        "aiContext": {
+          "situation": "Opportunity to shape architecture and platform direction in a growing product company.",
+          "approach": "Built secure CI/CD and deployment standards while enabling faster engineering throughput.",
+          "technicalWork": "Created a platform maturity roadmap that balanced speed, security, and cost.",
+          "lessonsLearned": "Security and compliance should be built into delivery workflows, not bolted on later."
+        }
+      },
+      {
+        "id": "542",
+        "companyName": "Subway",
+        "title": "Lead Integration Engineer",
+        "startDate": "2019-07-01",
+        "endDate": "2020-12-01",
+        "isCurrent": false,
+        "bulletPoints": [
+          "Built APIs in Node.js supporting mobile, web, and B2B channels at large scale.",
+          "Led distributed engineering efforts for integration delivery.",
+          "Unit Tests written in Mocha.",
+          "Monitored services with CloudWatch.",
+          "Wrote CloudFormation script."
+        ],
+        "aiContext": {
+          "situation": "Chance to lead high-scale integration architecture for a major global brand.",
+          "approach": "Drove API and integration reliability across multiple dependent teams.",
+          "technicalWork": "Established a delivery cadence that improved cross-team predictability.",
+          "lessonsLearned": "At scale, consistency in contracts and delivery process matters as much as raw coding speed."
+        }
+      },
+      {
+        "id": "543",
+        "companyName": "Southern Connecticut State University",
+        "title": "Adjunct Faculty Instructor",
+        "startDate": "2015-09-01",
+        "endDate": "2015-12-31",
+        "isCurrent": false,
+        "bulletPoints": [
+          "Taught CSC 443: Internet Programming in Node.js to undergraduate computer science students."
+        ],
+        "aiContext": {
+          "situation": "Offered an opportunity to teach and thought it was a great challenge.",
+          "approach": "Taught young minds how to develop software at scale.",
+          "technicalWork": "I still advise students on their careers.  There is a trust that was established.",
+          "lessonsLearned": "Let students know that the outcomes are always working code.  The journey and lessons learned are most important/"
+        }
+      },
+      {
+        "id": "550",
+        "companyName": "Thermo Fisher Scientific",
+        "title": "Principal Software Engineer",
+        "startDate": "2015-07-01",
+        "endDate": "2019-07-01",
+        "isCurrent": false,
+        "bulletPoints": [
+          "Developed platform applications using Java,  Docker, Kubernetes, and AWS.",
+          "Container log aggregation using ElasticSearch,  Fluentd, and Kibana (EFK).",
+          "Developed application components that  interact with REST Services.",
+          "Container/Cluster monitoring using  Prometheus.",
+          "Decomposed monolithic applications into discrete services.",
+          "Developed applications using OAuth."
+        ],
+        "aiContext": {
+          "situation": "Joined when we were Core Informatics and eventual acquired by Thermo Fisher Scientific.",
+          "approach": "DevOps, CI/CD, Observability",
+          "technicalWork": "Test automation, refactoring code to be more maintainable.",
+          "lessonsLearned": "Read the room.  The technology used was part of a larger narrative that made our organization give the impression that we were more technically competent then were.  This didn't sit well with me."
+        }
+      },
+      {
+        "id": "551",
+        "companyName": "Thermo Fisher Scientific",
+        "title": "Software Development and DevOps Manager",
+        "startDate": "2014-04-01",
+        "endDate": "2015-07-01",
+        "isCurrent": false,
+        "bulletPoints": [
+          "Managed a team of ten developers.",
+          "Developed pipelines in Jenkins to deploy to applications to AWS.",
+          "Process analysis and documentation.",
+          "Manage reviews and professional  development."
+        ],
+        "aiContext": {
+          "situation": "Joined to take on higher-impact technical ownership in a complex environment.",
+          "approach": "Focused on clear architecture, reliable delivery, and practical collaboration across teams.",
+          "technicalWork": "Delivered production systems with strong emphasis on operability and measurable outcomes.",
+          "lessonsLearned": "Strong contracts and observability improve long-term delivery speed and reliability."
+        }
+      },
+      {
+        "id": "544",
+        "companyName": "Fiserv",
+        "title": "Team Lead / Senior Software Engineer",
+        "startDate": "2009-05-01",
+        "endDate": "2014-03-31",
+        "isCurrent": false,
+        "bulletPoints": [
+          "Led onshore and offshore development teams building a commercial real-time bill payment web service used by major retail establishments.",
+          "Owned client relationships, project estimation, code reviews, and performance tuning for a system processing over $1M in daily transactions.",
+          "Progressed from Senior Software Engineer to Team Lead over ~5 years, growing scope from individual contribution to team and delivery ownership."
+        ],
+        "aiContext": {
+          "situation": "Interesting challenges in the under served financial industry.  Walmart was our biggest customer, and they had high expectations of service, quality, and delivery.",
+          "approach": "Focused on clear architecture, reliable delivery, and practical collaboration across teams.",
+          "technicalWork": "Delivered production systems with strong emphasis on operability and measurable outcomes.",
+          "lessonsLearned": "Strong contracts and observability improve long-term delivery speed and reliability."
+        }
+      },
+      {
+        "id": "545",
+        "companyName": "Southern Connecticut State University",
+        "title": "Technical Advisor",
+        "startDate": "2009-01-01",
+        "endDate": null,
+        "isCurrent": true,
+        "bulletPoints": [
+          "Serve on the Technical Advisory Committee for the Computer Science Department, providing industry perspective on curriculum, technology trends, and graduate outcomes."
+        ],
+        "aiContext": {
+          "situation": "To prepare students for the professional world and guide curriculum and navigate technological trends.",
+          "approach": "Guided curriculum",
+          "technicalWork": "Mentored and hired students from my alma mater.",
+          "lessonsLearned": "Strong contracts and observability improve long-term delivery speed and reliability."
+        }
+      },
+      {
+        "id": "546",
+        "companyName": "The Hartford",
+        "title": "Senior Software Engineer",
+        "startDate": "2008-06-01",
+        "endDate": "2009-05-31",
+        "isCurrent": false,
+        "bulletPoints": [
+          "Developed .NET enterprise applications for one of the largest insurance carriers in the US."
+        ],
+        "aiContext": {
+          "situation": "Joined to take on higher-impact technical ownership in a complex environment.",
+          "approach": "Focused on clear architecture, reliable delivery, and practical collaboration across teams.",
+          "technicalWork": "Delivered production systems with strong emphasis on operability and measurable outcomes.",
+          "lessonsLearned": "Strong contracts and observability improve long-term delivery speed and reliability."
+        }
+      },
+      {
+        "id": "552",
+        "companyName": "Neopost Technologies",
+        "title": "Software Engineer",
+        "startDate": "2002-04-01",
+        "endDate": "2008-05-31",
+        "isCurrent": false,
+        "bulletPoints": [
+          "Designed and developed Java and .NET applications for enterprise document management and postage automation systems.",
+          "Public Key Encryption",
+          "Hardware Security Modules (HSM)",
+          "Certificate Management"
+        ],
+        "aiContext": {
+          "situation": "Joined to take on higher-impact technical ownership in a complex environment.",
+          "approach": "Focused on clear architecture, reliable delivery, and practical collaboration across teams.",
+          "technicalWork": "Delivered production systems with strong emphasis on operability and measurable outcomes.",
+          "lessonsLearned": "Strong contracts and observability improve long-term delivery speed and reliability."
+        }
+      },
+      {
+        "id": "548",
+        "companyName": "Ingenix (UnitedHealth Group)",
+        "title": "Software Engineer",
+        "startDate": "1996-03-01",
+        "endDate": "2002-03-31",
+        "isCurrent": false,
+        "bulletPoints": [
+          "Built healthcare data and analytics applications on ASP.NET and the MicroStrategy platform for a UnitedHealth Group subsidiary."
+        ],
+        "aiContext": {
+          "situation": "Joined to take on higher-impact technical ownership in a complex environment.",
+          "approach": "Focused on clear architecture, reliable delivery, and practical collaboration across teams.",
+          "technicalWork": "Delivered production systems with strong emphasis on operability and measurable outcomes.",
+          "lessonsLearned": "Strong contracts and observability improve long-term delivery speed and reliability."
+        }
+      }
+    ],
+    "skills": {
+      "strong": [
+        "Azure Administration",
+        "Problem Solving",
+        "Azure Cloud",
+        "DevSecOps",
+        "Troubleshooting",
+        "Written Communication",
+        "Agile / Scrum",
+        "API Design and Development",
+        "Application Security",
+        "Artifactory",
+        "AWS API Gateway",
+        "AWS DynamoDB",
+        "AWS IOT",
+        "AWS Lambda",
+        "AWS S3",
+        "Azure DevOps",
+        "Code Design",
+        "Communication",
+        "Continuous Delivery (CI/CD)",
+        "Cryptography and Security Concepts",
+        "Datadog",
+        "Digital Authentication",
+        "Enterprise Architecture",
+        "Event Driven Architecture",
+        "GitHub Copilot",
+        "Interpersonal Skills",
+        "Observability",
+        "Python",
+        "React",
+        "Software Architecture",
+        "Terraform",
+        "TypeScript"
+      ],
+      "moderate": [
+        "Java",
+        "Docker / Containerization",
+        "Jenkins",
+        "Pen Testing Tools",
+        "YAML",
+        "Amazon CloudWatch",
+        "C#",
+        "Context Engineering",
+        "Conversational AI",
+        "JSON",
+        "Knowledge Sharing",
+        "LLM Integration",
+        "Load Balancing",
+        "Node.js",
+        "Object-Oriented Design",
+        "Prompt Engineering",
+        "Relational Databases",
+        "Shell Scripting",
+        "SNYK"
+      ],
+      "gap": [
+        {
+          "description": "Machine Learning Training",
+          "interestedInLearning": true
+        },
+        {
+          "description": "Rust",
+          "interestedInLearning": true
+        },
+        {
+          "description": "C++",
+          "interestedInLearning": true
+        },
+        {
+          "description": "Large Language Models (LLM)",
+          "interestedInLearning": true
+        },
+        {
+          "description": "PHP",
+          "interestedInLearning": false
+        }
+      ]
+    }
+  }
+}

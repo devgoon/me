@@ -3,10 +3,14 @@
   "words": [
     "Agri",
     "Ancera",
+    "Avenir",
     "backtotop",
     "Backtotop",
     "Branford",
+    "DBNAME",
     "dealbreakers",
+    "evals",
+    "gitflow",
     "Ingenix",
     "Lodovi",
     "Lodovi.co",
@@ -20,13 +24,15 @@
     "navigations",
     "Neopost",
     "recordset",
+    "Retriable",
     "scrollto",
+    "Segoe",
     "subpanel",
     "swiftui",
     "trustservercertificate",
     "valuenow",
-    "Wallingford",
-    "gitflow"
+    "Vite",
+    "Wallingford"
   ],
   "ignorePaths": [
     "**/node_modules/**",

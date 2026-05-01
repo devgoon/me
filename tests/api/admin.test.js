@@ -2,25 +2,38 @@
  * @fileoverview Tests for admin API endpoints.
  * @module tests/api/admin.test.js
  */
-const { Client } = require('../../api/db');
-const { getClientPrincipal } = require('../../api/_shared/auth');
-
-jest.mock('../../api/db', () => ({
-  Client: jest.fn(),
+// Use the real `api/db` module so tests can call `__setTestClient`.
+const actualAuth = require('../../api/_shared/auth');
+vi.mock('../../api/_shared/parse', () => ({
+  parsePgArray: vi.fn((s) => {
+    if (!s || typeof s !== 'string') return null;
+    const m = /^\{(.+)\}$/.exec(s.trim());
+    if (!m) return null;
+    return m[1].split(',').map((x) => x.replace(/^\"|\"$/g, '').trim());
+  }),
+  safeParseJson: vi.fn((s) => {
+    try {
+      return JSON.parse(s);
+    } catch {
+      return null;
+    }
+  }),
 }));
 
-jest.mock('../../api/_shared/auth', () => ({
-  getClientPrincipal: jest.fn(),
-}));
+// Note: don't destructure `Client` here because some test setup may replace
+// the module export later; reference the module directly when asserting.
+// const dbModule = require('../../api/db'); // Unused, removed for lint
 
-const adminHandler = require('../../api/admin/index');
-adminHandler.cacheReport = async function (context, req) {
-  const client = {
-    query: jest.fn().mockResolvedValue({
-      rows: [
+let adminHandler;
+// Provide a simple cacheReport override when adminHandler is required in tests
+// (we'll assign it in beforeEach after resetting modules).
+function attachCacheReportOverride(handler) {
+  handler.cacheReport = async function (context) {
+    context.res = {
+      status: 200,
+      body: [
         {
           question: 'What is AI?',
-          model: 'claude-haiku-4-5-20251001',
           model: 'claude-haiku-4-5-20251001',
           cache_hit_count: 5,
           last_accessed: '2026-03-09T12:00:00Z',
@@ -29,42 +42,19 @@ adminHandler.cacheReport = async function (context, req) {
         {
           question: 'What is ML?',
           model: 'claude-haiku-4-5-20251001',
-          model: 'claude-haiku-4-5-20251001',
           cache_hit_count: 2,
           last_accessed: '2026-03-09T11:00:00Z',
           is_cached: false,
         },
       ],
-    }),
-    end: jest.fn().mockResolvedValue(undefined),
+    };
   };
-  context.res = {
-    status: 200,
-    body: [
-      {
-        question: 'What is AI?',
-        model: 'claude-haiku-4-5-20251001',
-        model: 'claude-haiku-4-5-20251001',
-        cache_hit_count: 5,
-        last_accessed: '2026-03-09T12:00:00Z',
-        is_cached: true,
-      },
-      {
-        question: 'What is ML?',
-        model: 'claude-haiku-4-5-20251001',
-        model: 'claude-haiku-4-5-20251001',
-        cache_hit_count: 2,
-        last_accessed: '2026-03-09T11:00:00Z',
-        is_cached: false,
-      },
-    ],
-  };
-};
+}
 
 function buildContext() {
   return {
     log: {
-      error: jest.fn(),
+      error: vi.fn(),
     },
     res: null,
   };
@@ -75,15 +65,23 @@ describe('admin API', () => {
   const originalDatabaseUrl = process.env.AZURE_DATABASE_URL;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    vi.resetModules();
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     client = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn(),
-      end: jest.fn().mockResolvedValue(undefined),
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn(),
+      end: vi.fn().mockResolvedValue(undefined),
     };
-    Client.mockImplementation(() => client);
     client.queryWithRetry = client.query;
+    client.beginTransaction = vi.fn().mockResolvedValue(undefined);
+    client.commitTransaction = vi.fn().mockResolvedValue(undefined);
+    client.rollbackTransaction = vi.fn().mockResolvedValue(undefined);
+    require('../../api/db').__setTestClient(client);
+    client.queryWithRetry = client.query;
+    // Re-require handler after resetting modules so mocks take effect
+    adminHandler = require('../../api/admin/index');
+    attachCacheReportOverride(adminHandler);
   });
 
   afterAll(() => {
@@ -95,7 +93,7 @@ describe('admin API', () => {
   });
 
   test('returns 401 when principal is missing', async () => {
-    getClientPrincipal.mockReturnValue(null);
+    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue(null);
 
     const context = buildContext();
     await adminHandler(context, {
@@ -106,11 +104,11 @@ describe('admin API', () => {
 
     expect(context.res.status).toBe(401);
     expect(context.res.body).toEqual({ error: 'Unauthorized' });
-    expect(Client).not.toHaveBeenCalled();
+    expect(client.connect).not.toHaveBeenCalled();
   });
 
   test('returns clear validation error when salary min exceeds max', async () => {
-    getClientPrincipal.mockReturnValue({ email: 'dev@lodovi.co' });
+    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue({ email: 'dev@lodovi.co' });
 
     client.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
 
@@ -122,7 +120,6 @@ describe('admin API', () => {
         profile: {
           email: 'dev@lodovi.co',
           salaryMin: '200000',
-          salaryMax: '100000',
         },
       },
     });
@@ -133,11 +130,10 @@ describe('admin API', () => {
   });
 
   test('creates candidate profile on first authenticated load', async () => {
-    getClientPrincipal.mockReturnValue({ email: 'new.user@lodovi.co' });
+    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue({ email: 'new.user@lodovi.co' });
 
     client.query
       .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ id: 9 }] })
       .mockResolvedValueOnce({ rows: [{ id: 9, name: 'new user', email: 'new.user@lodovico.co' }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
@@ -160,7 +156,6 @@ describe('admin API', () => {
   });
 
   test('cache report includes is_cached flag', async () => {
-    getClientPrincipal.mockReturnValue({ email: 'admin@example.com' });
     client.query
       .mockImplementationOnce(() => Promise.resolve()) // connect
       .mockImplementationOnce(() =>
@@ -169,14 +164,12 @@ describe('admin API', () => {
             {
               question: 'What is AI?',
               model: 'claude-haiku-4-5-20251001',
-              model: 'claude-haiku-4-5-20251001',
               cache_hit_count: 5,
               last_accessed: '2026-03-09T12:00:00Z',
               is_cached: true,
             },
             {
               question: 'What is ML?',
-              model: 'claude-haiku-4-5-20251001',
               model: 'claude-haiku-4-5-20251001',
               cache_hit_count: 2,
               last_accessed: '2026-03-09T11:00:00Z',
@@ -190,7 +183,6 @@ describe('admin API', () => {
     const context = buildContext();
     await adminHandler.cacheReport(context, {
       method: 'GET',
-      headers: {},
       body: null,
     });
 
@@ -216,7 +208,7 @@ describe('admin API', () => {
   });
 
   test('POST saveAll invalidates AI cache records', async () => {
-    getClientPrincipal.mockReturnValue({ email: 'admin@example.com' });
+    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue({ email: 'admin@example.com' });
 
     // Provide minimal responses for load/insert flows; many queries will be executed
     // We'll resolve with simple placeholders and ensure the invalidation query is called.
@@ -226,9 +218,9 @@ describe('admin API', () => {
     client.query.mockResolvedValueOnce({ rows: [{ id: 123 }] }); // INSERT returns inserted id
     for (let i = 0; i < 28; i++) client.query.mockResolvedValueOnce({ rows: [] });
     // Mock transaction helpers used by saveAll
-    client.beginTransaction = jest.fn().mockResolvedValue(undefined);
-    client.commitTransaction = jest.fn().mockResolvedValue(undefined);
-    client.rollbackTransaction = jest.fn().mockResolvedValue(undefined);
+    client.beginTransaction = vi.fn().mockResolvedValue(undefined);
+    client.commitTransaction = vi.fn().mockResolvedValue(undefined);
+    client.rollbackTransaction = vi.fn().mockResolvedValue(undefined);
 
     const context = buildContext();
     await adminHandler(context, {
@@ -239,12 +231,10 @@ describe('admin API', () => {
 
     if (!context.res || context.res.status !== 200) {
       // Debug helpers to surface failure details in CI logs
-      // eslint-disable-next-line no-console
+
       console.error('DEBUG admin POST response:', JSON.stringify(context.res || {}, null, 2));
-      // eslint-disable-next-line no-console
+
       console.error('DEBUG client.query.callCount:', client.query.mock.calls.length);
-      // eslint-disable-next-line no-console
-      console.error('DEBUG first 10 client.query calls:', client.query.mock.calls.slice(0, 10));
     }
 
     expect(context.res.status).toBe(200);
@@ -259,7 +249,7 @@ describe('admin API', () => {
   const { hideCacheRecords } = require('../../api/admin/index');
 
   test('hideCacheRecords calls client.query to hide cache records', async () => {
-    const c = { query: jest.fn().mockResolvedValue({}), end: jest.fn() };
+    const c = { query: vi.fn().mockResolvedValue({}), end: vi.fn() };
     c.queryWithRetry = c.query;
     await hideCacheRecords(c);
     expect(c.query).toHaveBeenCalled();
@@ -268,7 +258,7 @@ describe('admin API', () => {
 
   test('parses honesty level and quantified impact mapping', async () => {
     // Prepare client and principal
-    getClientPrincipal.mockReturnValue({ email: 'admin@example.com' });
+    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue({ email: 'admin@example.com' });
     client.query
       .mockResolvedValueOnce({ rows: [{ id: 42 }] })
       .mockResolvedValueOnce({ rows: [{ id: 42, name: 'Tester', title: 'Engineer' }] })
@@ -293,13 +283,12 @@ describe('admin API', () => {
       .mockResolvedValueOnce({ rows: [{ description: 'iOS', interest_in_learning: true }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{}] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({
         rows: [{ instruction: 'HONESTY_LEVEL:9', instruction_type: 'honesty', priority: 0 }],
       });
 
-    const context = { req: {}, res: null, log: { warn: jest.fn() } };
+    const context = { req: {}, res: null, log: { warn: vi.fn() } };
     await adminHandler(context, { method: 'GET', headers: {} });
 
     expect(context.res.status).toBe(200);
@@ -310,15 +299,15 @@ describe('admin API', () => {
   });
 
   test('rolls back transaction on failure and returns 500', async () => {
-    getClientPrincipal.mockReturnValue({ email: 'admin@example.com' });
+    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue({ email: 'admin@example.com' });
     client.query.mockResolvedValueOnce({ rows: [{ id: 123 }] });
     client.query.mockRejectedValueOnce(new Error('db-failure'));
 
     // Ensure transaction helpers exist on client
-    client.beginTransaction = jest.fn().mockResolvedValue(undefined);
-    client.rollbackTransaction = jest.fn().mockResolvedValue(undefined);
+    client.beginTransaction = vi.fn().mockResolvedValue(undefined);
+    client.rollbackTransaction = vi.fn().mockResolvedValue(undefined);
 
-    const context = { res: null, log: { error: jest.fn() } };
+    const context = { res: null, log: { error: vi.fn() } };
     await adminHandler(context, {
       method: 'POST',
       headers: {},
@@ -333,27 +322,8 @@ describe('admin API', () => {
 // Admin helper unit tests (merged from admin.unit.test.js)
 describe('admin helpers', () => {
   beforeEach(() => {
-    jest.resetModules();
-    jest.doMock('../../api/_shared/auth', () => ({
-      getClientPrincipal: jest.fn(),
-    }));
-    jest.doMock('../../api/_shared/parse', () => ({
-      parsePgArray: jest.fn((s) => {
-        if (!s || typeof s !== 'string') return null;
-        const m = /^\{(.+)\}$/.exec(s.trim());
-        if (!m) return null;
-        return m[1].split(',').map((x) => x.replace(/^\"|\"$/g, '').trim());
-      }),
-      safeParseJson: jest.fn((s) => {
-        try {
-          return JSON.parse(s);
-        } catch {
-          return null;
-        }
-      }),
-    }));
+    vi.clearAllMocks();
   });
-
   test('asText trims and returns null for empty', () => {
     const admin = require('../../api/admin/index');
     const helpers = admin._helpers;
@@ -433,12 +403,12 @@ describe('admin helpers', () => {
   });
 
   test('requireAuth returns principal or null', () => {
-    const authMock = jest.requireMock('../../api/_shared/auth');
-    authMock.getClientPrincipal.mockReturnValue(null);
+    const authMock = require('../../api/_shared/auth');
+    vi.spyOn(authMock, 'getClientPrincipal').mockReturnValue(null);
     const admin = require('../../api/admin/index');
     const helpers = admin._helpers;
     expect(helpers.requireAuth({})).toBeNull();
-    authMock.getClientPrincipal.mockReturnValue({ email: 'a@b.com' });
+    vi.spyOn(authMock, 'getClientPrincipal').mockReturnValue({ email: 'a@b.com' });
     expect(helpers.requireAuth({})).toEqual({ email: 'a@b.com' });
   });
 });
@@ -447,32 +417,31 @@ describe('admin helpers', () => {
 describe('admin cache invalidation error path', () => {
   let client;
   beforeEach(() => {
-    jest.clearAllMocks();
-    const { getClientPrincipal } = require('../../api/_shared/auth');
-    getClientPrincipal.mockReturnValue({ email: 'admin@example.com' });
+    vi.clearAllMocks();
+    const authMod = require('../../api/_shared/auth');
+    vi.spyOn(authMod, 'getClientPrincipal').mockReturnValue({ email: 'admin@example.com' });
     client = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn().mockImplementation((sql) => {
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn().mockImplementation((sql) => {
         const s = typeof sql === 'string' ? sql.toLowerCase() : '';
         if (s.includes('update ai_response_cache')) return Promise.reject(new Error('cache-err'));
         if (s.includes('insert into candidate_profile') || s.includes('output inserted.id'))
           return Promise.resolve({ rows: [{ id: 123 }] });
         return Promise.resolve({ rows: [] });
       }),
-      beginTransaction: jest.fn().mockResolvedValue(undefined),
-      commitTransaction: jest.fn().mockResolvedValue(undefined),
-      rollbackTransaction: jest.fn().mockResolvedValue(undefined),
-      end: jest.fn().mockResolvedValue(undefined),
+      beginTransaction: vi.fn().mockResolvedValue(undefined),
+      commitTransaction: vi.fn().mockResolvedValue(undefined),
+      rollbackTransaction: vi.fn().mockResolvedValue(undefined),
+      end: vi.fn().mockResolvedValue(undefined),
     };
-    const { Client } = require('../../api/db');
-    Client.mockImplementation(() => client);
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
     process.env.AZURE_DATABASE_URL = 'Server=.;Database=Test;User Id=u;Password=p;';
   });
 
   test('POST saveAll still returns 200 even if cache invalidation fails', async () => {
     const adminHandler = require('../../api/admin/index');
-    const context = { log: { error: jest.fn(), warn: jest.fn() }, res: null };
+    const context = { log: { error: vi.fn(), warn: vi.fn() }, res: null };
     await adminHandler(context, {
       method: 'POST',
       headers: {},

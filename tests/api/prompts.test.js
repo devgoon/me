@@ -1,7 +1,5 @@
-const path = require('path');
-
 // Mock the parse helpers used by prompts.js so tests are deterministic
-jest.mock('../../api/_shared/parse', () => ({
+vi.mock('../../api/_shared/parse', () => ({
   parsePgArray: (s) => {
     if (!s || typeof s !== 'string') return null;
     const t = s.trim();

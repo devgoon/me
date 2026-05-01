@@ -3,6 +3,14 @@
  * @module api/_shared/parse.js
  */
 
+/**
+ * Parse a Postgres-style array string (e.g. "{a,b,\"c,d\"}") into a JS array.
+ * If input is already an array it is returned unchanged. Returns null for
+ * invalid inputs.
+ *
+ * @param {string|Array|null|undefined} raw - The raw value returned from Postgres.
+ * @returns {Array|null} Parsed array or null when input can't be parsed.
+ */
 function parseArray(raw) {
   if (raw === null || raw === undefined) return null;
   if (Array.isArray(raw)) return raw;
@@ -32,6 +40,13 @@ function parseArray(raw) {
   return out.map((it) => it.replace(/\\"/g, '"').replace(/\\\\/g, '\\').trim()).filter(Boolean);
 }
 
+/**
+ * Safely parse JSON-like input. If the input is already an object it is
+ * returned as-is. Returns null for non-strings or when JSON parse fails.
+ *
+ * @param {string|Object|null|undefined} raw - JSON string or already-parsed object.
+ * @returns {Object|null} Parsed object or null on failure.
+ */
 function safeParseJson(raw) {
   if (raw === null || raw === undefined) return null;
   if (typeof raw === 'object') return raw;
@@ -47,5 +62,7 @@ function safeParseJson(raw) {
 
 module.exports = {
   parseArray,
+  // Backwards-compatible alias used by tests and older modules
+  parsePgArray: parseArray,
   safeParseJson,
 };

@@ -17,6 +17,12 @@ const DB_QUERY_TIMEOUT_MS = 10000;
 // use shared server fetch helper for timeouts/retries
 const { fetchWithTimeout } = require('../fetch');
 
+/**
+ * Create and return a configured DB client for use in this module. Throws
+ * when `AZURE_DATABASE_URL` is not configured.
+ *
+ * @returns {Client}
+ */
 function getDbClient() {
   const databaseUrl = process.env.AZURE_DATABASE_URL;
   if (!databaseUrl) throw new Error('AZURE_DATABASE_URL is not configured');
@@ -39,6 +45,22 @@ function toCamel(obj) {
   return out;
 }
 
+/**
+ * Convert object keys from snake_case to camelCase shallowly.
+ *
+ * @param {Object} obj
+ * @returns {Object}
+ */
+// Note: duplicate declaration avoided by keeping original `toCamel` above.
+
+/**
+ * Public fit endpoint. GET returns public candidate summary; POST performs
+ * a job-description fit analysis using the AI model configured via
+ * `ANTHROPIC_API_KEY`.
+ *
+ * @param {Object} context - Azure Functions context
+ * @param {Object} req - Incoming request
+ */
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'fit.public');
   let client;
@@ -51,6 +73,12 @@ module.exports = async function (context, req) {
       const MAX_TOKENS = 1024;
       const AI_TIMEOUT_MS = 20000;
 
+      /**
+       * Create an abort signal with a clear helper for AI calls.
+       *
+       * @param {number} ms
+       * @returns {{signal:AbortSignal, clear:Function}}
+       */
       const timeoutSignal = (ms) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), ms);
@@ -61,6 +89,13 @@ module.exports = async function (context, req) {
 
       const { buildFitPrompt } = require('../prompts');
 
+      /**
+       * Load candidate context (profile, experiences, skills, gaps, etc.)
+       * for use in the fit prompt.
+       *
+       * @param {import('../db').Client} client
+       * @returns {Promise<Object>}
+       */
       const loadCandidateContext = async (client) => {
         const profileResult = await client.queryWithRetry(
           `SELECT TOP 1 * FROM candidate_profile ORDER BY updated_at DESC, created_at DESC`
@@ -133,6 +168,14 @@ module.exports = async function (context, req) {
         };
       };
 
+      /**
+       * Call Anthropic with retry/backoff and return assistant text.
+       *
+       * @param {string} systemPrompt
+       * @param {string} userMessage
+       * @param {string} apiKey
+       * @returns {Promise<string>}
+       */
       const callAnthropic = async (systemPrompt, userMessage, apiKey) => {
         const maxAttempts = 3;
         let attempt = 0;

@@ -4,7 +4,7 @@
  */
 
 const { Client } = require('../db');
-const { getClientPrincipal } = require('../_shared/auth');
+const auth = require('../_shared/auth');
 const {
   beginRequest,
   endRequest,
@@ -31,14 +31,18 @@ function getDbClient() {
 }
 
 function requireAuth(req) {
-  const principal = getClientPrincipal(req);
-  if (principal && principal.email) {
-    return principal;
-  }
-
+  // Use the platform-provided client principal (x-ms-client-principal).
+  const principal = auth.getClientPrincipal(req);
+  if (principal && principal.email) return principal;
   return null;
 }
 
+/**
+ * Cache report endpoint. Requires admin role and returns cached AI responses.
+ *
+ * @param {Object} context
+ * @param {Object} req
+ */
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'cacheReport');
   const auth = requireAuth(req);
@@ -49,6 +53,25 @@ module.exports = async function (context, req) {
       body: { error: 'Unauthorized' },
     };
     endRequest(context, obs, 401);
+    return;
+  }
+
+  // Require an admin role for this endpoint. Roles are provided by the
+  // `x-ms-client-principal` claims as `userRoles` and returned via
+  // `getClientPrincipal()` as `roles`.
+  const roles = Array.isArray(auth.roles) ? auth.roles.map((r) => String(r).toLowerCase()) : [];
+  const isAdmin =
+    roles.includes('admin') ||
+    roles.includes('administrator') ||
+    roles.includes('owner') ||
+    roles.includes('authenticated');
+  if (!isAdmin) {
+    context.res = {
+      status: 403,
+      headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+      body: { error: 'Forbidden' },
+    };
+    endRequest(context, obs, 403);
     return;
   }
 

@@ -2,7 +2,7 @@ const { fetchWithTimeout, apiFetch } = require('../../api/fetch');
 
 describe('api/fetch helpers', () => {
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     delete global.AbortController;
     delete global.fetch;
   });
@@ -10,14 +10,14 @@ describe('api/fetch helpers', () => {
   test('fetchWithTimeout rejects when no AbortController and timeout elapses', async () => {
     // simulate environment without AbortController
     delete global.AbortController;
-    global.fetch = jest.fn(() => new Promise((res) => setTimeout(() => res({ ok: true }), 200)));
+    global.fetch = vi.fn(() => new Promise((res) => setTimeout(() => res({ ok: true }), 200)));
 
     await expect(fetchWithTimeout('http://example', {}, 50)).rejects.toThrow(/Timeout/);
   });
 
   test('apiFetch retries on 5xx and succeeds when a later response is OK', async () => {
     let call = 0;
-    global.fetch = jest.fn(() => {
+    global.fetch = vi.fn(() => {
       call++;
       if (call === 1) return Promise.resolve({ status: 502, ok: false });
       return Promise.resolve({ status: 200, ok: true, text: async () => 'ok' });

@@ -4,7 +4,7 @@ describe('Client.queryWithRetry', () => {
   test('retries on transient error then succeeds', async () => {
     const c = new Client({ connectionString: 'conn' });
     // override query to simulate transient failure then success
-    c.query = jest
+    c.query = vi
       .fn()
       .mockRejectedValueOnce(new Error('deadlock detected'))
       .mockResolvedValue({ rows: [{ id: 1 }] });
@@ -17,7 +17,7 @@ describe('Client.queryWithRetry', () => {
 
   test('does not retry on non-transient error', async () => {
     const c = new Client({ connectionString: 'conn' });
-    c.query = jest.fn().mockRejectedValue(new Error('syntax error at or near'));
+    c.query = vi.fn().mockRejectedValue(new Error('syntax error at or near'));
 
     await expect(
       c.queryWithRetry('SELECT', [], { maxAttempts: 2, baseDelayMs: 1 })
@@ -26,32 +26,34 @@ describe('Client.queryWithRetry', () => {
   });
 });
 const path = require('path');
+// Sentinel connection string used by virtual mssql mock implementations
+const conn = 'conn';
 
 // Provide a stable top-level virtual mock for 'mssql'. Individual tests
-// can override the mocks by calling `jest.resetModules()` and replacing
+// can override the mocks by calling `vi.resetModules()` and replacing
 // implementations on the mocked export.
-jest.mock(
+vi.mock(
   'mssql',
   () => ({
-    ConnectionPool: jest.fn().mockImplementation(function (conn) {
+    ConnectionPool: vi.fn().mockImplementation(function () {
       this._conn = conn;
-      this.connect = jest.fn().mockResolvedValue(undefined);
-      this.request = jest.fn().mockReturnValue({
-        input: jest.fn().mockReturnThis(),
-        query: jest.fn().mockResolvedValue({ recordset: [] }),
+      this.connect = vi.fn().mockResolvedValue(undefined);
+      this.request = vi.fn().mockReturnValue({
+        input: vi.fn().mockReturnThis(),
+        query: vi.fn().mockResolvedValue({ recordset: [] }),
       });
-      this.close = jest.fn().mockResolvedValue(undefined);
+      this.close = vi.fn().mockResolvedValue(undefined);
     }),
-    Transaction: jest.fn().mockImplementation(function (pool) {
+    Transaction: vi.fn().mockImplementation(function (pool) {
       this._pool = pool;
-      this.begin = jest.fn().mockResolvedValue(undefined);
-      this.commit = jest.fn().mockResolvedValue(undefined);
-      this.rollback = jest.fn().mockResolvedValue(undefined);
+      this.begin = vi.fn().mockResolvedValue(undefined);
+      this.commit = vi.fn().mockResolvedValue(undefined);
+      this.rollback = vi.fn().mockResolvedValue(undefined);
     }),
-    Request: jest.fn().mockImplementation(function (target) {
+    Request: vi.fn().mockImplementation(function (target) {
       this.target = target;
-      this.input = jest.fn().mockReturnThis();
-      this.query = jest.fn().mockResolvedValue({ recordset: [] });
+      this.input = vi.fn().mockReturnThis();
+      this.query = vi.fn().mockResolvedValue({ recordset: [] });
     }),
   }),
   { virtual: true }
@@ -74,13 +76,13 @@ describe('api/db.js Client', () => {
   });
 
   test('connect uses provided connection string and trims quotes', async () => {
-    const mockConnect = jest.fn(() => Promise.resolve());
+    const mockConnect = vi.fn(() => Promise.resolve());
     const mockPoolInstance = {
       connect: mockConnect,
-      request: jest.fn(),
-      close: jest.fn(() => Promise.resolve()),
+      request: vi.fn(),
+      close: vi.fn(() => Promise.resolve()),
     };
-    const mockPoolConstructor = jest.fn(function (conn) {
+    const mockPoolConstructor = vi.fn(function () {
       this._conn = conn;
       return mockPoolInstance;
     });
@@ -101,32 +103,32 @@ describe('api/db.js Client', () => {
   });
 
   test('begin/commit/rollback transaction flows and errors', async () => {
-    const mockBegin = jest.fn(() => Promise.resolve());
-    const mockCommit = jest.fn(() => Promise.resolve());
-    const mockRollback = jest.fn(() => Promise.resolve());
+    const mockBegin = vi.fn(() => Promise.resolve());
+    const mockCommit = vi.fn(() => Promise.resolve());
+    const mockRollback = vi.fn(() => Promise.resolve());
 
-    const mockTransactionConstructor = jest.fn(function (pool) {
+    const mockTransactionConstructor = vi.fn(function (pool) {
       this._pool = pool;
       this.begin = mockBegin;
       this.commit = mockCommit;
       this.rollback = mockRollback;
     });
 
-    const mockConnect = jest.fn(() => Promise.resolve());
+    const mockConnect = vi.fn(() => Promise.resolve());
     const mockPoolInstance = {
       connect: mockConnect,
-      request: jest.fn(),
-      close: jest.fn(() => Promise.resolve()),
+      request: vi.fn(),
+      close: vi.fn(() => Promise.resolve()),
     };
-    const mockPoolConstructor = jest.fn(function (conn) {
+    const mockPoolConstructor = vi.fn(function () {
       return mockPoolInstance;
     });
 
     const mockRequestInstance = {
-      input: jest.fn(),
-      query: jest.fn(() => Promise.resolve({ recordset: [] })),
+      input: vi.fn(),
+      query: vi.fn(() => Promise.resolve({ recordset: [] })),
     };
-    const mockRequestConstructor = jest.fn(function (tx) {
+    const mockRequestConstructor = vi.fn(function (tx) {
       // if tx passed in, we can inspect it in tests
       this._tx = tx;
       return mockRequestInstance;
@@ -168,18 +170,18 @@ describe('api/db.js Client', () => {
     await expect(c.query('select $1')).rejects.toThrow('Client not connected');
 
     // now mock mssql with pool and request
-    const mockQuery = jest.fn(() => Promise.resolve({ recordset: [{ id: 1 }] }));
-    const mockRequestInstance = { input: jest.fn(), query: mockQuery };
-    const mockRequestConstructor = jest.fn(function (tx) {
+    const mockQuery = vi.fn(() => Promise.resolve({ recordset: [{ id: 1 }] }));
+    const mockRequestInstance = { input: vi.fn(), query: mockQuery };
+    const mockRequestConstructor = vi.fn(function (tx) {
       this._tx = tx;
       return mockRequestInstance;
     });
     const mockPoolInstance = {
-      connect: jest.fn(() => Promise.resolve()),
-      request: jest.fn(() => mockRequestInstance),
-      close: jest.fn(() => Promise.resolve()),
+      connect: vi.fn(() => Promise.resolve()),
+      request: vi.fn(() => mockRequestInstance),
+      close: vi.fn(() => Promise.resolve()),
     };
-    const mockPoolConstructor = jest.fn(function (conn) {
+    const mockPoolConstructor = vi.fn(function () {
       return mockPoolInstance;
     });
 
@@ -215,13 +217,13 @@ describe('api/db.js Client', () => {
   });
 
   test('end closes pool and handles close errors gracefully', async () => {
-    const mockClose = jest.fn(() => Promise.resolve());
+    const mockClose = vi.fn(() => Promise.resolve());
     const mockPoolInstance = {
-      connect: jest.fn(() => Promise.resolve()),
-      request: jest.fn(),
+      connect: vi.fn(() => Promise.resolve()),
+      request: vi.fn(),
       close: mockClose,
     };
-    const mockPoolConstructor = jest.fn(function (conn) {
+    const mockPoolConstructor = vi.fn(function () {
       return mockPoolInstance;
     });
 
@@ -235,13 +237,13 @@ describe('api/db.js Client', () => {
     expect(mockClose).toHaveBeenCalled();
 
     // now simulate close throwing - should be ignored
-    const mockCloseFail = jest.fn(() => Promise.reject(new Error('close-err')));
+    const mockCloseFail = vi.fn(() => Promise.reject(new Error('close-err')));
     const mockPoolInstance2 = {
-      connect: jest.fn(() => Promise.resolve()),
-      request: jest.fn(),
+      connect: vi.fn(() => Promise.resolve()),
+      request: vi.fn(),
       close: mockCloseFail,
     };
-    const mockPoolConstructor2 = jest.fn(function (conn) {
+    const mockPoolConstructor2 = vi.fn(function () {
       return mockPoolInstance2;
     });
     const db2 = require(path.join(__dirname, '../../api/db.js'));

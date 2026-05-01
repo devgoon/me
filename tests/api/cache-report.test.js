@@ -1,28 +1,28 @@
-const cacheReport = require('../../api/cache-report/index');
-const { Client } = require('../../api/db');
-const { getClientPrincipal } = require('../../api/_shared/auth');
-
-jest.mock('../../api/db', () => ({ Client: jest.fn() }));
-jest.mock('../../api/_shared/auth', () => ({ getClientPrincipal: jest.fn() }));
+vi.mock('../../api/db', () => ({ Client: vi.fn() }));
+const actualAuth = require('../../api/_shared/auth');
 
 describe('cache-report', () => {
   let client;
   beforeEach(() => {
-    jest.clearAllMocks();
-    client = { connect: jest.fn(), query: jest.fn(), end: jest.fn() };
-    Client.mockImplementation(() => client);
+    vi.clearAllMocks();
+    client = { connect: vi.fn(), query: vi.fn(), end: vi.fn() };
+    require('../../api/db').__setTestClient(client);
     client.queryWithRetry = client.query;
   });
 
   test('returns 401 when unauthenticated', async () => {
-    getClientPrincipal.mockReturnValue(null);
+    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue(null);
+    const cacheReport = require('../../api/cache-report/index');
     const context = { res: null };
     await cacheReport(context, { headers: {} });
     expect(context.res.status).toBe(401);
   });
 
   test('returns mapped rows when authenticated', async () => {
-    getClientPrincipal.mockReturnValue({ email: 'a@b.c' });
+    vi.spyOn(actualAuth, 'getClientPrincipal').mockReturnValue({
+      email: 'a@b.c',
+      roles: ['admin'],
+    });
     process.env.AZURE_DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     client.connect.mockResolvedValue(undefined);
     client.query.mockResolvedValue({
@@ -32,6 +32,7 @@ describe('cache-report', () => {
     });
     client.end.mockResolvedValue(undefined);
 
+    const cacheReport = require('../../api/cache-report/index');
     const context = { res: null };
     await cacheReport(context, { headers: {} });
     expect(context.res.status).toBe(200);

@@ -12,20 +12,20 @@ if [ ! -f "$SQL_FILE" ]; then
 fi
 
 if [ ! -f .env.local ]; then
-  echo ".env.local not found; create .env.local with DATABASE_ADO set" >&2
+  echo ".env.local not found; create .env.local with ADMIN_DATABASE_ADO set" >&2
   exit 1
 fi
 
 # source .env.local so quoted values are handled
 set -a; . .env.local; set +a
 
-if [ -z "${DATABASE_ADO:-}" ]; then
-  echo "DATABASE_ADO not found in .env.local; please add ADO-style connection string (wrap in quotes if it contains semicolons)" >&2
+if [ -z "${ADMIN_DATABASE_ADO:-}" ]; then
+  echo "ADMIN_DATABASE_ADO not found in .env.local; please add ADO-style connection string (wrap in quotes if it contains semicolons)" >&2
   exit 1
 fi
 
 # strip optional surrounding quotes (already sourced, but be safe)
-DB_CONN="${DATABASE_ADO}"
+DB_CONN="${ADMIN_DATABASE_ADO}"
 
 # Parse ADO-style connection string (key=value;key2=value2;...)
 IFS=';' read -ra PARTS <<< "$DB_CONN"
@@ -51,11 +51,11 @@ for p in "${PARTS[@]}"; do
 done
 
 if [ -z "$USER" ] || [ -z "$PASSWORD" ]; then
-  echo "DATABASE_ADO appears to be missing User ID or Password; include credentials in .env.local" >&2
+  echo "ADMIN_DATABASE_ADO appears to be missing User ID or Password; include credentials in .env.local" >&2
   exit 1
 fi
 if [ -z "$SERVER" ]; then
-  echo "Could not parse Server from DATABASE_ADO" >&2
+  echo "Could not parse Server from ADMIN_DATABASE_ADO" >&2
   exit 1
 fi
 
