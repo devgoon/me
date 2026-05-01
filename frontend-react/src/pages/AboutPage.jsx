@@ -57,7 +57,7 @@ function AboutPage() {
                     Contact: vminnocci@gmail.com
                   </Typography>
                 </Box>
-                <Box sx={{ mt: 2 }}>
+                <Box sx={{ mt: 2, maxWidth: 800 }}>
                   <ExperienceChips />
                 </Box>
               </Stack>
@@ -121,11 +121,23 @@ function ExperienceChips() {
     return <Typography color="text.secondary">Experience not available.</Typography>;
 
   const experiences = data && Array.isArray(data.experiences) ? data.experiences : [];
+  // Deduplicate by companyName (preserve first occurrence), case-insensitive
+  const uniqueExperiences = (() => {
+    const map = new Map();
+    for (const exp of experiences) {
+      const key = String(exp?.companyName || '')
+        .trim()
+        .toLowerCase();
+      if (!key) continue;
+      if (!map.has(key)) map.set(key, exp);
+    }
+    return Array.from(map.values());
+  })();
 
   return (
     <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }} component="div" useFlexGap>
-      {experiences.map((exp) => {
-        const label = exp.title ? `${exp.companyName} — ${exp.title}` : exp.companyName;
+      {uniqueExperiences.map((exp) => {
+        const label = `${exp.companyName}`;
         return (
           <Chip
             key={exp.id}
