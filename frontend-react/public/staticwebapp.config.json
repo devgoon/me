@@ -34,7 +34,7 @@
   },
   "navigationFallback": {
     "rewrite": "/index.html",
-      "exclude": [
+    "exclude": [
       "/frontend/assets/*",
       "/images/*",
       "/favicon.ico",
