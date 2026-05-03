@@ -194,10 +194,6 @@ function FitPage() {
                   {copied ? 'Copied' : 'Copy'}
                 </Button>
               </Stack>
-              <Typography variant="body2">
-                <strong>Score:</strong> {result.score ?? 'N/A'}
-              </Typography>
-
               {scheduleMeetingUrl && isSchedulableVerdict(result.verdict) ? (
                 <Button
                   type="button"

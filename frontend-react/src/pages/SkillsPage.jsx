@@ -104,7 +104,7 @@ function SkillsPage() {
             <Stack spacing={3}>
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
-                  Strong
+                  Primary Skills
                 </Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }} useFlexGap>
                   {skills.strong.map((skill) => (
@@ -126,7 +126,7 @@ function SkillsPage() {
 
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
-                  Broader Expertise
+                  Secondary Skills
                 </Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }} useFlexGap>
                   {skills.moderate.map((skill) => (
