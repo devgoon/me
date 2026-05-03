@@ -292,6 +292,8 @@ async function getCache(client, model, question) {
 
 /**
  * Store or merge a response into the AI response cache by hash key.
+ * Ensures string responses are trimmed and objects are JSON-stringified
+ * before persisting.
  *
  * @param {import('../db').Client} client
  * @param {string} model
@@ -331,6 +333,7 @@ async function setCache(client, model, question, response) {
  *
  * @param {Object} context - Azure Functions context object.
  * @param {Object} req - Incoming request object.
+ * @returns {Promise<void>} Resolves when the HTTP response has been set on the `context`.
  */
 module.exports = async function (context, req) {
   const obs = beginRequest(context, req, 'chat.ask');

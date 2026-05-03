@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Grid, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Card, CardContent, Grid, Stack, Typography } from '@mui/material';
 
 // Certifications data with image mappings
 const CERTIFICATIONS = [
@@ -67,37 +67,29 @@ const CERTIFICATIONS = [
 ];
 
 function CertificationBadge({ cert }) {
-  const tooltipText = `${cert.name}\nIssued: ${new Date(cert.issue_date).toLocaleDateString()}\n${
-    cert.expiration_date
-      ? `Expires: ${new Date(cert.expiration_date).toLocaleDateString()}`
-      : 'No expiration'
-  }`;
-
   return (
-    <Tooltip title={tooltipText} arrow>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        transition: 'transform 0.2s',
+        '&:hover': {
+          transform: 'scale(1.05)',
+        },
+      }}
+    >
       <Box
+        component="img"
+        src={`/assets/img/${cert.image}`}
+        alt={cert.name}
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          transition: 'transform 0.2s',
-          '&:hover': {
-            transform: 'scale(1.05)',
-          },
+          maxWidth: '100%',
+          height: 'auto',
+          maxHeight: 240,
         }}
-      >
-        <Box
-          component="img"
-          src={`/assets/img/${cert.image}`}
-          alt={cert.name}
-          sx={{
-            maxWidth: '100%',
-            height: 'auto',
-            maxHeight: 240,
-          }}
-        />
-      </Box>
-    </Tooltip>
+      />
+    </Box>
   );
 }
 
