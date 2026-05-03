@@ -188,10 +188,6 @@ const theme = createTheme({
           border: '1px solid #00E5FF',
           boxShadow: '0 6px 22px rgba(0,229,255,0.18)',
           transition: 'transform 120ms ease, box-shadow 120ms ease',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: '0 12px 36px rgba(0,229,255,0.22)',
-          },
         },
         outlined: {
           borderColor: '#00E5FF',
@@ -199,11 +195,7 @@ const theme = createTheme({
           color: '#00E5FF',
           borderWidth: 1,
           transition: 'background-color 120ms ease, transform 120ms ease, box-shadow 120ms ease',
-          '&:hover': {
-            backgroundColor: 'rgba(0,229,255,0.06)',
-            transform: 'translateY(-2px)',
-            boxShadow: '0 6px 18px rgba(0,229,255,0.08)',
-          },
+          // Hover effects removed for chips to disable mouse-over animations
         },
       },
     },
