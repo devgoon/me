@@ -1,4 +1,5 @@
 import ExperiencePanel from '../../components/admin/ExperiencePanel.jsx';
+import ReflectionsPanel from '../../components/admin/ReflectionsPanel.jsx';
 import {
   AiPanel,
   CachePanel,
@@ -98,6 +99,12 @@ export const ADMIN_PANEL_REGISTRY = {
       cacheSearch: admin.cacheSearch,
       setCacheSearch: admin.setCacheSearch,
       filteredCache: admin.filteredCache,
+    }),
+  },
+  reflections: {
+    Component: ReflectionsPanel,
+    buildProps: (admin) => ({
+      adminData: admin.adminData,
     }),
   },
 };

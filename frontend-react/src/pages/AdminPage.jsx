@@ -22,6 +22,7 @@ const TAB_LABELS = {
   faq: 'FAQ',
   ai: 'AI Instructions',
   cache: 'Cache Report',
+  reflections: 'Reflections',
 };
 
 function AdminPage() {

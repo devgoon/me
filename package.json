@@ -42,5 +42,8 @@
   ],
   "engines": {
     "node": "22.x"
+  },
+  "dependencies": {
+    "jspdf": "^4.2.1"
   }
 }

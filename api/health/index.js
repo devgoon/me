@@ -110,11 +110,23 @@ module.exports = async function (context, req) {
           body: JSON.stringify({
             model: aiModel || 'claude-instant-1',
             max_tokens: 200,
-            system: "You are a concise assistant that summarizes a candidate's strongest skills.",
+            system: [
+              {
+                type: 'text',
+                text: "You are a concise assistant that summarizes a candidate's strongest skills.",
+                cache_control: { type: 'ephemeral' },
+              },
+            ],
             messages: [
               {
                 role: 'user',
-                content: question,
+                content: [
+                  {
+                    type: 'text',
+                    text: question,
+                    cache_control: { type: 'ephemeral' },
+                  },
+                ],
               },
             ],
           }),

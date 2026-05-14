@@ -180,11 +180,23 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
           body: JSON.stringify({
             model: AI_MODEL,
             max_tokens: MAX_TOKENS,
-            system: systemPrompt,
+            system: [
+              {
+                type: 'text',
+                text: systemPrompt,
+                cache_control: { type: 'ephemeral' },
+              },
+            ],
             messages: [
               {
                 role: 'user',
-                content: userMessage,
+                content: [
+                  {
+                    type: 'text',
+                    text: userMessage,
+                    cache_control: { type: 'ephemeral' },
+                  },
+                ],
               },
             ],
           }),

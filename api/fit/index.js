@@ -197,8 +197,25 @@ module.exports = async function (context, req) {
                 body: JSON.stringify({
                   model: AI_MODEL,
                   max_tokens: MAX_TOKENS,
-                  system: systemPrompt,
-                  messages: [{ role: 'user', content: userMessage }],
+                  system: [
+                    {
+                      type: 'text',
+                      text: systemPrompt,
+                      cache_control: { type: 'ephemeral' },
+                    },
+                  ],
+                  messages: [
+                    {
+                      role: 'user',
+                      content: [
+                        {
+                          type: 'text',
+                          text: userMessage,
+                          cache_control: { type: 'ephemeral' },
+                        },
+                      ],
+                    },
+                  ],
                 }),
               },
               AI_TIMEOUT_MS

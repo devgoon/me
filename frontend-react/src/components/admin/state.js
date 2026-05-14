@@ -73,4 +73,5 @@ export const ADMIN_TABS = [
   'faq',
   'ai',
   'cache',
+  'reflections',
 ];
