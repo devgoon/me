@@ -103,9 +103,6 @@ function CertificationsPage() {
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
                 Certifications
               </Typography>
-              <Typography color="text.secondary">
-                Professional certifications and credentials. Click any badge to verify.
-              </Typography>
             </Stack>
           </CardContent>
         </Card>
