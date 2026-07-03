@@ -1,24 +1,74 @@
-# me — AI-assisted portfolio (developer-focused README)
+# me — AI-assisted portfolio & job-fit analyzer
 
-Purpose
+An interactive portfolio site that uses AI to help job seekers and hiring managers quickly determine fit. Upload a job description and get an instant, honest assessment of how your skills, experience, and values align — plus an AI assistant trained on your profile that answers questions directly.
 
-- Personal portfolio site with AI-assisted admin and analysis features.
-- Static frontend served by Azure Static Web Apps and serverless APIs implemented as Azure Functions (Node.js).
-- Prompt engineering composes a detailed, context-rich prompt from a candidate's profile, experience, education, certifications, skills, FAQ, and custom instructions.
-- Support for per-candidate instruction overrides (tone, honesty, boundaries) to tune assistant behavior.
-- Deterministic client-side analyzers extract transferable skills, education matches, and gaps from job descriptions without invoking an LLM.
-- Server-side orchestration prepares prompts and invokes models, with a response cache to avoid redundant calls.
-- Design focuses on concise, honest assistant responses and preserves user-controlled overrides and privacy-conscious caching.
+## Features
 
-Features
+**For job seekers:**
 
-- Admin interface for editing and publishing candidate profile data.
-- Experience viewer with AI-generated role context for resume items.
-- Fit/Analyzer tools for comparing job descriptions to a profile and identifying transferable skills and gaps.
-- Serverless HTTP APIs that assemble profile context, run deterministic analyzers, and proxy prompts to an AI model with caching.
-- PostgreSQL-backed schema for profile, experiences, skills, education, certifications, and AI instruction overrides.
+- **Fit Analyzer** — Upload a job description and instantly see how your skills, experience, and values match (without hitting the LLM)
+- **Honest AI Chat** — Ask questions about yourself. The AI assistant is trained on your profile but configured to be brutally honest, not oversell
+- **Experience Context** — Privately store the real story behind each role (why you joined, what you learned, challenges faced) that the AI uses to give authentic answers
+- **Custom AI Instructions** — Set tone, boundaries, and specific guidance for how the assistant should represent you
 
-## Architecture Diagram
+**For admins:**
+
+- **Profile Editor** — Manage your experience, skills, education, certifications, and custom instructions in one place
+- **Eval Tools** — Built-in testing and eval framework for fit accuracy and chat quality
+
+## Tech Stack
+
+- **Frontend:** React (with TypeScript, migration in progress), vanilla JS with no build step for static pages
+- **Backend:** Node.js serverless (Azure Functions), prompt engineering with Anthropic Claude
+- **Database:** Azure SQL / PostgreSQL with schema migrations
+- **Infrastructure:** Azure Static Web Apps, CDN, distributed cache for AI responses
+- **Testing:** Unit tests, integration tests, and an eval framework for prompt/output validation
+
+## Getting Started
+
+### Live Demo
+
+- Visit the [deployed portfolio](https://devgoon.com) to see it in action
+- Try the Fit Analyzer by uploading a job description
+- Chat with the AI to ask questions
+
+### Local Development
+
+1. Clone the repo and install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Copy `.env.local.example` to `.env.local` and fill in required vars:
+
+   - `AZURE_DATABASE_URL` — database connection
+   - `ANTHROPIC_API_KEY` — Claude API key
+   - `VITE_SCHEDULE_MEETING_URL` — (optional) booking link shown when a role is a fit
+
+3. Start the dev stack:
+
+   ```bash
+   make start
+   ```
+
+   This runs the SWA emulator, Azure Functions, and React dev server.
+
+4. Open your browser:
+   - Admin UI: http://127.0.0.1:4280/admin.html
+   - Experience Viewer: http://127.0.0.1:4280/experience.html
+   - Fit Analyzer: http://127.0.0.1:4280/fit.html
+
+## Design Principles
+
+- **Honesty over selling** — the AI is instructed to tell the truth about fit, not oversell
+- **User control** — you own your profile data and can override AI behavior via custom instructions
+- **Privacy-conscious** — responses are cached server-side; no personal data sent to third-party analytics
+- **Deterministic where possible** — skill matching and gap detection runs client-side without invoking an LLM
+
+## For Developers
+
+### Architecture
 
 ```mermaid
 flowchart LR
@@ -37,130 +87,90 @@ flowchart LR
   CDN -->|edge cache| Browser
 ```
 
-Architecture Diagram
+**How it works:**
 
-- Prerequisites
-- Node.js (tested on 22+) and npm
+- Frontend is served as static files (no build step required); React components are in `frontend-react/` for new UIs
+- Backend APIs (`api/` folder) assemble candidate context from the database and compose detailed prompts for Claude
+- Responses are cached by model + question hash to avoid redundant API calls
+- Fit analyzer runs deterministic algorithms client-side (skill extraction, gap detection) without invoking an LLM
+
+### Prerequisites
+
+- Node.js 22+ and npm
 - GNU Make
-- Azure SQL tools: `sqlcmd` and `sqlpackage` (for backups/restore). Alternatively, you can run DB commands with a Node script using the `mssql`/`tedious` packages.
+- (Optional) Azure SQL tools (`sqlcmd`, `sqlpackage`) for database admin tasks
 
-Environment (local)
+### Environment Setup
 
-- Copy and fill `.env.local` from `.env.local.example` (DO NOT commit secrets).
-  -- Key env vars:
-  - `AZURE_DATABASE_URL` — Database connection string used by local tooling. Provide either an ADO-style connection string (suitable for `sqlpackage`/`sqlcmd`), for example:
-    `Server=tcp:myhost.database.windows.net,1433;Initial Catalog=mydb;User ID=myuser;Password=secret;Encrypt=true;TrustServerCertificate=false;`
-    or a `sqlserver://...;key=val;...` form.
-  - `ADMIN_DATABASE_ADO` — Admin-only ADO-style connection string used by Makefile DB admin tasks (`backup-db`, `dump-schema`, `restore-db`, `run-sql-file`).
-  - `ANTHROPIC_API_KEY` — AI provider key (required for AI-backed endpoints; missing this will cause AI endpoints to return 500 errors)
-  - `AI_MODEL` — model id (optional override)
-  - `VITE_SCHEDULE_MEETING_URL` — optional frontend booking URL shown when fit verdict is `FIT` (for example a Google Calendar appointment schedule URL). Must start with `VITE_`.
-  - `FUNCTIONS_WORKER_RUNTIME=node`
+Copy `.env.local` from `.env.local.example` and fill in:
 
-Start local dev stack
+| Variable                    | Purpose                                                                   |
+| --------------------------- | ------------------------------------------------------------------------- |
+| `AZURE_DATABASE_URL`        | Database connection (ADO or `sqlserver://` format)                        |
+| `ANTHROPIC_API_KEY`         | Claude API key                                                            |
+| `ADMIN_DATABASE_ADO`        | Admin connection for backup/migration tasks (optional)                    |
+| `AI_MODEL`                  | Override default Claude model (optional)                                  |
+| `VITE_SCHEDULE_MEETING_URL` | Booking URL shown on job fit verdicts (optional, must start with `VITE_`) |
 
-- Start everything (SWA emulator + Functions):
+### Running Locally
 
 ```bash
+# Start everything (SWA emulator + Functions + React dev server)
 make start
-```
 
-Database management
-
-- `make backup-db` — export the current database. For Azure SQL this will export a `.bacpac` using `sqlpackage`. Requires `ADMIN_DATABASE_ADO` in `.env.local`.
-- `make deploy-db` — runs the full deployment workflow (pre/post schema dumps, migrations, verification). Review `Makefile` and ensure `.env.local` is configured before running.
-
-Quick commands:
-
-```bash
-# create a timestamped backup
-make backup-db
-
-# run full DB deployment workflow (use with caution)
-make deploy-db
-```
-
-- Stop local stack:
-
-```bash
+# Stop the stack
 make stop
 ```
 
-Open these pages in your browser once the emulator is running:
+Open your browser to the endpoints listed in the "Getting Started" section above.
 
-- Admin UI: http://127.0.0.1:4280/admin.html (source: frontend-react)
-- Experience UI: http://127.0.0.1:4280/experience.html (source: frontend-react)
-- Fit / Analyzer: http://127.0.0.1:4280/fit.html (source: frontend-react)
-
-Development notes
-
-- Frontend is served as static files; `assets/js` contains the client code (no frontend build step required).
-- The `dist/` directory contains bundled/minified artifacts used on some static pages; `assets/js` is the authoritative source during development.
-- The admin UI performs draft autosaves to `localStorage`; use the Admin page to persist changes to the DB.
-
-React frontend (migration work)
-
-- A React version of the UI is available in `frontend-react/`.
-- Start React dev server: `npm run react:dev`
-- Build React app: `npm run react:build`
-- `make start` now includes React build watch mode and rebuilds `frontend-react/dist` on file changes.
-- Build React app on file changes only: `npm run react:build:watch`
-- Preview React build: `npm run react:preview`
-
-Testing & quality checks
-
-- Run the project quality pipeline (spellcheck, unit tests, link checks, linter, etc.):
+### Database Management
 
 ```bash
+# Create a timestamped backup
+make backup-db
+
+# Run full deployment workflow (schema dump → migrate → verify)
+make deploy-db
+```
+
+Requires `ADMIN_DATABASE_ADO` in `.env.local`.
+
+### React Frontend
+
+The React version in `frontend-react/` is under migration. Use these commands:
+
+```bash
+npm run react:dev          # Start dev server (hot reload)
+npm run react:build        # Build production bundle
+npm run react:build:watch  # Rebuild on file changes
+npm run react:preview      # Preview production build
+```
+
+`make start` includes React watch mode automatically.
+
+### Testing & Quality
+
+```bash
+# Run full quality pipeline (unit tests, linter, spellcheck, link checks)
 make check
-```
 
-- Run only unit tests:
-
-```bash
+# Run only unit tests
 make unit-test
-```
 
-- Run starter prompt/output evals for fit + chat analysis:
-
-```bash
-npm run test:evals
-```
-
-- Run eval tests through Jest (included under `tests/evals`):
-
-```bash
+# Run prompt/output evals (Jest-based)
 npm run test:evals:jest
+
+# Export chat cache for eval analysis
+npm run evals:export:chat-cache -- --limit 100 --min-hits 2
+npm run evals:export:chat-cache -- --only-active  # Active entries only
 ```
 
-- Optional: evaluate real model outputs from a JSON file keyed by case id:
+**Evaluating model outputs:**
 
 ```bash
 EVAL_MODEL_OUTPUTS_PATH=./path/to/model-outputs.json npm run test:evals
+EVAL_CHAT_OUTPUTS_PATH=./path/to/chat-outputs.json npm run test:evals
 ```
 
-- Optional: evaluate chat outputs from a JSON file keyed by chat case id:
-
-```bash
-EVAL_CHAT_OUTPUTS_PATH=./path/to/chat-model-outputs.json npm run test:evals
-```
-
-- Export draft eval cases from chat cache history (`ai_response_cache`):
-
-```bash
-npm run evals:export:chat-cache -- --limit 100 --min-hits 2
-```
-
-- Optional: include only non-invalidated cache entries:
-
-```bash
-npm run evals:export:chat-cache -- --only-active
-```
-
-- Optional: choose a custom output path:
-
-```bash
-npm run evals:export:chat-cache -- --out tests/evals/fixtures/chat-eval-cases.generated.json
-```
-
-Implementation details are in `docs/DESIGN.md`.
+See `docs/DESIGN.md` for implementation details.

@@ -10,9 +10,12 @@ const {
   failRequest,
   withRequestId,
 } = require('../_shared/observability');
+const { loadGitHubContext } = require('../github');
 
 const DB_CONNECT_TIMEOUT_MS = 5000;
 const DB_QUERY_TIMEOUT_MS = 10000;
+const GITHUB_OWNER = process.env.GITHUB_OWNER || 'devgoon';
+const GITHUB_REPO = process.env.GITHUB_REPO || 'me';
 
 // use shared server fetch helper for timeouts/retries
 const { fetchWithTimeout } = require('../fetch');
@@ -155,6 +158,18 @@ module.exports = async function (context, req) {
           certificationsResult = { rows: [] };
         }
 
+        // Load GitHub portfolio context
+        let gitHubContext = { hook: '', features: '', techStack: '', url: '' };
+        try {
+          gitHubContext = await loadGitHubContext({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            client,
+          });
+        } catch {
+          // GitHub fetch failed; continue without it
+        }
+
         return {
           profile,
           experiences: experiencesResult.rows,
@@ -165,6 +180,7 @@ module.exports = async function (context, req) {
           values: valuesResult.rows[0] || null,
           faq: faqResult.rows,
           aiInstructions: aiInstructionsResult.rows,
+          gitHub: gitHubContext,
         };
       };
 

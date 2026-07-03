@@ -43,7 +43,6 @@ function EducationPage() {
         <CardContent>
           <Stack spacing={2}>
             <Typography variant="h4">Education</Typography>
-            <Typography color="text.secondary">Academic background and degrees</Typography>
           </Stack>
         </CardContent>
       </Card>

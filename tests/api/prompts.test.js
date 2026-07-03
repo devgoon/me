@@ -106,4 +106,92 @@ describe('prompts utilities', () => {
     const user = buildExperienceUserPrompt({ experiences: [{ id: 1 }] });
     expect(user).toMatch(/"experiences":/);
   });
+
+  test('buildChatPrompt includes GitHub portfolio when provided', () => {
+    const payload = {
+      profile: { name: 'Dev', email: 'e', title: 'T', elevator_pitch: '', target_titles: [] },
+      experiences: [],
+      skills: [],
+      gaps: [],
+      values: null,
+      faq: [],
+      education: [],
+      certifications: [],
+      aiInstructions: [],
+      gitHub: {
+        hook: 'An interactive portfolio site',
+        features: '- Feature 1\n- Feature 2',
+        techStack: '- Node.js\n- React',
+        url: 'https://github.com/devgoon/me',
+      },
+    };
+
+    const chat = buildChatPrompt(payload);
+    expect(chat).toMatch(/PUBLIC PORTFOLIO/);
+    expect(chat).toMatch(/github\.com\/devgoon\/me/);
+    expect(chat).toMatch(/An interactive portfolio site/);
+    expect(chat).toMatch(/Feature 1/);
+    expect(chat).toMatch(/Node\.js/);
+  });
+
+  test('buildChatPrompt omits GitHub section when not provided', () => {
+    const payload = {
+      profile: { name: 'Dev', email: 'e', title: 'T', elevator_pitch: '', target_titles: [] },
+      experiences: [],
+      skills: [],
+      gaps: [],
+      values: null,
+      faq: [],
+      education: [],
+      certifications: [],
+      aiInstructions: [],
+      gitHub: { hook: '', features: '', techStack: '', url: '' },
+    };
+
+    const chat = buildChatPrompt(payload);
+    expect(chat).not.toMatch(/PUBLIC PORTFOLIO/);
+  });
+
+  test('buildFitPrompt includes GitHub portfolio when provided', () => {
+    const payload = {
+      profile: { name: 'Dev', email: 'e', title: 'T', elevator_pitch: '', target_titles: [] },
+      experiences: [],
+      skills: [],
+      gaps: [],
+      values: null,
+      faq: [],
+      education: [],
+      certifications: [],
+      aiInstructions: [],
+      gitHub: {
+        hook: 'An interactive site',
+        features: '- Feature 1',
+        techStack: '- Node.js',
+        url: 'https://github.com/devgoon/me',
+      },
+    };
+
+    const fit = buildFitPrompt(payload);
+    expect(fit).toMatch(/PUBLIC PORTFOLIO/);
+    expect(fit).toMatch(/github\.com\/devgoon\/me/);
+    expect(fit).toMatch(/An interactive site/);
+  });
+
+  test('buildFitPrompt omits GitHub section when URL is empty', () => {
+    const payload = {
+      profile: { name: 'Dev', email: 'e', title: 'T', elevator_pitch: '', target_titles: [] },
+      experiences: [],
+      skills: [],
+      gaps: [],
+      values: null,
+      faq: [],
+      education: [],
+      certifications: [],
+      aiInstructions: [],
+      gitHub: { hook: 'test', features: '', techStack: '', url: '' },
+    };
+
+    const fit = buildFitPrompt(payload);
+    expect(fit).not.toMatch(/PUBLIC PORTFOLIO/);
+  });
 });

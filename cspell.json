@@ -32,7 +32,8 @@
     "trustservercertificate",
     "valuenow",
     "Vite",
-    "Wallingford"
+    "Wallingford",
+    "devgoon"
   ],
   "ignorePaths": [
     "**/node_modules/**",

@@ -271,6 +271,14 @@ function buildFitPrompt(payload) {
     `Target roles: ${textOrNA(ensureArray(profile.target_titles).join(', '))}`,
     '## SUMMARY',
     textOrNA(profile.elevator_pitch),
+    ...(payload.gitHub && payload.gitHub.url
+      ? [
+          '## PUBLIC PORTFOLIO',
+          payload.gitHub.url,
+          payload.gitHub.hook ? `\n${payload.gitHub.hook}` : '',
+          payload.gitHub.techStack ? `\n### Tech Stack\n${payload.gitHub.techStack}` : '',
+        ]
+      : []),
     '## EXPERIENCE',
     experiencesText,
     '## EDUCATION',
@@ -306,6 +314,13 @@ function buildFitPrompt(payload) {
       `Title: ${textOrNA(profile.title)}`,
       '## SUMMARY',
       textOrNA(profile.elevator_pitch),
+      ...(payload.gitHub && payload.gitHub.url
+        ? [
+            '## PUBLIC PORTFOLIO',
+            payload.gitHub.url,
+            payload.gitHub.hook ? `\n${payload.gitHub.hook}` : '',
+          ]
+        : []),
       '## EXPERIENCE',
       experiencesText,
       '## EDUCATION',
@@ -451,6 +466,15 @@ function buildChatPrompt(payload) {
     `Target roles: ${textOrNA(ensureArray(profile.target_titles).join(', '))}`,
     `What I'm looking for: ${textOrNA(profile.looking_for)}`,
     `What I'm NOT looking for: ${textOrNA(profile.not_looking_for)}`,
+    ...(payload.gitHub && payload.gitHub.url
+      ? [
+          '## PUBLIC PORTFOLIO',
+          payload.gitHub.url,
+          payload.gitHub.hook ? `\n${payload.gitHub.hook}` : '',
+          payload.gitHub.features ? `\n### Features\n${payload.gitHub.features}` : '',
+          payload.gitHub.techStack ? `\n### Tech Stack\n${payload.gitHub.techStack}` : '',
+        ]
+      : []),
     '## WORK EXPERIENCE',
     experiencesText,
     '## EDUCATION',

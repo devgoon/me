@@ -91,9 +91,6 @@ function SkillsPage() {
             <Typography variant="h4" sx={{ fontWeight: 700 }}>
               Skills
             </Typography>
-            <Typography color="text.secondary">
-              I've acquired many skills over the years...
-            </Typography>
           </Stack>
         </CardContent>
       </Card>

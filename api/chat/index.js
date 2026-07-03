@@ -10,6 +10,7 @@ const {
   failRequest,
   withRequestId,
 } = require('../_shared/observability');
+const { loadGitHubContext } = require('../github');
 const crypto = require('crypto');
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
@@ -18,6 +19,8 @@ const MAX_TOKENS = 1024;
 const DB_CONNECT_TIMEOUT_MS = 30000;
 const DB_QUERY_TIMEOUT_MS = 30000;
 const AI_TIMEOUT_MS = 60000;
+const GITHUB_OWNER = process.env.GITHUB_OWNER || 'devgoon';
+const GITHUB_REPO = process.env.GITHUB_REPO || 'me';
 
 /**
  * Create an AbortController with a timeout and a clear function.
@@ -138,6 +141,18 @@ async function loadCandidateContext(client) {
     certificationsResult = { rows: [] };
   }
 
+  // Load GitHub portfolio context
+  let gitHubContext = { hook: '', features: '', techStack: '', url: '' };
+  try {
+    gitHubContext = await loadGitHubContext({
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
+      client,
+    });
+  } catch {
+    // GitHub fetch failed; continue without it
+  }
+
   return {
     profile,
     experiences: experiencesResult.rows,
@@ -148,6 +163,7 @@ async function loadCandidateContext(client) {
     values: valuesResult.rows[0] || null,
     faq: faqResult.rows,
     aiInstructions: aiInstructionsResult.rows,
+    gitHub: gitHubContext,
   };
 }
 
