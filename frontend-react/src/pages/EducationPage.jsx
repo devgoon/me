@@ -50,8 +50,8 @@ function EducationPage() {
       {EDUCATION.length === 0 ? (
         <Typography color="text.secondary">No education records found</Typography>
       ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table>
+        <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 500 }}>
             <TableHead>
               <TableRow sx={{ bgcolor: 'action.hover' }}>
                 <TableCell>
