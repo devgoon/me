@@ -96,7 +96,7 @@ function ExperienceChips() {
 
       try {
         const apiRes = await apiRequestJson(
-          '/api/experience',
+          '/api/experience?skipAI=1',
           { method: 'GET' },
           { timeoutMs: 8000 }
         );
