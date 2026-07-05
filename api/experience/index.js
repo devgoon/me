@@ -5,6 +5,8 @@
 
 const { Client } = require('../db');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const {
   beginRequest,
   endRequest,
@@ -19,6 +21,77 @@ const DB_QUERY_TIMEOUT_MS = 15000;
 const AI_TIMEOUT_MS = 30000;
 const AI_MAX_TOKENS = 1400;
 const EXPERIENCE_QUESTION_KEY = 'experience_ai_contexts_v1';
+const STATIC_DEFAULT_DATA_PATH_CANDIDATES = [
+  path.join(__dirname, '../../frontend-react/public/_shared/default-data.json'),
+  path.join(process.cwd(), 'frontend-react/public/_shared/default-data.json'),
+  path.join(process.cwd(), '_shared/default-data.json'),
+  path.join(process.cwd(), 'frontend/_shared/default-data.json'),
+];
+
+function logInfo(context, message, meta) {
+  try {
+    if (context && context.log && typeof context.log.info === 'function') {
+      context.log.info(message, meta || {});
+    } else if (context && typeof context.log === 'function') {
+      context.log(`${message} ${JSON.stringify(meta || {})}`);
+    }
+  } catch {
+    // Best-effort logging only.
+  }
+}
+
+function logWarn(context, message, meta) {
+  try {
+    if (context && context.log && typeof context.log.warn === 'function') {
+      context.log.warn(message, meta || {});
+    } else if (context && typeof context.log === 'function') {
+      context.log(`${message} ${JSON.stringify(meta || {})}`);
+    }
+  } catch {
+    // Best-effort logging only.
+  }
+}
+
+function loadStaticDefaultData() {
+  for (const filePath of STATIC_DEFAULT_DATA_PATH_CANDIDATES) {
+    try {
+      if (!fs.existsSync(filePath)) continue;
+      const raw = fs.readFileSync(filePath, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch {
+      // Continue trying other locations.
+    }
+  }
+  return null;
+}
+
+function buildExperienceFallbackPayload() {
+  const defaults = loadStaticDefaultData();
+  if (defaults && defaults.experience && typeof defaults.experience === 'object') {
+    return defaults.experience;
+  }
+  return {
+    profile: {},
+    experiences: [],
+    skills: { strong: [], moderate: [], gap: [] },
+  };
+}
+
+function hasEmptyExperiencePayload(payload) {
+  const experiences = payload && Array.isArray(payload.experiences) ? payload.experiences : [];
+  const strong =
+    payload && payload.skills && Array.isArray(payload.skills.strong) ? payload.skills.strong : [];
+  const moderate =
+    payload && payload.skills && Array.isArray(payload.skills.moderate)
+      ? payload.skills.moderate
+      : [];
+  const gap =
+    payload && payload.skills && Array.isArray(payload.skills.gap) ? payload.skills.gap : [];
+  return (
+    experiences.length === 0 && strong.length === 0 && moderate.length === 0 && gap.length === 0
+  );
+}
 
 /**
  * Create an AbortController that aborts after `ms` milliseconds.
@@ -54,6 +127,18 @@ function toIsoDate(value) {
     return value.toISOString().slice(0, 10);
   }
   return String(value).slice(0, 10);
+}
+
+/**
+ * Normalize a skill category value for robust comparisons.
+ *
+ * @param {*} value
+ * @returns {string}
+ */
+function normalizeSkillCategory(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase();
 }
 
 /**
@@ -317,14 +402,34 @@ async function callAnthropicForContexts(profile, experiences, apiKey, certificat
  * Load candidate profile, experiences, skills and gaps from the database.
  *
  * @param {import('../db').Client} client
+ * @param context
  * @returns {Promise<Object>} Normalized payload used by experience handlers.
  */
-async function loadCandidateData(client) {
-  const profileResult = await client.queryWithRetry(
-    `SELECT TOP 1 id, name, title
-     FROM candidate_profile
-     ORDER BY updated_at DESC, created_at DESC`
+async function loadCandidateData(client, context) {
+  // Prefer the latest profile that has at least one strong/moderate skill.
+  // Fallback to the latest profile if none currently have categorized skills.
+  let profileResult = await client.queryWithRetry(
+    `SELECT TOP 1 cp.id, cp.name, cp.title
+     FROM candidate_profile cp
+     WHERE EXISTS (
+       SELECT 1
+       FROM skills s
+       WHERE s.candidate_id = cp.id
+         AND s.category IN ('strong', 'moderate')
+     )
+     ORDER BY cp.updated_at DESC, cp.created_at DESC`
   );
+
+  let candidateSource = 'latest_with_skills';
+
+  if (!profileResult.rows || profileResult.rows.length === 0) {
+    profileResult = await client.queryWithRetry(
+      `SELECT TOP 1 id, name, title
+       FROM candidate_profile
+       ORDER BY updated_at DESC, created_at DESC`
+    );
+    candidateSource = 'latest_profile_fallback';
+  }
 
   if (profileResult.rows.length === 0) {
     throw new Error('No candidate profile found');
@@ -332,6 +437,11 @@ async function loadCandidateData(client) {
 
   const profile = profileResult.rows[0];
   const candidateId = profile.id;
+
+  logInfo(context, 'experience.loadCandidateData candidate selected', {
+    candidateId,
+    source: candidateSource,
+  });
 
   const experiencesResult = await client.queryWithRetry(
     `SELECT id, company_name, title, title_progression, start_date, end_date, is_current,
@@ -359,6 +469,32 @@ async function loadCandidateData(client) {
      ORDER BY s.category ASC, CASE WHEN s.self_rating IS NULL THEN 1 ELSE 0 END ASC, s.self_rating DESC, s.skill_name ASC`,
     [candidateId]
   );
+
+  const skillCategoryCounts = { strong: 0, moderate: 0, gap: 0 };
+  const unknownSkillCategoryCounts = {};
+  (skillsResult.rows || []).forEach((r) => {
+    const category = normalizeSkillCategory(r.category);
+    if (category === 'strong' || category === 'moderate' || category === 'gap') {
+      skillCategoryCounts[category] += 1;
+    } else {
+      unknownSkillCategoryCounts[category || '<empty>'] =
+        (unknownSkillCategoryCounts[category || '<empty>'] || 0) + 1;
+    }
+  });
+
+  logInfo(context, 'experience.loadCandidateData fetched skills', {
+    candidateId,
+    totalSkillRows: (skillsResult.rows || []).length,
+    skillCategoryCounts,
+    unknownSkillCategoryCounts,
+  });
+
+  if (Object.keys(unknownSkillCategoryCounts).length > 0) {
+    logWarn(context, 'experience.loadCandidateData encountered unknown skill categories', {
+      candidateId,
+      unknownSkillCategoryCounts,
+    });
+  }
 
   const gapsResult = await client.queryWithRetry(
     `SELECT description, interest_in_learning
@@ -390,14 +526,18 @@ module.exports = async function (context) {
   const obs = beginRequest(context, req, 'experience.get');
   const databaseUrl = process.env.AZURE_DATABASE_URL;
   const apiKey = process.env.ANTHROPIC_API_KEY;
+  const fallbackBody = buildExperienceFallbackPayload();
 
   if (!databaseUrl) {
+    logWarn(context, 'experience.get AZURE_DATABASE_URL missing, serving static fallback', {
+      requestId: obs.requestId,
+    });
     context.res = {
-      status: 500,
+      status: 200,
       headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
-      body: { error: 'AZURE_DATABASE_URL is not configured' },
+      body: fallbackBody,
     };
-    endRequest(context, obs, 500);
+    endRequest(context, obs, 200);
     return;
   }
 
@@ -411,7 +551,7 @@ module.exports = async function (context) {
 
   try {
     await client.connect();
-    const payload = await loadCandidateData(client);
+    const payload = await loadCandidateData(client, context);
 
     let aiContexts = {};
     // Allow callers to skip AI enrichment (faster for classic lists)
@@ -600,10 +740,14 @@ module.exports = async function (context) {
     }));
 
     const skills = {
-      strong: payload.skills.filter((s) => s.category === 'strong').map((s) => s.skill_name),
-      moderate: payload.skills.filter((s) => s.category === 'moderate').map((s) => s.skill_name),
+      strong: payload.skills
+        .filter((s) => normalizeSkillCategory(s.category) === 'strong')
+        .map((s) => s.skill_name),
+      moderate: payload.skills
+        .filter((s) => normalizeSkillCategory(s.category) === 'moderate')
+        .map((s) => s.skill_name),
       gap: payload.skills
-        .filter((s) => s.category === 'gap')
+        .filter((s) => normalizeSkillCategory(s.category) === 'gap')
         .map((s) => s.skill_name)
         .concat(
           (payload.gaps || [])
@@ -615,20 +759,45 @@ module.exports = async function (context) {
         ),
     };
 
+    let responseBody = {
+      profile: {
+        name: payload.profile.name,
+        title: payload.profile.title,
+      },
+      experiences,
+      skills,
+    };
+
+    if (hasEmptyExperiencePayload(responseBody) && !hasEmptyExperiencePayload(fallbackBody)) {
+      logWarn(context, 'experience.get empty DB payload, serving static fallback', {
+        requestId: obs.requestId,
+        candidateId: payload.profile && payload.profile.id,
+      });
+      responseBody = fallbackBody;
+    }
+
     context.res = {
       status: 200,
       headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
-      body: {
-        profile: {
-          name: payload.profile.name,
-          title: payload.profile.title,
-        },
-        experiences,
-        skills,
-      },
+      body: responseBody,
     };
     endRequest(context, obs, 200);
   } catch (error) {
+    logWarn(context, 'experience.get error, serving static fallback', {
+      requestId: obs.requestId,
+      error: error && error.message ? error.message : String(error),
+    });
+    const fallbackIsEmpty = hasEmptyExperiencePayload(fallbackBody);
+    if (!fallbackIsEmpty) {
+      context.res = {
+        status: 200,
+        headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
+        body: fallbackBody,
+      };
+      endRequest(context, obs, 200);
+      return;
+    }
+
     const message = error && error.message ? error.message : 'Unable to load experience data';
     const isTimeout = /timeout/i.test(message);
     const status = isTimeout ? 504 : 500;

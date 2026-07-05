@@ -250,6 +250,60 @@ describe('experience API', () => {
       ])
     );
   });
+
+  test('prefers latest profile that has strong/moderate skills', async () => {
+    client.query
+      .mockResolvedValueOnce({ rows: [{ id: 2, name: 'Older With Skills', title: 'Engineer' }] }) // profile with skills
+      .mockResolvedValueOnce({ rows: [] }) // experiences
+      .mockResolvedValueOnce({
+        rows: [
+          { skill_name: 'TypeScript', category: ' STRONG ' },
+          { skill_name: 'React', category: 'Moderate' },
+        ],
+      }) // skills
+      .mockResolvedValueOnce({ rows: [] }); // gaps
+
+    const context = {
+      req: { query: { skipAI: 'true' }, headers: {} },
+      res: null,
+      log: { warn: vi.fn() },
+    };
+    await experienceHandler(context);
+
+    expect(context.res.status).toBe(200);
+    expect(context.res.body.skills.strong).toEqual(expect.arrayContaining(['TypeScript']));
+    expect(context.res.body.skills.moderate).toEqual(expect.arrayContaining(['React']));
+  });
+
+  test('serves static fallback when db connection fails', async () => {
+    client.connect.mockRejectedValueOnce(new Error('db offline'));
+
+    const context = { req: {}, res: null, log: { warn: vi.fn(), info: vi.fn() } };
+    await experienceHandler(context);
+
+    expect(context.res.status).toBe(200);
+    expect(Array.isArray(context.res.body.experiences)).toBe(true);
+    expect(context.res.body.experiences.length).toBeGreaterThan(0);
+  });
+
+  test('serves static fallback when db returns an empty experience payload', async () => {
+    client.query
+      .mockResolvedValueOnce({ rows: [{ id: 3, name: 'Empty Candidate', title: 'Engineer' }] }) // profile with skills query
+      .mockResolvedValueOnce({ rows: [] }) // experiences
+      .mockResolvedValueOnce({ rows: [] }) // skills
+      .mockResolvedValueOnce({ rows: [] }); // gaps
+
+    const context = {
+      req: { query: { skipAI: 'true' }, headers: {} },
+      res: null,
+      log: { warn: vi.fn(), info: vi.fn() },
+    };
+    await experienceHandler(context);
+
+    expect(context.res.status).toBe(200);
+    expect(Array.isArray(context.res.body.experiences)).toBe(true);
+    expect(context.res.body.experiences.length).toBeGreaterThan(0);
+  });
 });
 
 // Experience helper unit tests (merged from experience.unit.test.js)

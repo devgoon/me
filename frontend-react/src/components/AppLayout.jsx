@@ -227,9 +227,7 @@ function AppLayout({ children }) {
         </Box>
 
         {/* Main Content */}
-        <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, flex: 1, overflow: 'auto' }}>
-          {children}
-        </Box>
+        <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, flex: 1, overflow: 'auto' }}>{children}</Box>
       </Box>
 
       {/* Mobile Navigation Drawer */}
