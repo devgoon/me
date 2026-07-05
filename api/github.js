@@ -4,8 +4,6 @@
  */
 
 const { fetchWithTimeout } = require('./fetch');
-
-const GITHUB_API_TIMEOUT_MS = 10000;
 const GITHUB_RAW_TIMEOUT_MS = 5000;
 
 /**
