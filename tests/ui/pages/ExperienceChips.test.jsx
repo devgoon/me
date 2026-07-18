@@ -1,14 +1,14 @@
 import 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { vi } from 'vitest';
+import { expect, test, vi } from 'vitest';
 
 // Mock the apiRequestJson used by ExperienceChips
-vi.mock('../src/lib/tanstackApi.js', () => ({
+vi.mock('../../../frontend-react/src/lib/tanstackApi.js', () => ({
   apiRequestJson: vi.fn(),
 }));
 
-import { apiRequestJson } from '../src/lib/tanstackApi.js';
-import AboutPage from '../src/pages/AboutPage.jsx';
+import { apiRequestJson } from '../../../frontend-react/src/lib/tanstackApi.js';
+import AboutPage from '../../../frontend-react/src/pages/AboutPage.jsx';
 
 test('ExperienceChips shows unique companyName (deduplicated case-insensitive)', async () => {
   // Provide duplicate companyName entries (different casing)

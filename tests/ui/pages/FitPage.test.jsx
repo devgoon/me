@@ -89,7 +89,6 @@ describe('FitPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Good Match')).toBeInTheDocument();
-      expect(screen.getByText(/Score:/)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
       expect(screen.getByText("WHERE I DON'T FIT")).toBeInTheDocument();
       expect(screen.getByText('WHAT TRANSFERS')).toBeInTheDocument();

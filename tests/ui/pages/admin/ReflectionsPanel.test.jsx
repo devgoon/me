@@ -11,8 +11,13 @@ vi.mock('jspdf', () => {
     addPage: vi.fn(),
     save: vi.fn(),
   };
+
+  function JsPdfMock() {
+    return mockDoc;
+  }
+
   return {
-    default: vi.fn(() => mockDoc),
+    default: JsPdfMock,
   };
 });
 
