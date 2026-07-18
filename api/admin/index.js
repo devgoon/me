@@ -316,7 +316,7 @@ async function loadAll(client, candidateId) {
     `SELECT *
      FROM skills
      WHERE candidate_id = @p1
-     ORDER BY category ASC, CASE WHEN self_rating IS NULL THEN 1 ELSE 0 END ASC, self_rating DESC, skill_name ASC`,
+     ORDER BY last_used DESC, skill_name ASC`,
     [candidateId]
   )) || { rows: [] };
 
@@ -674,7 +674,9 @@ async function saveAll(client, candidateId, payload, authEmail) {
 
     await client.queryWithRetry('DELETE FROM skills WHERE candidate_id = @p1', [candidateId]);
     const validSkills = skills.filter((item) => asText(item.skillName));
-    for (const item of validSkills) {
+    // We sort by created_at DESC when loading; insert in reverse so the
+    // first UI item receives the newest created_at value.
+    for (const item of validSkills.slice().reverse()) {
       // Normalize lastUsed: prefer canonical YMD, fall back to MDY display if provided
       const normalizedLastUsed =
         formatDateToYMD(item.lastUsed) || formatMDYToYMD(item.lastUsedDisplay || '') || null;
