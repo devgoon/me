@@ -47,6 +47,55 @@ const { fetchWithTimeout } = require('../fetch');
 
 const { buildChatPrompt } = require('../prompts');
 
+const MAX_HISTORY_TURNS = 8;
+const MAX_HISTORY_TEXT = 4000;
+
+const FOLLOW_UP_INSTRUCTION = `
+
+## CONVERSATION STYLE
+This is a progressive, interview-style conversation. After your answer, suggest exactly 3 short follow-up questions the interviewer would naturally ask next, building on the conversation so far and not repeating earlier questions. Put them at the very end, after the answer, in this exact format on a single final line:
+FOLLOW_UPS: question one? | question two? | question three?`;
+
+/**
+ * Validate client-supplied history into user/assistant turns starting with a user turn.
+ *
+ * @param {unknown} raw
+ * @returns {Array<{role:string,text:string}>}
+ */
+function sanitizeHistory(raw) {
+  if (!Array.isArray(raw)) return [];
+  const turns = raw
+    .filter(
+      (h) =>
+        h &&
+        (h.role === 'user' || h.role === 'assistant') &&
+        typeof h.text === 'string' &&
+        h.text.trim()
+    )
+    .map((h) => ({ role: h.role, text: h.text.trim().slice(0, MAX_HISTORY_TEXT) }))
+    .slice(-MAX_HISTORY_TURNS);
+  while (turns.length && turns[0].role !== 'user') turns.shift();
+  return turns;
+}
+
+/**
+ * Split a model response into the visible answer and suggested follow-ups.
+ *
+ * @param {string} raw
+ * @returns {{answer:string, followUps:string[]}}
+ */
+function parseFollowUps(raw) {
+  const text = typeof raw === 'string' ? raw : '';
+  const match = text.match(/\n?[ \t]*FOLLOW_UPS:[ \t]*([^\n]*)\s*$/);
+  if (!match) return { answer: text.trim(), followUps: [] };
+  const followUps = match[1]
+    .split('|')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  return { answer: text.slice(0, match.index).trim(), followUps };
+}
+
 /**
  * Load candidate profile, experiences, skills, gaps, values, FAQ and
  * related context from the database for use in chat prompts.
@@ -173,9 +222,10 @@ async function loadCandidateContext(client) {
  * @param {string} systemPrompt
  * @param {string} userMessage
  * @param {string} apiKey
+ * @param {Array<{role:string,text:string}>} [history] - Prior turns, oldest first.
  * @returns {Promise<string>} Assistant response text.
  */
-async function callAnthropic(systemPrompt, userMessage, apiKey) {
+async function callAnthropic(systemPrompt, userMessage, apiKey, history = []) {
   const maxAttempts = 3;
   let attempt = 0;
   let lastErr = null;
@@ -204,6 +254,10 @@ async function callAnthropic(systemPrompt, userMessage, apiKey) {
               },
             ],
             messages: [
+              ...history.map((h) => ({
+                role: h.role,
+                content: [{ type: 'text', text: h.text }],
+              })),
               {
                 role: 'user',
                 content: [
@@ -458,26 +512,30 @@ module.exports = async function (context, req) {
 
     await connectWithRetry(client);
 
-    let assistantResponse;
+    const history = sanitizeHistory(req.body.history);
+
+    let rawResponse;
     try {
-      // Check cache first
-      const cached = await getCache(client, AI_MODEL, userMessage);
+      // Cache is keyed by question only, so only first-turn questions are cached
+      const cached = history.length === 0 ? await getCache(client, AI_MODEL, userMessage) : null;
       if (cached) {
-        assistantResponse = cached;
+        rawResponse = cached;
       } else {
         const contextPayload = await loadCandidateContext(client);
-        const systemPrompt = buildChatPrompt(contextPayload);
-        assistantResponse = await callAnthropic(systemPrompt, userMessage, apiKey);
-        await setCache(client, AI_MODEL, userMessage, assistantResponse);
+        const systemPrompt = buildChatPrompt(contextPayload) + FOLLOW_UP_INSTRUCTION;
+        rawResponse = await callAnthropic(systemPrompt, userMessage, apiKey, history);
+        if (history.length === 0) await setCache(client, AI_MODEL, userMessage, rawResponse);
       }
     } finally {
       await client.end();
     }
 
+    const { answer, followUps } = parseFollowUps(rawResponse);
+
     context.res = {
       status: 200,
       headers: withRequestId({ 'Content-Type': 'application/json' }, obs.requestId),
-      body: { response: assistantResponse },
+      body: { response: answer, followUps },
     };
     endRequest(context, obs, 200);
   } catch (error) {
@@ -500,4 +558,6 @@ module.exports._helpers = {
   getCache,
   setCache,
   loadCandidateContext,
+  sanitizeHistory,
+  parseFollowUps,
 };

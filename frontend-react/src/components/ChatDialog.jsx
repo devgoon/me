@@ -19,11 +19,12 @@ const SUGGESTIONS = [
   'Do you have enterprise development experience?',
   'How do you use GitHub Copilot?',
   'What cloud platforms do you have experience with?',
-  'Have you worked at scale?',
-  'What roles are you looking for?',
 ];
 
+const MAX_HISTORY = 8;
+
 const WELCOME_MESSAGE = {
+  isWelcome: true,
   role: 'assistant',
   text: 'Ask me about strengths, hard lessons, leadership, or project outcomes.',
 };
@@ -119,15 +120,16 @@ function ChatDialog({ open, onClose, initialContext = null }) {
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState(SUGGESTIONS);
   const historyRef = useRef(null);
   const chatMutation = useMutation({
-    mutationFn: (text) =>
+    mutationFn: ({ text, history }) =>
       apiRequest(
         '/api/chat',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text }),
+          body: JSON.stringify({ message: text, history }),
         },
         { timeoutMs: 60000, maxAttempts: 1, baseDelay: 0 }
       ),
@@ -142,6 +144,7 @@ function ChatDialog({ open, onClose, initialContext = null }) {
 
   useEffect(() => {
     if (!open) return;
+    setTimeout(() => setSuggestions(SUGGESTIONS), 0);
     if (!initialContext) {
       setTimeout(() => setMessages([WELCOME_MESSAGE]), 0);
       return;
@@ -170,18 +173,25 @@ function ChatDialog({ open, onClose, initialContext = null }) {
     const text = (prompt || input).trim();
     if (!text || loading) return;
 
+    const history = messages
+      .filter((m) => (m.role === 'user' || m.role === 'assistant') && !m.typing && !m.isWelcome)
+      .slice(-MAX_HISTORY)
+      .map(({ role, text: t }) => ({ role, text: t }));
+
     setInput('');
+    setSuggestions([]);
     setMessages((prev) => [...prev, { role: 'user', text }]);
     setLoading(true);
     setMessages((prev) => [...prev, { role: 'assistant', typing: true, text: '' }]);
 
     try {
-      const response = await chatMutation.mutateAsync(text);
+      const response = await chatMutation.mutateAsync({ text, history });
 
       let answer = 'I could not generate a response right now.';
       if (response.ok) {
         const data = await response.json();
         if (data?.response) answer = data.response;
+        if (Array.isArray(data?.followUps)) setSuggestions(data.followUps.slice(0, 3));
       } else {
         try {
           const err = await response.json();
@@ -259,21 +269,21 @@ function ChatDialog({ open, onClose, initialContext = null }) {
         ))}
       </Stack>
 
-      {messages.length <= 1 && (
+      {suggestions.length > 0 && (
         <Stack
           direction="row"
           spacing={1}
           sx={{ px: 2, pb: 1, flexWrap: 'wrap', flexShrink: 0 }}
           useFlexGap
         >
-          {SUGGESTIONS.map((s) => (
+          {suggestions.map((s) => (
             <Button
               key={s}
               size="small"
               variant="outlined"
               onClick={() => sendPrompt(s)}
               disabled={loading}
-              sx={{ fontSize: '0.75rem', textTransform: 'none', whiteSpace: 'nowrap' }}
+              sx={{ fontSize: '0.75rem', textTransform: 'none', textAlign: 'left' }}
             >
               {s}
             </Button>
